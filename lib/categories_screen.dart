@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'listings_screen.dart';
+
 /// Категории из таблицы categories. Первая проверка связи с базой.
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -36,6 +38,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       appBar: AppBar(
         title: const Text('TAJBozor'),
         actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ListingsScreen()),
+            ),
+            icon: const Icon(Icons.list_alt),
+            tooltip: 'Объявления',
+          ),
           IconButton(onPressed: _signOut, icon: const Icon(Icons.logout), tooltip: 'Выйти'),
         ],
       ),
