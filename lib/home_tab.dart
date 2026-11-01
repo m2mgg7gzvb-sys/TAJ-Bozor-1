@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -198,10 +200,33 @@ class _HomeTabState extends State<HomeTab> {
   }
 }
 
-class _SearchField extends StatelessWidget {
+class _SearchField extends StatefulWidget {
   const _SearchField({required this.onTap});
 
   final VoidCallback onTap;
+
+  @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  static const _words = ['работу', 'самокат', 'квартиру', 'телефон', 'даром', 'уборщицу'];
+  int _i = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 2200), (_) {
+      if (mounted) setState(() => _i = (_i + 1) % _words.length);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -210,20 +235,37 @@ class _SearchField extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               SvgPicture.asset('assets/logo.svg', width: 28, height: 28),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Поиск во всех регионах',
-                  style: TextStyle(color: AppColors.muted, fontSize: 16),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(
+                      position: Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+                          .animate(anim),
+                      child: child,
+                    ),
+                  ),
+                  child: Align(
+                    key: ValueKey(_i),
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Найти ${_words[_i]}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppColors.muted, fontSize: 16),
+                    ),
+                  ),
                 ),
               ),
-              Icon(Icons.tune_rounded, color: AppColors.primary),
+              const Icon(Icons.tune_rounded, color: AppColors.primary),
             ],
           ),
         ),

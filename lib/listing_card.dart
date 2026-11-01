@@ -4,8 +4,9 @@ import 'favorites_store.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
+import 'viewed_store.dart';
 
-/// Карточка объявления для сетки: фото, цена, название, город и сердечко.
+/// Карточка объявления: фото, метка «Просмотрено», сердечко, цена, название, город.
 class ListingCard extends StatelessWidget {
   const ListingCard({super.key, required this.item});
 
@@ -18,15 +19,20 @@ class ListingCard extends StatelessWidget {
     }
   }
 
+  void _open(BuildContext context) {
+    ViewedStore.markViewed(item['id'] as String);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final photo = photoUrl(item);
     final city = item['city'] as String?;
     final id = item['id'] as String;
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
-      ),
+      onTap: () => _open(context),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: cardDecoration(radius: 18),
@@ -49,6 +55,27 @@ class ListingCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.mint),
                         ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: ValueListenableBuilder<Set<String>>(
+                      valueListenable: ViewedStore.ids,
+                      builder: (context, viewed, _) {
+                        if (!viewed.contains(id)) return const SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Просмотрено',
+                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                   Positioned(
                     top: 8,
                     right: 8,

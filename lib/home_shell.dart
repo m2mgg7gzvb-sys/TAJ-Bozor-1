@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'account_tab.dart';
 import 'favorites_screen.dart';
 import 'favorites_store.dart';
+import 'guest_prompt.dart';
 import 'home_tab.dart';
 import 'my_listings_tab.dart';
+import 'nav_state.dart';
 import 'theme.dart';
 
-/// Основа приложения: нижнее меню из 5 вкладок, как в макете.
+/// Основа приложения: нижнее меню из 5 вкладок.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -16,12 +18,24 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
+  late int _index;
 
   @override
   void initState() {
     super.initState();
+    _index = tabIndex.value;
+    tabIndex.addListener(_onTabChanged);
     FavoritesStore.load();
+  }
+
+  @override
+  void dispose() {
+    tabIndex.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (mounted) setState(() => _index = tabIndex.value);
   }
 
   @override
@@ -39,7 +53,7 @@ class _HomeShellState extends State<HomeShell> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) => tabIndex.value = i,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.search_rounded), label: 'Поиск'),
           NavigationDestination(icon: Icon(Icons.favorite_border_rounded), label: 'Избранное'),
@@ -52,7 +66,7 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// Сообщения пока не реализованы.
+/// Сообщения: пока заглушка.
 class _MessagesTab extends StatelessWidget {
   const _MessagesTab();
 
@@ -60,9 +74,10 @@ class _MessagesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Сообщения')),
-      body: const Center(
-        child: Text('Переписка с продавцами появится в следующей версии',
-            textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
+      body: const GuestPrompt(
+        icon: Icons.chat_bubble_rounded,
+        title: 'Сообщения скоро появятся',
+        text: 'Здесь будут переписки с продавцами по вашим объявлениям.',
       ),
     );
   }

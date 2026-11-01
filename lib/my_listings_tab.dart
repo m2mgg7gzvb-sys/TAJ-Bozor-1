@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'create_listing_screen.dart';
+import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
 
-/// Вкладка «Объявления»: кнопка подачи и список своих объявлений.
+/// Вкладка «Объявления»: для гостя — большой экран входа, для вошедшего — подача и свои объявления.
 class MyListingsTab extends StatefulWidget {
   const MyListingsTab({super.key});
 
@@ -46,6 +47,16 @@ class _MyListingsTabState extends State<MyListingsTab> {
   @override
   Widget build(BuildContext context) {
     final loggedIn = Supabase.instance.client.auth.currentUser != null;
+    if (!loggedIn) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Объявления')),
+        body: const GuestPrompt(
+          icon: Icons.post_add_rounded,
+          title: 'Войдите, чтобы публиковать объявления',
+          text: 'Подайте объявление за несколько минут и находите покупателей по всему Таджикистану.',
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Объявления')),
       body: Column(
@@ -53,47 +64,42 @@ class _MyListingsTabState extends State<MyListingsTab> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: FilledButton.icon(
-              onPressed: loggedIn ? _create : null,
+              onPressed: _create,
               icon: const Icon(Icons.add_rounded),
               label: const Text('Подать объявление'),
             ),
           ),
           Expanded(
-            child: !loggedIn
-                ? const Center(child: Text('Войдите, чтобы подать объявление'))
-                : FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _future,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: FilledButton(
-                            onPressed: _reload,
-                            child: const Text('Повторить'),
-                          ),
-                        );
-                      }
-                      final items = snapshot.data ?? [];
-                      if (items.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'Вы ещё не публиковали объявления',
-                            style: TextStyle(color: AppColors.muted),
-                          ),
-                        );
-                      }
-                      return GridView.count(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 0.72,
-                        children: [for (final item in items) ListingCard(item: item)],
-                      );
-                    },
-                  ),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: FilledButton(onPressed: _reload, child: const Text('Повторить')),
+                  );
+                }
+                final items = snapshot.data ?? [];
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Вы ещё не публиковали объявления',
+                      style: TextStyle(color: AppColors.muted),
+                    ),
+                  );
+                }
+                return GridView.count(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                  children: [for (final item in items) ListingCard(item: item)],
+                );
+              },
+            ),
           ),
         ],
       ),

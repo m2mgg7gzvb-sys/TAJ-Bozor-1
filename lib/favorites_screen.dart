@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'favorites_store.dart';
+import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
-import 'theme.dart';
 
 /// Вкладка «Избранное»: объявления, которые пользователь сохранил.
 class FavoritesScreen extends StatefulWidget {
@@ -52,7 +52,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Избранное')),
       body: !loggedIn
-          ? const Center(child: Text('Войдите, чтобы сохранять избранное'))
+          ? const GuestPrompt(
+              icon: Icons.favorite_rounded,
+              title: 'Войдите, чтобы открыть избранное',
+              text: 'Сохраняйте понравившиеся объявления и возвращайтесь к ним в любой момент.',
+            )
           : FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
