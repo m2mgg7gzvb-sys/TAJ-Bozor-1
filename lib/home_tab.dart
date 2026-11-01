@@ -89,11 +89,13 @@ class _HomeTabState extends State<HomeTab> {
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
-      child: RefreshIndicator(
-        onRefresh: _refresh,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Row(
               children: [
                 SvgPicture.asset('assets/logo.svg', width: 40, height: 40),
@@ -111,6 +113,15 @@ class _HomeTabState extends State<HomeTab> {
             ),
             const SizedBox(height: 14),
             _SearchField(onTap: _openAll),
+              ],
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                children: [
             const SizedBox(height: 16),
             _PromoBanner(onTap: _openAll),
             const SizedBox(height: 24),
@@ -190,7 +201,10 @@ class _HomeTabState extends State<HomeTab> {
               },
             ),
           ],
-        ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
