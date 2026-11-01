@@ -155,7 +155,7 @@ class _HomeTabState extends State<HomeTab> {
                 }
                 final items = snapshot.data ?? [];
                 return SizedBox(
-                  height: 152,
+                  height: 148,
                   child: GridView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -164,7 +164,7 @@ class _HomeTabState extends State<HomeTab> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
-                      childAspectRatio: 1.9,
+                      childAspectRatio: 1.85,
                     ),
                     itemBuilder: (context, i) {
                       if (i == 0) {
