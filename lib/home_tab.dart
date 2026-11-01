@@ -88,6 +88,22 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  Widget _categoryTile(_Cat cat, int index) {
+    final isAll = cat.data == null;
+    return SizedBox(
+      width: isAll ? 84 : 132,
+      height: 70,
+      child: _CategoryChip(
+        index: index,
+        icon: cat.icon,
+        name: cat.name,
+        onTap: isAll
+            ? _openAll
+            : () => _openCategory(cat.data!['id'] as int, cat.name),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -154,33 +170,30 @@ class _HomeTabState extends State<HomeTab> {
                   return const Text('Не удалось загрузить категории');
                 }
                 final items = snapshot.data ?? [];
+                final all = <_Cat>[
+                  const _Cat('Все', Icons.apps_rounded, null),
+                  for (final c in items)
+                    _Cat(c['name_ru'] as String, _iconFor(c['slug'] as String), c),
+                ];
+                final columns = <List<_Cat>>[
+                  for (var i = 0; i < all.length; i += 2)
+                    all.sublist(i, i + 2 > all.length ? all.length : i + 2),
+                ];
                 return SizedBox(
                   height: 148,
-                  child: GridView.builder(
+                  child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 0),
-                    itemCount: items.length + 1,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 0.54,
-                    ),
-                    itemBuilder: (context, i) {
-                      if (i == 0) {
-                        return _CategoryChip(
-                          index: 0,
-                          icon: Icons.apps_rounded,
-                          name: 'Все',
-                          onTap: _openAll,
-                        );
-                      }
-                      final c = items[i - 1];
-                      return _CategoryChip(
-                        index: i,
-                        icon: _iconFor(c['slug'] as String),
-                        name: c['name_ru'] as String,
-                        onTap: () => _openCategory(c['id'] as int, c['name_ru'] as String),
+                    itemCount: columns.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, col) {
+                      final pair = columns[col];
+                      return Column(
+                        children: [
+                          for (var r = 0; r < pair.length; r++) ...[
+                            if (r > 0) const SizedBox(height: 8),
+                            _categoryTile(pair[r], col * 2 + r),
+                          ],
+                        ],
                       );
                     },
                   ),
@@ -316,6 +329,14 @@ class _SearchFieldState extends State<_SearchField> {
       ),
     );
   }
+}
+
+class _Cat {
+  const _Cat(this.name, this.icon, this.data);
+
+  final String name;
+  final IconData icon;
+  final Map<String, dynamic>? data;
 }
 
 class _SectionTitle extends StatelessWidget {
