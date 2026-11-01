@@ -96,22 +96,6 @@ class _HomeTabState extends State<HomeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            Row(
-              children: [
-                SvgPicture.asset('assets/logo.svg', width: 40, height: 40),
-                const SizedBox(width: 10),
-                Text.rich(
-                  TextSpan(
-                    style: const TextStyle(fontSize: 24, color: AppColors.primary, height: 1),
-                    children: const [
-                      TextSpan(text: 'TAJ ', style: TextStyle(fontWeight: FontWeight.w800)),
-                      TextSpan(text: 'Bozor', style: TextStyle(fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
             _SearchField(onTap: _openAll),
               ],
             ),
@@ -123,8 +107,6 @@ class _HomeTabState extends State<HomeTab> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
             const SizedBox(height: 16),
-            _PromoBanner(onTap: _openAll),
-            const SizedBox(height: 24),
             const _SectionTitle('Категории'),
             const SizedBox(height: 12),
             FutureBuilder<List<Map<String, dynamic>>>(
@@ -141,11 +123,17 @@ class _HomeTabState extends State<HomeTab> {
                 }
                 final items = snapshot.data ?? [];
                 return SizedBox(
-                  height: 96,
-                  child: ListView.separated(
+                  height: 210,
+                  child: GridView.builder(
                     scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 0),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.5,
+                    ),
                     itemBuilder: (context, i) => _CategoryChip(
                       icon: _iconFor(items[i]['slug'] as String),
                       name: items[i]['name_ru'] as String,
@@ -223,11 +211,11 @@ class _SearchField extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              Icon(Icons.search_rounded, color: AppColors.muted),
+              SvgPicture.asset('assets/logo.svg', width: 28, height: 28),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -238,60 +226,6 @@ class _SearchField extends StatelessWidget {
               Icon(Icons.tune_rounded, color: AppColors.primary),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.deep],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Все объявления',
-                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Свежие предложения по всему Таджикистану',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.saffron,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.arrow_forward_rounded, color: AppColors.ink),
-            ),
-          ],
         ),
       ),
     );
@@ -327,32 +261,30 @@ class _CategoryChip extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: SizedBox(
-          width: 88,
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.mint,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(icon, color: AppColors.primary),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.mint,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 8),
-                Text(
+                child: Icon(icon, color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
                   name,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
