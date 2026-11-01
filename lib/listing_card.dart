@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 
+import 'favorites_store.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
 
 /// Карточка объявления для сетки: фото, цена, название, город и сердечко.
-class ListingCard extends StatefulWidget {
+class ListingCard extends StatelessWidget {
   const ListingCard({super.key, required this.item});
 
   final Map<String, dynamic> item;
 
-  @override
-  State<ListingCard> createState() => _ListingCardState();
-}
-
-class _ListingCardState extends State<ListingCard> {
-  bool _fav = false;
+  Future<void> _toggleFav(BuildContext context) async {
+    final error = await FavoritesStore.toggle(item['id'] as String);
+    if (error != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final item = widget.item;
     final photo = photoUrl(item);
     final city = item['city'] as String?;
+    final id = item['id'] as String;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
@@ -51,17 +52,23 @@ class _ListingCardState extends State<ListingCard> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _fav = !_fav),
-                      child: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          _fav ? Icons.favorite : Icons.favorite_border,
-                          size: 18,
-                          color: _fav ? AppColors.ruby : AppColors.ink,
-                        ),
-                      ),
+                    child: ValueListenableBuilder<Set<String>>(
+                      valueListenable: FavoritesStore.ids,
+                      builder: (context, favIds, _) {
+                        final fav = favIds.contains(id);
+                        return GestureDetector(
+                          onTap: () => _toggleFav(context),
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              fav ? Icons.favorite : Icons.favorite_border,
+                              size: 18,
+                              color: fav ? AppColors.ruby : AppColors.ink,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

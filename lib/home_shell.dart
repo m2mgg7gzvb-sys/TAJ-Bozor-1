@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_screen.dart';
+import 'favorites_screen.dart';
+import 'favorites_store.dart';
 import 'home_tab.dart';
 import 'listings_screen.dart';
 import 'theme.dart';
@@ -18,17 +20,19 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
   @override
+  void initState() {
+    super.initState();
+    FavoritesStore.load();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _index,
         children: const [
           HomeTab(),
-          _NeedLoginTab(
-            icon: Icons.favorite_border_rounded,
-            title: 'Избранное',
-            text: 'Вход нужен, чтобы сохранять избранные объявления',
-          ),
+          FavoritesScreen(),
           ListingsScreen(),
           _NeedLoginTab(
             icon: Icons.chat_bubble_outline_rounded,
