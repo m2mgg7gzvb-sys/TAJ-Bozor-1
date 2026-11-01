@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listing_card.dart';
@@ -87,12 +88,20 @@ class _HomeTabState extends State<HomeTab> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            Text(
-              'TAJBozor',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+            Row(
+              children: [
+                SvgPicture.asset('assets/logo.svg', width: 40, height: 40),
+                const SizedBox(width: 10),
+                Text.rich(
+                  TextSpan(
+                    style: const TextStyle(fontSize: 24, color: AppColors.primary, height: 1),
+                    children: const [
+                      TextSpan(text: 'TAJ ', style: TextStyle(fontWeight: FontWeight.w800)),
+                      TextSpan(text: 'Bozor', style: TextStyle(fontWeight: FontWeight.w500)),
+                    ],
                   ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             _SearchField(onTap: _openAll),

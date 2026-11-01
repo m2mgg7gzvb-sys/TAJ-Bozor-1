@@ -20,7 +20,7 @@ class TajBozorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TAJBozor',
+      title: 'TAJ Bozor',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       home: const SplashScreen(),

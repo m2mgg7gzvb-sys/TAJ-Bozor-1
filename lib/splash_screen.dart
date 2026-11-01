@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'root_gate.dart';
 import 'theme.dart';
@@ -36,11 +37,16 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.storefront_rounded, size: 96, color: Colors.white),
+            SvgPicture.asset('assets/logo.svg', width: 120, height: 120),
             SizedBox(height: 20),
-            Text(
-              'TAJBozor',
-              style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800),
+            Text.rich(
+              TextSpan(
+                style: TextStyle(color: Colors.white, fontSize: 32, height: 1),
+                children: [
+                  TextSpan(text: 'TAJ ', style: TextStyle(fontWeight: FontWeight.w800)),
+                  TextSpan(text: 'Bozor', style: TextStyle(fontWeight: FontWeight.w500)),
+                ],
+              ),
             ),
             SizedBox(height: 6),
             Text(
