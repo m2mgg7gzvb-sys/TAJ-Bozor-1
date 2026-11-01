@@ -39,7 +39,7 @@ class _HomeTabState extends State<HomeTab> {
   Future<List<Map<String, dynamic>>> _loadCategories() async {
     final rows = await Supabase.instance.client
         .from('categories')
-        .select('slug, name_ru, name_tj')
+        .select('id, slug, name_ru, name_tj')
         .order('id');
     return List<Map<String, dynamic>>.from(rows);
   }
@@ -58,6 +58,12 @@ class _HomeTabState extends State<HomeTab> {
 
   void _openAll() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ListingsScreen()));
+  }
+
+  void _openCategory(int id, String name) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ListingsScreen(categoryId: id, title: name)),
+    );
   }
 
   IconData _iconFor(String slug) {
@@ -132,7 +138,10 @@ class _HomeTabState extends State<HomeTab> {
                     itemBuilder: (context, i) => _CategoryChip(
                       icon: _iconFor(items[i]['slug'] as String),
                       name: items[i]['name_ru'] as String,
-                      onTap: _openAll,
+                      onTap: () => _openCategory(
+                        items[i]['id'] as int,
+                        items[i]['name_ru'] as String,
+                      ),
                     ),
                   ),
                 );

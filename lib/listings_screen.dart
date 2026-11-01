@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Лента активных объявлений из таблицы listings.
+import 'listing_card.dart';
+import 'listing_utils.dart';
+import 'theme.dart';
+
+/// Лента объявлений. Может быть отфильтрована по категории и по поисковой строке.
 class ListingsScreen extends StatefulWidget {
-  const ListingsScreen({super.key});
+  const ListingsScreen({super.key, this.categoryId, this.title = 'Объявления'});
+
+  final int? categoryId;
+  final String title;
 
   @override
   State<ListingsScreen> createState() => _ListingsScreenState();
 }
 
 class _ListingsScreenState extends State<ListingsScreen> {
+  final _searchCtrl = TextEditingController();
   late Future<List<Map<String, dynamic>>> _future;
 
   @override
@@ -18,159 +26,89 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _future = _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   Future<List<Map<String, dynamic>>> _load() async {
-    final rows = await Supabase.instance.client
+    var query = Supabase.instance.client
         .from('listings')
-        .select('id, title, price, currency, city, created_at, listing_images(path, position)')
-        .eq('status', 'active')
-        .order('created_at', ascending: false)
-        .limit(50);
+        .select(listingSelect)
+        .eq('status', 'active');
+    if (widget.categoryId != null) {
+      query = query.eq('category_id', widget.categoryId!);
+    }
+    final search = _searchCtrl.text.trim();
+    if (search.isNotEmpty) {
+      query = query.ilike('title', '%$search%');
+    }
+    final rows = await query.order('created_at', ascending: false).limit(100);
     return List<Map<String, dynamic>>.from(rows);
   }
 
-  Future<void> _refresh() async {
-    setState(() => _future = _load());
-    try {
-      await _future;
-    } catch (_) {
-      // Ошибку покажет FutureBuilder.
-    }
-  }
-
-  /// Публичная ссылка на первое фото объявления (или null, если фото нет).
-  String? _photoUrl(Map<String, dynamic> item) {
-    final raw = (item['listing_images'] as List?) ?? [];
-    final images = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    if (images.isEmpty) return null;
-    images.sort((a, b) => (a['position'] as int).compareTo(b['position'] as int));
-    final path = images.first['path'] as String;
-    return Supabase.instance.client.storage.from('listing-photos').getPublicUrl(path);
-  }
-
-  String _priceText(Map<String, dynamic> item) {
-    final price = num.tryParse('${item['price']}');
-    if (price == null) return 'Договорная';
-    final currency = item['currency'] as String? ?? 'TJS';
-    final amount = price % 1 == 0 ? price.toStringAsFixed(0) : price.toStringAsFixed(2);
-    return '$amount $currency';
-  }
+  void _reload() => setState(() => _future = _load());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Объявления')),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return ListView(
-                children: [
-                  const SizedBox(height: 120),
-                  const Center(child: Text('Не удалось загрузить объявления')),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: FilledButton(
-                      onPressed: () => setState(() => _future = _load()),
-                      child: const Text('Повторить'),
-                    ),
-                  ),
-                ],
-              );
-            }
-            final items = snapshot.data ?? [];
-            if (items.isEmpty) {
-              return ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('Объявлений пока нет')),
-                ],
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: items.length,
-              itemBuilder: (context, i) => _ListingTile(
-                title: items[i]['title'] as String,
-                price: _priceText(items[i]),
-                city: items[i]['city'] as String?,
-                photoUrl: _photoUrl(items[i]),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _ListingTile extends StatelessWidget {
-  const _ListingTile({
-    required this.title,
-    required this.price,
-    required this.city,
-    required this.photoUrl,
-  });
-
-  final String title;
-  final String price;
-  final String? city;
-  final String? photoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
+      appBar: AppBar(title: Text(widget.title)),
+      body: Column(
         children: [
-          SizedBox(
-            width: 110,
-            height: 110,
-            child: photoUrl == null
-                ? const ColoredBox(
-                    color: Color(0xFFE6EFEC),
-                    child: Icon(Icons.image_outlined, color: Colors.black38),
-                  )
-                : Image.network(
-                    photoUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const ColoredBox(
-                      color: Color(0xFFE6EFEC),
-                      child: Icon(Icons.broken_image_outlined, color: Colors.black38),
-                    ),
-                  ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: TextField(
+              controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _reload(),
+              decoration: InputDecoration(
+                hintText: 'Поиск по названию',
+                prefixIcon: const Icon(Icons.search_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
           ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    price,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w800,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Не удалось загрузить объявления'),
+                        const SizedBox(height: 12),
+                        FilledButton(onPressed: _reload, child: const Text('Повторить')),
+                      ],
                     ),
+                  );
+                }
+                final items = snapshot.data ?? [];
+                if (items.isEmpty) {
+                  return const Center(child: Text('Ничего не найдено'));
+                }
+                return RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: GridView.count(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.72,
+                    children: [for (final item in items) ListingCard(item: item)],
                   ),
-                  const SizedBox(height: 4),
-                  if (city != null && city!.isNotEmpty)
-                    Text(city!, style: const TextStyle(color: Colors.black54)),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
