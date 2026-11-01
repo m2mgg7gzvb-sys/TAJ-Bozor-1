@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listings_screen.dart';
+import 'nav_state.dart';
 import 'theme.dart';
 
 /// Главная вкладка «Поиск»: поиск, баннер, категории и новые объявления.
@@ -105,7 +106,29 @@ class _HomeTabState extends State<HomeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            _SearchField(onTap: _openAll),
+            Row(
+                  children: [
+                    Expanded(child: _SearchField(onTap: _openAll)),
+                    if (Supabase.instance.client.auth.currentUser == null) ...[
+                      const SizedBox(width: 10),
+                      Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => tabIndex.value = loginTabIndex,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            child: Text(
+                              'Войти',
+                              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -116,6 +139,53 @@ class _HomeTabState extends State<HomeTab> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
             const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [AppColors.deep, AppColors.primary]),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Продайте за пару минут',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Добавьте фото и цену, и объявление сразу появится в ленте',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
+                        ),
+                        const SizedBox(height: 12),
+                        Material(
+                          color: AppColors.saffron,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => tabIndex.value = 2,
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                              child: Text(
+                                'Подать объявление',
+                                style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Icon(Icons.sell_rounded, color: Colors.white, size: 56),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             const _SectionTitle('Категории'),
             const SizedBox(height: 12),
             FutureBuilder<List<Map<String, dynamic>>>(
@@ -157,7 +227,12 @@ class _HomeTabState extends State<HomeTab> {
               },
             ),
             const SizedBox(height: 24),
-            const _SectionTitle('Новые объявления'),
+            Row(
+              children: [
+                const Expanded(child: _SectionTitle('Новые объявления')),
+                TextButton(onPressed: _openAll, child: const Text('Все')),
+              ],
+            ),
             const SizedBox(height: 12),
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _listings,
