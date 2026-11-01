@@ -139,53 +139,6 @@ class _HomeTabState extends State<HomeTab> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppColors.deep, AppColors.primary]),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Продайте за пару минут',
-                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Добавьте фото и цену, и объявление сразу появится в ленте',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
-                        ),
-                        const SizedBox(height: 12),
-                        Material(
-                          color: AppColors.saffron,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => tabIndex.value = 2,
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                              child: Text(
-                                'Подать объявление',
-                                style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Icon(Icons.sell_rounded, color: Colors.white, size: 56),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
             const _SectionTitle('Категории'),
             const SizedBox(height: 12),
             FutureBuilder<List<Map<String, dynamic>>>(
@@ -202,26 +155,34 @@ class _HomeTabState extends State<HomeTab> {
                 }
                 final items = snapshot.data ?? [];
                 return SizedBox(
-                  height: 210,
+                  height: 152,
                   child: GridView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 0),
-                    itemCount: items.length,
+                    itemCount: items.length + 1,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 1.6,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1.9,
                     ),
-                    itemBuilder: (context, i) => _CategoryChip(
-                      index: i,
-                      icon: _iconFor(items[i]['slug'] as String),
-                      name: items[i]['name_ru'] as String,
-                      onTap: () => _openCategory(
-                        items[i]['id'] as int,
-                        items[i]['name_ru'] as String,
-                      ),
-                    ),
+                    itemBuilder: (context, i) {
+                      if (i == 0) {
+                        return _CategoryChip(
+                          index: 0,
+                          icon: Icons.apps_rounded,
+                          name: 'Все',
+                          onTap: _openAll,
+                        );
+                      }
+                      final c = items[i - 1];
+                      return _CategoryChip(
+                        index: i,
+                        icon: _iconFor(c['slug'] as String),
+                        name: c['name_ru'] as String,
+                        onTap: () => _openCategory(c['id'] as int, c['name_ru'] as String),
+                      );
+                    },
                   ),
                 );
               },
@@ -407,14 +368,14 @@ class _CategoryChip extends StatelessWidget {
     final accent = _accents[index % _accents.length];
     return Material(
       color: tint,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: Text(
                 name,
                 maxLines: 2,
@@ -426,14 +387,14 @@ class _CategoryChip extends StatelessWidget {
               right: 8,
               bottom: 8,
               child: Container(
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.75),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: accent, size: 24),
+                child: Icon(icon, color: accent, size: 22),
               ),
             ),
           ],
