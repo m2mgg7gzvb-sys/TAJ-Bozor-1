@@ -93,8 +93,15 @@ class _HomeTabState extends State<HomeTab> {
       bottom: false,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFDDF0E8), AppColors.background],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -134,9 +141,10 @@ class _HomeTabState extends State<HomeTab> {
                       crossAxisCount: 2,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.5,
+                      childAspectRatio: 1.6,
                     ),
                     itemBuilder: (context, i) => _CategoryChip(
+                      index: i,
                       icon: _iconFor(items[i]['slug'] as String),
                       name: items[i]['name_ru'] as String,
                       onTap: () => _openCategory(
@@ -289,45 +297,71 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.icon, required this.name, required this.onTap});
+  const _CategoryChip({
+    required this.index,
+    required this.icon,
+    required this.name,
+    required this.onTap,
+  });
 
+  final int index;
   final IconData icon;
   final String name;
   final VoidCallback onTap;
 
+  static const _tints = [
+    Color(0xFFE3F2EC),
+    Color(0xFFFFF3D1),
+    Color(0xFFE2EEFF),
+    Color(0xFFFDE7EF),
+    Color(0xFFEDE7FF),
+    Color(0xFFE0F5F5),
+  ];
+  static const _accents = [
+    Color(0xFF0B7A5A),
+    Color(0xFFB7850A),
+    Color(0xFF2D6FD1),
+    Color(0xFFD62D4A),
+    Color(0xFF6B4FD1),
+    Color(0xFF13807A),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final tint = _tints[index % _tints.length];
+    final accent = _accents[index % _accents.length];
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      color: tint,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              child: Text(
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1.2),
+              ),
+            ),
+            Positioned(
+              right: 8,
+              bottom: 8,
+              child: Container(
+                width: 44,
+                height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.mint,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.75),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 22),
+                child: Icon(icon, color: accent, size: 24),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
