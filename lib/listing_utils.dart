@@ -22,3 +22,16 @@ String priceText(Map<String, dynamic> item) {
   final amount = price % 1 == 0 ? price.toStringAsFixed(0) : price.toStringAsFixed(2);
   return '$amount $currency';
 }
+
+/// Все фото объявления по порядку (пусто, если фото нет).
+List<String> photoUrls(Map<String, dynamic> item) {
+  final raw = (item['listing_images'] as List?) ?? [];
+  final images = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+    ..sort((a, b) => (a['position'] as int).compareTo(b['position'] as int));
+  return [
+    for (final img in images)
+      Supabase.instance.client.storage
+          .from('listing-photos')
+          .getPublicUrl(img['path'] as String),
+  ];
+}

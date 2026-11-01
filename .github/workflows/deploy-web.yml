@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -30,3 +30,13 @@ jobs:
         with:
           name: tajbozor-web
           path: build/web
+
+      - name: Publish built site to the site branch
+        run: |
+          cd build/web
+          git init -q -b site
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -q -m "Build ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" site
