@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_shell.dart';
 
 /// Перестраивает приложение при входе и выходе пользователя.
+/// Конструктор HomeShell не const, чтобы вкладка «Войти» обновлялась после смены сессии.
 class RootGate extends StatelessWidget {
   const RootGate({super.key});
 
@@ -11,7 +12,7 @@ class RootGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) => const HomeShell(),
+      builder: (context, snapshot) => HomeShell(key: UniqueKey()),
     );
   }
 }
