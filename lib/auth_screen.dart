@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'theme.dart';
+
 /// Регистрация и вход по почте.
 /// Шаг 1: почта (и имя при регистрации) → Supabase присылает 6-значный код.
 /// Шаг 2: код из письма → verifyOTP создаёт сессию.
@@ -113,36 +115,69 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
+              Container(
+                width: 76,
+                height: 76,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 40),
+              ),
+              const SizedBox(height: 20),
               Text(
-                _codeStep ? 'Введите код' : (_isRegister ? 'Регистрация' : 'Вход'),
+                'TAJBozor',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 _codeStep
                     ? 'Мы отправили 6-значный код на ${_emailCtrl.text.trim()}'
-                    : 'Войдите по почте, код придёт на письмо',
-                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                    : 'Объявления Таджикистана в одном месте',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.muted, fontSize: 15),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               if (!_codeStep) ...[
-                if (_isRegister)
+                SegmentedButton<bool>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(value: true, label: Text('Регистрация')),
+                    ButtonSegment(value: false, label: Text('Вход')),
+                  ],
+                  selected: {_isRegister},
+                  onSelectionChanged: (s) => setState(() {
+                    _isRegister = s.first;
+                    _error = null;
+                  }),
+                ),
+                const SizedBox(height: 20),
+                if (_isRegister) ...[
                   TextField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Имя', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      hintText: 'Ваше имя',
+                      prefixIcon: Icon(Icons.person_outline_rounded),
+                    ),
                   ),
-                if (_isRegister) const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                ],
                 TextField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
-                  decoration: const InputDecoration(labelText: 'Почта', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    hintText: 'Почта',
+                    prefixIcon: Icon(Icons.mail_outline_rounded),
+                  ),
                 ),
               ] else ...[
                 TextField(
@@ -150,53 +185,45 @@ class _AuthScreenState extends State<AuthScreen> {
                   keyboardType: TextInputType.number,
                   maxLength: 6,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, letterSpacing: 6),
-                  decoration: const InputDecoration(counterText: '', border: OutlineInputBorder()),
+                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: 8),
+                  decoration: const InputDecoration(counterText: ''),
                 ),
               ],
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(_error!, style: TextStyle(color: Colors.red.shade700)),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               FilledButton(
                 onPressed: _loading ? null : (_codeStep ? _verifyCode : _sendCode),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                 child: _loading
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                       )
                     : Text(_codeStep ? 'Подтвердить' : 'Получить код на почту'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               if (!_codeStep) ...[
-                const SizedBox(height: 4),
                 OutlinedButton(
                   onPressed: _loading ? null : _anonymousLogin,
-                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                   child: const Text('Тестовый вход без почты'),
                 ),
+                const SizedBox(height: 8),
               ],
-              const SizedBox(height: 8),
-              if (!_codeStep)
-                TextButton(
-                  onPressed: () => setState(() {
-                    _isRegister = !_isRegister;
-                    _error = null;
-                  }),
-                  child: Text(_isRegister ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'),
-                )
-              else
-                TextButton(
-                  onPressed: () => setState(() {
-                    _codeStep = false;
-                    _codeCtrl.clear();
-                    _error = null;
-                  }),
-                  child: const Text('Изменить почту'),
-                ),
+              TextButton(
+                onPressed: () {
+                  if (_codeStep) {
+                    setState(() {
+                      _codeStep = false;
+                      _codeCtrl.clear();
+                      _error = null;
+                    });
+                  }
+                },
+                child: Text(_codeStep ? 'Изменить почту' : ''),
+              ),
             ],
           ),
         ),
