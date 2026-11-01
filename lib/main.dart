@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
 import 'categories_screen.dart';
 import 'config.dart';
-import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,16 +19,21 @@ class TajBozorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const green = Color(0xFF0B7A5A);
     return MaterialApp(
       title: 'TAJBozor',
       debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: green, primary: green),
+        useMaterial3: true,
+        fontFamily: null,
+      ),
       home: const RootGate(),
     );
   }
 }
 
-/// Показывает вход, если пользователь не авторизован, иначе — главный экран.
+/// Показывает вход, если пользователь не авторизован, иначе — категории.
 class RootGate extends StatelessWidget {
   const RootGate({super.key});
 

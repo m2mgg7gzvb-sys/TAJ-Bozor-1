@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'theme.dart';
-
 /// Лента активных объявлений из таблицы listings.
 class ListingsScreen extends StatefulWidget {
   const ListingsScreen({super.key});
@@ -94,7 +92,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
               );
             }
             return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              padding: const EdgeInsets.all(12),
               itemCount: items.length,
               itemBuilder: (context, i) => _ListingTile(
                 title: items[i]['title'] as String,
@@ -126,63 +124,53 @@ class _ListingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
-      decoration: cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          AspectRatio(
-            aspectRatio: 4 / 3,
+          SizedBox(
+            width: 110,
+            height: 110,
             child: photoUrl == null
                 ? const ColoredBox(
-                    color: AppColors.mint,
-                    child: Center(
-                      child: Icon(Icons.image_outlined, size: 40, color: AppColors.primary),
-                    ),
+                    color: Color(0xFFE6EFEC),
+                    child: Icon(Icons.image_outlined, color: Colors.black38),
                   )
                 : Image.network(
                     photoUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const ColoredBox(
-                      color: AppColors.mint,
-                      child: Center(
-                        child: Icon(Icons.broken_image_outlined, size: 40, color: AppColors.primary),
-                      ),
+                      color: Color(0xFFE6EFEC),
+                      child: Icon(Icons.broken_image_outlined, color: Colors.black38),
                     ),
                   ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  price,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w800,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                if (city != null && city!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.place_outlined, size: 16, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Text(city!, style: const TextStyle(color: AppColors.muted, fontSize: 14)),
-                    ],
+                  const SizedBox(height: 6),
+                  Text(
+                    price,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                  const SizedBox(height: 4),
+                  if (city != null && city!.isNotEmpty)
+                    Text(city!, style: const TextStyle(color: Colors.black54)),
                 ],
-              ],
+              ),
             ),
           ),
         ],
