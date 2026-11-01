@@ -77,7 +77,7 @@ class _NeedLoginTab extends StatelessWidget {
               Icon(icon, size: 56, color: AppColors.primary),
               const SizedBox(height: 16),
               Text(
-                loggedIn ? title : 'Войдите в TAJBozor',
+                loggedIn ? title : 'Войдите в TAJ Bozor',
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
