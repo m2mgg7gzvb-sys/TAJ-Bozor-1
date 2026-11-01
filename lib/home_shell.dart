@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account_tab.dart';
 import 'favorites_screen.dart';
@@ -66,19 +67,26 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// Сообщения: пока заглушка.
+/// Сообщения: гостю — экран входа, вошедшему — заглушка до появления переписки.
 class _MessagesTab extends StatelessWidget {
   const _MessagesTab();
 
   @override
   Widget build(BuildContext context) {
+    final loggedIn = Supabase.instance.client.auth.currentUser != null;
     return Scaffold(
       appBar: AppBar(title: const Text('Сообщения')),
-      body: const GuestPrompt(
-        icon: Icons.chat_bubble_rounded,
-        title: 'Сообщения скоро появятся',
-        text: 'Здесь будут переписки с продавцами по вашим объявлениям.',
-      ),
+      body: loggedIn
+          ? const GuestPrompt(
+              icon: Icons.chat_bubble_rounded,
+              title: 'Сообщения скоро появятся',
+              text: 'Здесь будут переписки с продавцами по вашим объявлениям.',
+            )
+          : const GuestPrompt(
+              icon: Icons.chat_bubble_rounded,
+              title: 'Войдите, чтобы писать продавцам',
+              text: 'Переписка в приложении удобна и безопасна: все детали по объявлению в одном месте.',
+            ),
     );
   }
 }
