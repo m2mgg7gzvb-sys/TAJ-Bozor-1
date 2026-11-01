@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_screen.dart';
 import 'home_tab.dart';
+import 'listings_screen.dart';
 import 'theme.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок, как в макете.
@@ -28,11 +29,7 @@ class _HomeShellState extends State<HomeShell> {
             title: 'Избранное',
             text: 'Вход нужен, чтобы сохранять избранные объявления',
           ),
-          _NeedLoginTab(
-            icon: Icons.post_add_rounded,
-            title: 'Объявления',
-            text: 'Вход нужен, чтобы публиковать и смотреть свои объявления',
-          ),
+          ListingsScreen(),
           _NeedLoginTab(
             icon: Icons.chat_bubble_outline_rounded,
             title: 'Сообщения',
