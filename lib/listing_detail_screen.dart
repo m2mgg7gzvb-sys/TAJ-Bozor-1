@@ -1,10 +1,21 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'callback_sheet.dart';
 import 'fallback_photo.dart';
+import 'favorites_store.dart';
+import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'photo_viewer.dart';
 import 'theme.dart';
 
-/// Страница объявления: галерея, цена, место, продавец, описание и кнопки связи.
+/// Страница объявления: галерея, цена, кнопки связи, описание, продавец,
+/// похожие объявления и другие объявления продавца.
 class ListingDetailScreen extends StatefulWidget {
   const ListingDetailScreen({super.key, required this.item});
 
@@ -17,6 +28,19 @@ class ListingDetailScreen extends StatefulWidget {
 class _ListingDetailScreenState extends State<ListingDetailScreen> {
   final _pageCtrl = PageController();
   int _page = 0;
+  bool _descOpen = false;
+  Map<String, dynamic>? _seller;
+  late final Future<List<Map<String, dynamic>>> _similar = _loadSimilar();
+  late final Future<List<Map<String, dynamic>>> _sellerItems = _loadSellerItems();
+
+  String get _id => widget.item['id'] as String;
+  String? get _userId => widget.item['user_id'] as String?;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSeller();
+  }
 
   @override
   void dispose() {
@@ -24,10 +48,87 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     super.dispose();
   }
 
-  void _soon(String what) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$what появится в следующей версии')),
-    );
+  Future<void> _loadSeller() async {
+    final uid = _userId;
+    if (uid == null) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('profiles')
+          .select('name, city, phone')
+          .eq('id', uid)
+          .maybeSingle();
+      if (mounted && row != null) setState(() => _seller = Map<String, dynamic>.from(row));
+    } catch (_) {
+      // Без продавца страница всё равно работает.
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _loadSimilar() async {
+    final cat = widget.item['category_id'];
+    var query = Supabase.instance.client
+        .from('listings')
+        .select(listingSelect)
+        .eq('status', 'active')
+        .neq('id', _id);
+    if (cat != null) query = query.eq('category_id', cat);
+    final rows = await query.order('created_at', ascending: false).limit(10);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  Future<List<Map<String, dynamic>>> _loadSellerItems() async {
+    final uid = _userId;
+    if (uid == null) return [];
+    final rows = await Supabase.instance.client
+        .from('listings')
+        .select(listingSelect)
+        .eq('status', 'active')
+        .eq('user_id', uid)
+        .neq('id', _id)
+        .order('created_at', ascending: false)
+        .limit(10);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  /// Записываем событие (звонок, поделились) для статистики. Ошибка не мешает пользователю.
+  Future<void> _logEvent(String kind) async {
+    try {
+      await Supabase.instance.client.from('listing_events').insert({'listing_id': _id, 'kind': kind});
+    } catch (_) {}
+  }
+
+  void _toast(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<void> _call() async {
+    final phone = _seller?['phone'] as String?;
+    if (phone == null || phone.isEmpty) {
+      _toast('Номер продавца пока не указан');
+      return;
+    }
+    unawaited(_logEvent('call'));
+    final ok = await launchUrl(Uri(scheme: 'tel', path: phone));
+    if (!ok && mounted) _toast('Не удалось открыть звонок');
+  }
+
+  void _share() {
+    unawaited(_logEvent('share'));
+    final text = '${widget.item['title']} — ${priceText(widget.item)}\nTAJ Bozor';
+    Share.share(text);
+  }
+
+  Future<void> _copyLink() async {
+    await Clipboard.setData(ClipboardData(text: 'https://tajbozor.netlify.app/?listing=$_id'));
+    if (mounted) _toast('Ссылка скопирована');
+  }
+
+  String _date() {
+    final raw = widget.item['created_at'] as String?;
+    if (raw == null) return '';
+    final d = DateTime.tryParse(raw)?.toLocal();
+    if (d == null) return '';
+    String two(int n) => n.toString().padLeft(2, '0');
+    return 'Опубликовано ${two(d.day)}.${two(d.month)}.${d.year}';
   }
 
   @override
@@ -36,10 +137,39 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final photos = photoUrls(item);
     final city = item['city'] as String?;
     final description = item['description'] as String?;
-    final theme = Theme.of(context);
+    final sellerName = (_seller?['name'] as String?)?.trim();
+    final sellerCity = (_seller?['city'] as String?) ?? city;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Объявление')),
+      appBar: AppBar(
+        title: const Text('Объявление'),
+        actions: [
+          IconButton(
+            tooltip: 'Поделиться',
+            icon: const Icon(Icons.ios_share_rounded),
+            onPressed: _share,
+          ),
+          IconButton(
+            tooltip: 'Скопировать ссылку',
+            icon: const Icon(Icons.link_rounded),
+            onPressed: _copyLink,
+          ),
+          ValueListenableBuilder<Set<String>>(
+            valueListenable: FavoritesStore.ids,
+            builder: (context, favIds, _) {
+              final fav = favIds.contains(_id);
+              return IconButton(
+                tooltip: 'В избранное',
+                icon: Icon(fav ? Icons.favorite : Icons.favorite_border, color: fav ? AppColors.ruby : null),
+                onPressed: () async {
+                  final error = await FavoritesStore.toggle(_id);
+                  if (error != null && mounted) _toast(error);
+                },
+              );
+            },
+          ),
+        ],
+      ),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -54,10 +184,15 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         controller: _pageCtrl,
                         itemCount: photos.length,
                         onPageChanged: (i) => setState(() => _page = i),
-                        itemBuilder: (_, i) => Image.network(
-                          photos[i],
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.mint),
+                        itemBuilder: (_, i) => GestureDetector(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => PhotoViewer(photos: photos, initialIndex: i)),
+                          ),
+                          child: Image.network(
+                            photos[i],
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => FallbackPhoto(item: item),
+                          ),
                         ),
                       ),
                 if (photos.length > 1)
@@ -71,7 +206,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${_page + 1} / ${photos.length}',
+                        '${_page + 1} из ${photos.length}',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -88,39 +223,51 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 // Цена и название
                 Text(
                   priceText(item),
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: const TextStyle(color: AppColors.primary, fontSize: 28, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  item['title'] as String,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                Text(item['title'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (city != null && city.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(color: AppColors.mint, borderRadius: BorderRadius.circular(20)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.place_rounded, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text(city, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    if (_date().isNotEmpty)
+                      Text(_date(), style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                  ],
                 ),
-                if (city != null && city.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.mint,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.place_rounded, size: 16, color: AppColors.primary),
-                        const SizedBox(width: 4),
-                        Text(city, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                ],
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
+
+                // Кнопки связи, как в макете
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
+                  onPressed: _call,
+                  child: const Text('Позвонить'),
+                ),
+                const SizedBox(height: 10),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2D8CFF)),
+                  onPressed: () => showCallbackSheet(context, listingId: _id),
+                  child: const Text('Заказать звонок'),
+                ),
 
                 // Продавец
+                const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: cardDecoration(radius: 18),
@@ -132,13 +279,21 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         child: Icon(Icons.person_rounded, color: AppColors.primary),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Частное лицо', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                            SizedBox(height: 2),
-                            Text('Продавец на TAJ Bozor', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                            Text(
+                              (sellerName != null && sellerName.isNotEmpty) ? sellerName : 'Частное лицо',
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              sellerCity != null && sellerCity.isNotEmpty
+                                  ? 'Продавец в $sellerCity'
+                                  : 'Продавец на TAJ Bozor',
+                              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                            ),
                           ],
                         ),
                       ),
@@ -149,10 +304,33 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 // Описание
                 if (description != null && description.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  Text('Описание', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  const Text('Описание', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 8),
-                  Text(description, style: const TextStyle(fontSize: 15, height: 1.5)),
+                  Text(
+                    description,
+                    maxLines: _descOpen ? null : 6,
+                    overflow: _descOpen ? TextOverflow.visible : TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 15, height: 1.5),
+                  ),
+                  if (description.length > 280)
+                    TextButton(
+                      onPressed: () => setState(() => _descOpen = !_descOpen),
+                      child: Text(_descOpen ? 'Свернуть' : 'Читать полностью'),
+                    ),
                 ],
+
+                // Похожие объявления
+                const SizedBox(height: 24),
+                const Text('Найти больше вариантов', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
+                _Strip(future: _similar),
+
+                // Другие объявления продавца
+                const SizedBox(height: 24),
+                const Text('Другие объявления продавца', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
+                _Strip(future: _sellerItems),
+
                 const SizedBox(height: 90),
               ],
             ),
@@ -160,33 +338,49 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         ],
       ),
 
-      // Нижняя панель с кнопками связи
+      // Закреплённая кнопка «Позвонить» внизу экрана
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => _soon('Звонок'),
-                  child: const Text('Позвонить'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.saffron,
-                    foregroundColor: AppColors.ink,
-                  ),
-                  onPressed: () => _soon('Переписка'),
-                  child: const Text('Написать'),
-                ),
-              ),
-            ],
+          child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
+            onPressed: _call,
+            child: const Text('Позвонить'),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Горизонтальная прокрутка карточек. Пустой список не показывает ничего.
+class _Strip extends StatelessWidget {
+  const _Strip({required this.future});
+
+  final Future<List<Map<String, dynamic>>> future;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const SizedBox(height: 230, child: Center(child: CircularProgressIndicator()));
+        }
+        final items = snap.data ?? [];
+        if (items.isEmpty) {
+          return const Text('Пока ничего нет', style: TextStyle(color: AppColors.muted));
+        }
+        return SizedBox(
+          height: 270,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) => SizedBox(width: 170, child: ListingCard(item: items[i])),
+          ),
+        );
+      },
     );
   }
 }
