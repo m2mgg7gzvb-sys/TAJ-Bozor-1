@@ -74,9 +74,9 @@ class _HomeTabState extends State<HomeTab> {
       case 'auto':
         return Icons.directions_car_rounded;
       case 'real-estate':
-        return Icons.apartment_rounded;
+        return Icons.home_rounded;
       case 'electronics':
-        return Icons.devices_rounded;
+        return Icons.smartphone_rounded;
       case 'home':
         return Icons.chair_rounded;
       case 'services':
@@ -88,27 +88,42 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
-  // Ширина плиток разная, как в примере: у коротких названий уже, у длинных шире.
+  // Размеры плиток из макета: у коротких названий уже, у длинных шире.
   static const _tileWidths = {
-    'all': 83.0,
-    'real-estate': 143.0,
-    'jobs': 143.0,
-    'auto': 83.0,
-    'electronics': 83.0,
-    'services': 83.0,
-    'home': 113.0,
+    'all': 82.0,
+    'real-estate': 139.0,
+    'jobs': 139.0,
+    'auto': 82.0,
+    'electronics': 82.0,
+    'services': 82.0,
+    'home': 136.0,
   };
-  static const _tileLabels = {'electronics': 'Электро-\nника'};
+  static const _tileLabels = {
+    'electronics': 'Элек-\nтроника',
+    'jobs': 'Работа и\nподработка',
+  };
 
-  Widget _categoryTile(_Cat cat, int index) {
+  Color _accentFor(String slug) {
+    switch (slug) {
+      case 'jobs':
+      case 'services':
+        return AppColors.saffron;
+      case 'electronics':
+        return AppColors.ink;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  Widget _categoryTile(_Cat cat) {
     final isAll = cat.data == null;
     final slug = isAll ? 'all' : cat.data!['slug'] as String;
     return SizedBox(
       width: _tileWidths[slug] ?? 113.0,
-      height: 77,
+      height: 78,
       child: _CategoryChip(
-        index: index,
         icon: cat.icon,
+        accent: _accentFor(slug),
         name: _tileLabels[slug] ?? cat.name,
         onTap: isAll ? _openAll : () => _openCategory(cat.data!['id'] as int, cat.name),
       ),
@@ -125,7 +140,7 @@ class _HomeTabState extends State<HomeTab> {
 
     const first = ['real-estate', 'jobs'];
     const second = ['auto', 'electronics', 'services', 'home'];
-    final row1 = <_Cat>[const _Cat('Все', Icons.apps_rounded, null)];
+    final row1 = <_Cat>[const _Cat('Все', Icons.grid_view_rounded, null)];
     final row2 = <_Cat>[];
     for (final s in first) {
       final c = catFor(s);
@@ -143,24 +158,24 @@ class _HomeTabState extends State<HomeTab> {
       toRow2 = !toRow2;
     }
 
-    Widget row(List<_Cat> cats, int offset) => Row(
+    Widget row(List<_Cat> cats) => Row(
           children: [
             for (var i = 0; i < cats.length; i++) ...[
-              if (i > 0) const SizedBox(width: 7),
-              _categoryTile(cats[i], offset + i),
+              if (i > 0) const SizedBox(width: 9),
+              _categoryTile(cats[i]),
             ],
           ],
         );
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 11),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          row(row1, 0),
-          const SizedBox(height: 7),
-          row(row2, row1.length),
+          row(row1),
+          const SizedBox(height: 8),
+          row(row2),
         ],
       ),
     );
@@ -173,39 +188,85 @@ class _HomeTabState extends State<HomeTab> {
       child: Column(
         children: [
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFDDF0E8), AppColors.background],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+            margin: const EdgeInsets.fromLTRB(11, 8, 11, 10),
+            padding: const EdgeInsets.fromLTRB(9, 9, 9, 14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.deep, AppColors.primary],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
+              borderRadius: BorderRadius.circular(20),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            Row(
+                Row(
                   children: [
                     Expanded(child: _SearchField(onTap: _openAll)),
                     if (Supabase.instance.client.auth.currentUser == null) ...[
                       const SizedBox(width: 10),
                       Material(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFFF4F6F5),
+                        borderRadius: BorderRadius.circular(26),
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(26),
                           onTap: () => tabIndex.value = loginTabIndex,
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                             child: Text(
                               'Войти',
-                              style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: AppColors.ink,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ],
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () => tabIndex.value = 2,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Row(
+                      children: [
+                        const Text(
+                          'Поднимите объявление в топ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 22),
+                        const SizedBox(width: 4),
+                        Transform.rotate(
+                          angle: -0.06,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.saffron,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: const Text(
+                              'ТОП',
+                              style: TextStyle(
+                                color: AppColors.ink,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -316,13 +377,13 @@ class _SearchFieldState extends State<_SearchField> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: const Color(0xFFF4F6F5),
+      borderRadius: BorderRadius.circular(26),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(26),
         onTap: widget.onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           child: Row(
             children: [
               SvgPicture.asset('assets/logo.svg', width: 28, height: 28),
@@ -383,40 +444,21 @@ class _SectionTitle extends StatelessWidget {
 
 class _CategoryChip extends StatelessWidget {
   const _CategoryChip({
-    required this.index,
     required this.icon,
+    required this.accent,
     required this.name,
     required this.onTap,
   });
 
-  final int index;
   final IconData icon;
+  final Color accent;
   final String name;
   final VoidCallback onTap;
 
-  static const _tints = [
-    Color(0xFFE3F2EC),
-    Color(0xFFFFF3D1),
-    Color(0xFFE2EEFF),
-    Color(0xFFFDE7EF),
-    Color(0xFFEDE7FF),
-    Color(0xFFE0F5F5),
-  ];
-  static const _accents = [
-    Color(0xFF0B7A5A),
-    Color(0xFFB7850A),
-    Color(0xFF2D6FD1),
-    Color(0xFFD62D4A),
-    Color(0xFF6B4FD1),
-    Color(0xFF13807A),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final tint = _tints[index % _tints.length];
-    final accent = _accents[index % _accents.length];
     return Material(
-      color: tint,
+      color: const Color(0xFFEEF1F0),
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -424,27 +466,23 @@ class _CategoryChip extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
               child: Text(
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.25),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.25,
+                  color: AppColors.ink,
+                ),
               ),
             ),
             Positioned(
-              right: -6,
-              bottom: -6,
-              child: Container(
-                width: 54,
-                height: 54,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: accent, size: 28),
-              ),
+              right: 8,
+              bottom: 6,
+              child: Icon(icon, color: accent, size: 36),
             ),
           ],
         ),

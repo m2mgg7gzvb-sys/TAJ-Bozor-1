@@ -37,7 +37,7 @@ class ListingCard extends StatelessWidget {
       onTap: () => _open(context),
       child: Container(
         clipBehavior: Clip.antiAlias,
-        decoration: cardDecoration(radius: 12),
+        decoration: cardDecoration(radius: 11),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -129,10 +129,6 @@ class ListingCard extends StatelessWidget {
                             fontSize: 16,
                           ),
                         ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(right: 6),
-                        child: Icon(Icons.more_horiz, size: 22, color: AppColors.ink),
                       ),
                     ],
                   ),

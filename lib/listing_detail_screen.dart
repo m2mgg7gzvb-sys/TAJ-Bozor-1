@@ -167,7 +167,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: FilledButton(
                   onPressed: () => _soon('Звонок'),
                   child: const Text('Позвонить'),
                 ),
@@ -175,6 +175,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.saffron,
+                    foregroundColor: AppColors.ink,
+                  ),
                   onPressed: () => _soon('Переписка'),
                   child: const Text('Написать'),
                 ),
