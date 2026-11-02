@@ -48,7 +48,10 @@ class _LoginRouteState extends State<LoginRoute> {
 /// Вход для гостя: сначала логотип и название по центру, затем сразу
 /// открывается окно «Войти» с кнопками.
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+  const WelcomeScreen({super.key, this.onSkip});
+
+  /// Что делать по «Пропустить». Если не задано, открывается вкладка «Поиск».
+  final VoidCallback? onSkip;
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -99,7 +102,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   void _openPhone() => _push(const PhoneAuthScreen());
 
   void _skip() {
-    tabIndex.value = 0;
+    if (widget.onSkip != null) {
+      widget.onSkip!();
+    } else {
+      tabIndex.value = 0;
+    }
   }
 
   Future<void> _oauth(OAuthProvider provider) async {
