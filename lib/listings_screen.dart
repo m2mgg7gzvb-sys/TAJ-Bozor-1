@@ -102,9 +102,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   child: GridView.count(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.72,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.66,
                     children: [for (final item in items) ListingCard(item: item)],
                   ),
                 );

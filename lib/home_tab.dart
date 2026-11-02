@@ -88,18 +88,80 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  // Ширина плиток разная, как в примере: у коротких названий уже, у длинных шире.
+  static const _tileWidths = {
+    'all': 83.0,
+    'real-estate': 143.0,
+    'jobs': 143.0,
+    'auto': 83.0,
+    'electronics': 83.0,
+    'services': 83.0,
+    'home': 113.0,
+  };
+  static const _tileLabels = {'electronics': 'Электро-\nника'};
+
   Widget _categoryTile(_Cat cat, int index) {
     final isAll = cat.data == null;
+    final slug = isAll ? 'all' : cat.data!['slug'] as String;
     return SizedBox(
-      width: isAll ? 84 : 132,
-      height: 70,
+      width: _tileWidths[slug] ?? 113.0,
+      height: 77,
       child: _CategoryChip(
         index: index,
         icon: cat.icon,
-        name: cat.name,
-        onTap: isAll
-            ? _openAll
-            : () => _openCategory(cat.data!['id'] as int, cat.name),
+        name: _tileLabels[slug] ?? cat.name,
+        onTap: isAll ? _openAll : () => _openCategory(cat.data!['id'] as int, cat.name),
+      ),
+    );
+  }
+
+  // Два ряда плиток в одной горизонтальной прокрутке, ряды не выровнены друг по другу.
+  Widget _categoryRows(List<Map<String, dynamic>> items) {
+    final bySlug = {for (final c in items) c['slug'] as String: c};
+    _Cat? catFor(String slug) {
+      final c = bySlug[slug];
+      return c == null ? null : _Cat(c['name_ru'] as String, _iconFor(slug), c);
+    }
+
+    const first = ['real-estate', 'jobs'];
+    const second = ['auto', 'electronics', 'services', 'home'];
+    final row1 = <_Cat>[const _Cat('Все', Icons.apps_rounded, null)];
+    final row2 = <_Cat>[];
+    for (final s in first) {
+      final c = catFor(s);
+      if (c != null) row1.add(c);
+    }
+    for (final s in second) {
+      final c = catFor(s);
+      if (c != null) row2.add(c);
+    }
+    var toRow2 = row2.length <= row1.length;
+    for (final c in items) {
+      final slug = c['slug'] as String;
+      if (first.contains(slug) || second.contains(slug)) continue;
+      (toRow2 ? row2 : row1).add(_Cat(c['name_ru'] as String, _iconFor(slug), c));
+      toRow2 = !toRow2;
+    }
+
+    Widget row(List<_Cat> cats, int offset) => Row(
+          children: [
+            for (var i = 0; i < cats.length; i++) ...[
+              if (i > 0) const SizedBox(width: 7),
+              _categoryTile(cats[i], offset + i),
+            ],
+          ],
+        );
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          row(row1, 0),
+          const SizedBox(height: 7),
+          row(row2, row1.length),
+        ],
       ),
     );
   }
@@ -152,11 +214,9 @@ class _HomeTabState extends State<HomeTab> {
             child: RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
                 children: [
-            const SizedBox(height: 16),
-            const _SectionTitle('Категории'),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _categories,
               builder: (context, snapshot) {
@@ -169,45 +229,10 @@ class _HomeTabState extends State<HomeTab> {
                 if (snapshot.hasError) {
                   return const Text('Не удалось загрузить категории');
                 }
-                final items = snapshot.data ?? [];
-                final all = <_Cat>[
-                  const _Cat('Все', Icons.apps_rounded, null),
-                  for (final c in items)
-                    _Cat(c['name_ru'] as String, _iconFor(c['slug'] as String), c),
-                ];
-                final columns = <List<_Cat>>[
-                  for (var i = 0; i < all.length; i += 2)
-                    all.sublist(i, i + 2 > all.length ? all.length : i + 2),
-                ];
-                return SizedBox(
-                  height: 148,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: columns.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, col) {
-                      final pair = columns[col];
-                      return Column(
-                        children: [
-                          for (var r = 0; r < pair.length; r++) ...[
-                            if (r > 0) const SizedBox(height: 8),
-                            _categoryTile(pair[r], col * 2 + r),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                );
+                return _categoryRows(snapshot.data ?? []);
               },
             ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                const Expanded(child: _SectionTitle('Новые объявления')),
-                TextButton(onPressed: _openAll, child: const Text('Все')),
-              ],
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _listings,
               builder: (context, snapshot) {
@@ -236,14 +261,17 @@ class _HomeTabState extends State<HomeTab> {
                     child: Center(child: Text('Объявлений пока нет')),
                   );
                 }
-                return GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.72,
-                  children: [for (final item in items) ListingCard(item: item)],
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.66,
+                    children: [for (final item in items) ListingCard(item: item)],
+                  ),
                 );
               },
             ),
@@ -396,26 +424,26 @@ class _CategoryChip extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               child: Text(
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1.2),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 1.25),
               ),
             ),
             Positioned(
-              right: 8,
-              bottom: 8,
+              right: -6,
+              bottom: -6,
               child: Container(
-                width: 36,
-                height: 36,
+                width: 54,
+                height: 54,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.75),
+                  color: Colors.white.withValues(alpha: 0.7),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: accent, size: 22),
+                child: Icon(icon, color: accent, size: 28),
               ),
             ),
           ],

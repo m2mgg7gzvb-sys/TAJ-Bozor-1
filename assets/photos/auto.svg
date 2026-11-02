@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{bg1}}"/>
+      <stop offset="1" stop-color="{{bg2}}"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{a}}"/>
+      <stop offset="1" stop-color="{{b}}"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EAF4F8"/>
+      <stop offset="1" stop-color="#9FB9C4"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="320" cy="90" r="46" fill="#FFFFFF" opacity="0.35"/>
+  <circle cx="70" cy="130" r="26" fill="#FFFFFF" opacity="0.25"/>
+  <rect y="290" width="400" height="110" fill="#000000" opacity="0.07"/>
+  <ellipse cx="205" cy="322" rx="158" ry="13" fill="#000000" opacity="0.2"/>
+  <path d="M52 296 L52 250 Q52 234 70 230 L120 220 L152 178 Q162 166 178 166 L254 166 Q272 166 284 180 L312 216 L342 224 Q358 228 358 246 L358 296 Z" fill="url(#body)"/>
+  <path d="M138 216 L162 184 Q166 180 174 180 L204 180 L204 216 Z" fill="url(#glass)"/>
+  <path d="M216 216 L216 180 L250 180 Q258 180 263 186 L286 216 Z" fill="url(#glass)"/>
+  <rect x="64" y="238" width="20" height="11" rx="5" fill="#FFF6C9"/>
+  <rect x="334" y="238" width="14" height="11" rx="5" fill="#FF8A8A"/>
+  <rect x="52" y="272" width="306" height="8" fill="#000000" opacity="0.12"/>
+  <circle cx="122" cy="292" r="32" fill="#1D2622"/>
+  <circle cx="122" cy="292" r="15" fill="#D5DCD8"/>
+  <circle cx="122" cy="292" r="5" fill="#8A958F"/>
+  <circle cx="288" cy="292" r="32" fill="#1D2622"/>
+  <circle cx="288" cy="292" r="15" fill="#D5DCD8"/>
+  <circle cx="288" cy="292" r="5" fill="#8A958F"/>
+</svg>

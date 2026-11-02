@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'fallback_photo.dart';
 import 'favorites_store.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
 import 'viewed_store.dart';
 
-/// Карточка объявления: фото, метка «Просмотрено», сердечко, цена, название, город.
+/// Карточка объявления: большое фото, метка «Просмотрено», название и сердечко,
+/// цена, город.
 class ListingCard extends StatelessWidget {
   const ListingCard({super.key, required this.item});
 
@@ -35,7 +37,7 @@ class ListingCard extends StatelessWidget {
       onTap: () => _open(context),
       child: Container(
         clipBehavior: Clip.antiAlias,
-        decoration: cardDecoration(radius: 18),
+        decoration: cardDecoration(radius: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -44,16 +46,11 @@ class ListingCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   photo == null
-                      ? const ColoredBox(
-                          color: AppColors.mint,
-                          child: Center(
-                            child: Icon(Icons.image_outlined, size: 36, color: AppColors.primary),
-                          ),
-                        )
+                      ? FallbackPhoto(item: item)
                       : Image.network(
                           photo,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.mint),
+                          errorBuilder: (_, __, ___) => FallbackPhoto(item: item),
                         ),
                   Positioned(
                     top: 8,
@@ -66,33 +63,11 @@ class ListingCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.black54,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'Просмотрено',
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: ValueListenableBuilder<Set<String>>(
-                      valueListenable: FavoritesStore.ids,
-                      builder: (context, favIds, _) {
-                        final fav = favIds.contains(id);
-                        return GestureDetector(
-                          onTap: () => _toggleFav(context),
-                          child: CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.white,
-                            child: Icon(
-                              fav ? Icons.favorite : Icons.favorite_border,
-                              size: 18,
-                              color: fav ? AppColors.ruby : AppColors.ink,
-                            ),
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                           ),
                         );
                       },
@@ -102,28 +77,73 @@ class ListingCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 10, 6, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    priceText(item),
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 38),
+                          child: Text(
+                            item['title'] as String,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 15, height: 1.25, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                      ValueListenableBuilder<Set<String>>(
+                        valueListenable: FavoritesStore.ids,
+                        builder: (context, favIds, _) {
+                          final fav = favIds.contains(id);
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _toggleFav(context),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                fav ? Icons.favorite : Icons.favorite_border,
+                                size: 24,
+                                color: fav ? AppColors.ruby : AppColors.ink,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item['title'] as String,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          priceText(item),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(right: 6),
+                        child: Icon(Icons.more_horiz, size: 22, color: AppColors.ink),
+                      ),
+                    ],
                   ),
                   if (city != null && city.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(city, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                    const SizedBox(height: 2),
+                    Text(
+                      city,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                    ),
                   ],
                 ],
               ),

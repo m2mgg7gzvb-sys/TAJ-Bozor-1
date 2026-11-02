@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'fallback_photo.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
 
@@ -48,12 +49,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             child: Stack(
               children: [
                 photos.isEmpty
-                    ? const ColoredBox(
-                        color: AppColors.mint,
-                        child: Center(
-                          child: Icon(Icons.image_outlined, size: 56, color: AppColors.primary),
-                        ),
-                      )
+                    ? SizedBox.expand(child: FallbackPhoto(item: item))
                     : PageView.builder(
                         controller: _pageCtrl,
                         itemCount: photos.length,
