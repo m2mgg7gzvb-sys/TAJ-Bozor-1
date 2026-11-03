@@ -132,6 +132,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
 
+  /// Открывает адрес продавца в Яндекс Картах.
+  Future<void> _openMap() async {
+    final address = widget.item['address'] as String?;
+    if (address == null || address.isEmpty) {
+      _toast('Адрес пока не указан');
+      return;
+    }
+    final url = Uri.parse('https://yandex.ru/maps/?text=${Uri.encodeQueryComponent(address)}');
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _call() async {
     final phone = _seller?['phone'] as String?;
     if (phone == null || phone.isEmpty) {
@@ -168,6 +179,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final item = widget.item;
     final photos = photoUrls(item);
     final city = item['city'] as String?;
+    final address = item['address'] as String?;
     final description = item['description'] as String?;
     final sellerName = (_seller?['name'] as String?)?.trim();
     final sellerCity = (_seller?['city'] as String?) ?? city;
@@ -284,6 +296,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 ),
 
                 const SizedBox(height: 18),
+
+                if (address != null && address.isNotEmpty) ...[
+                  Text(address, style: const TextStyle(fontSize: 15)),
+                  TextButton.icon(
+                    onPressed: _openMap,
+                    icon: const Icon(Icons.map_outlined, size: 18),
+                    label: const Text('Показать на карте'),
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: AppColors.primary),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 // Кнопки связи: заказать звонок сверху, ниже «Позвонить» и «Написать»
                 FilledButton(

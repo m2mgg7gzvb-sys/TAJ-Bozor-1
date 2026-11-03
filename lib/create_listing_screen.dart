@@ -17,6 +17,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _descCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _cityCtrl = TextEditingController(text: 'Душанбе');
+  final _addressCtrl = TextEditingController();
   final List<XFile> _photos = [];
 
   List<Map<String, dynamic>> _categories = [];
@@ -37,6 +38,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _descCtrl.dispose();
     _priceCtrl.dispose();
     _cityCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -94,6 +96,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'price': price,
             'currency': 'TJS',
             'city': _cityCtrl.text.trim(),
+            'address': _addressCtrl.text.trim(),
             'status': 'active',
           })
           .select('id')
@@ -161,6 +164,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           TextField(
             controller: _cityCtrl,
             decoration: const InputDecoration(hintText: 'Город'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _addressCtrl,
+            decoration: const InputDecoration(hintText: 'Адрес (улица, дом) для карты'),
           ),
           const SizedBox(height: 12),
           TextField(
