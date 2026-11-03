@@ -66,7 +66,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
 
   Future<void> _open(String id) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ChatScreen(conversationId: id, title: 'Обращение')),
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(conversationId: id, title: 'Обращение', staffTicket: true),
+      ),
     );
     if (mounted) _reload();
     refreshUnread();

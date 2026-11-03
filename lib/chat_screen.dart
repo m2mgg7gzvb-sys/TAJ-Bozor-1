@@ -32,10 +32,18 @@ Future<String> findOrCreateConversation({required String kind, String? listingId
 
 /// Экран переписки: сообщения в реальном времени и поле ввода.
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.conversationId, required this.title});
+  const ChatScreen({
+    super.key,
+    required this.conversationId,
+    required this.title,
+    this.staffTicket = false,
+  });
 
   final String conversationId;
   final String title;
+
+  /// Обращение в поддержку, открытое сотрудником: показываем кнопки статуса.
+  final bool staffTicket;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -87,12 +95,63 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _setTicket(String status) async {
+    try {
+      await Supabase.instance.client
+          .from('conversations')
+          .update({'status': status})
+          .eq('id', widget.conversationId);
+      if (!mounted) return;
+      if (status == 'answered') {
+        // Завершённое обращение скрывается из списка для сотрудников — возвращаемся назад
+        Navigator.of(context).pop();
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Обращение: на помощи')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось изменить статус')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Column(
         children: [
+          if (widget.staffTicket)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _setTicket('in_progress'),
+                      icon: const Icon(Icons.support_agent_rounded),
+                      label: const Text('На помощь'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF9A7400),
+                        side: const BorderSide(color: Color(0xFFF2B600), width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _setTicket('answered'),
+                      icon: const Icon(Icons.check_circle_rounded),
+                      label: const Text('Завершить'),
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: _stream,
