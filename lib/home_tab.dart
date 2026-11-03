@@ -1,3 +1,4 @@
+import 'search_screen.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -63,6 +64,10 @@ class _HomeTabState extends State<HomeTab> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ListingsScreen()));
   }
 
+  void _openSearch() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
+  }
+
   void _openCategory(int id, String name) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ListingsScreen(categoryId: id, title: name)),
@@ -83,6 +88,16 @@ class _HomeTabState extends State<HomeTab> {
         return Icons.handyman_rounded;
       case 'jobs':
         return Icons.work_rounded;
+      case 'parts':
+        return Icons.build_circle_rounded;
+      case 'fashion':
+        return Icons.checkroom_rounded;
+      case 'business':
+        return Icons.business_center_rounded;
+      case 'travel':
+        return Icons.luggage_rounded;
+      case 'hobby':
+        return Icons.sports_soccer_rounded;
       default:
         return Icons.category_rounded;
     }
@@ -203,7 +218,7 @@ class _HomeTabState extends State<HomeTab> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: _SearchField(onTap: _openAll)),
+                    Expanded(child: _SearchField(onTap: _openSearch)),
                     if (Supabase.instance.client.auth.currentUser == null) ...[
                       const SizedBox(width: 10),
                       Material(

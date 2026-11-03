@@ -7,9 +7,10 @@ import 'theme.dart';
 
 /// Лента объявлений. Может быть отфильтрована по категории и по поисковой строке.
 class ListingsScreen extends StatefulWidget {
-  const ListingsScreen({super.key, this.categoryId, this.title = 'Объявления'});
+  const ListingsScreen({super.key, this.categoryId, this.title = 'Объявления', this.initialQuery});
 
   final int? categoryId;
+  final String? initialQuery;
   final String title;
 
   @override
@@ -23,6 +24,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   @override
   void initState() {
     super.initState();
+    _searchCtrl.text = widget.initialQuery ?? '';
     _future = _load();
   }
 
