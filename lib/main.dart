@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'notify_store.dart';
 import 'splash_screen.dart';
 import 'theme.dart';
 import 'viewed_store.dart';
@@ -13,6 +14,7 @@ Future<void> main() async {
     anonKey: AppConfig.supabaseKey,
   );
   await ViewedStore.load();
+  startNotifications();
   runApp(const TajBozorApp());
 }
 
@@ -22,6 +24,7 @@ class TajBozorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: 'TAJ Bozor',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),

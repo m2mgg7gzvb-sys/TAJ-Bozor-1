@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'chat_screen.dart';
+import 'notify_store.dart';
 import 'notifications_screen.dart';
 import 'theme.dart';
 
@@ -95,11 +96,15 @@ class _MessagesTabState extends State<MessagesTab> {
                   )
                 else
                   for (final c in chats.where((c) => c['kind'] != 'support')) ...[
-                    _Tile(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      title: _chatTitle(c),
-                      subtitle: 'Открыть переписку',
-                      onTap: () => _openChat(id: c['id'] as String, title: _chatTitle(c)),
+                    ValueListenableBuilder<Set<String>>(
+                      valueListenable: unreadChats,
+                      builder: (_, unread, __) => _Tile(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: _chatTitle(c),
+                        subtitle: 'Открыть переписку',
+                        dot: unread.contains(c['id'] as String),
+                        onTap: () => _openChat(id: c['id'] as String, title: _chatTitle(c)),
+                      ),
                     ),
                     const SizedBox(height: 10),
                   ],
@@ -119,12 +124,19 @@ String _chatTitle(Map<String, dynamic> c) {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, required this.subtitle, this.onTap});
+  const _Tile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+    this.dot = false,
+  });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+  final bool dot;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +152,21 @@ class _Tile extends StatelessWidget {
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle, style: const TextStyle(color: AppColors.muted)),
-        trailing: onTap == null ? null : const Icon(Icons.chevron_right_rounded),
+        trailing: onTap == null
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (dot)
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    ),
+                  if (dot) const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right_rounded),
+                ],
+              ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'home_tab.dart';
 import 'messages_tab.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
+import 'notify_store.dart';
 import 'theme.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок.
@@ -56,12 +57,23 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => tabIndex.value = i,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.search_rounded), label: 'Поиск'),
-          NavigationDestination(icon: Icon(Icons.favorite_border_rounded), label: 'Избранное'),
-          NavigationDestination(icon: Icon(Icons.post_add_rounded), label: 'Объявления'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline_rounded), label: 'Сообщения'),
-          NavigationDestination(icon: Icon(Icons.person_outline_rounded), label: 'Войти'),
+        destinations: [
+          const NavigationDestination(icon: Icon(Icons.search_rounded), label: 'Поиск'),
+          const NavigationDestination(icon: Icon(Icons.favorite_border_rounded), label: 'Избранное'),
+          const NavigationDestination(icon: Icon(Icons.post_add_rounded), label: 'Объявления'),
+          NavigationDestination(
+            icon: ValueListenableBuilder<bool>(
+              valueListenable: hasUnread,
+              builder: (_, has, __) => Badge(
+                isLabelVisible: has,
+                smallSize: 9,
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.chat_bubble_outline_rounded),
+              ),
+            ),
+            label: 'Сообщения',
+          ),
+          const NavigationDestination(icon: Icon(Icons.person_outline_rounded), label: 'Войти'),
         ],
       ),
     );

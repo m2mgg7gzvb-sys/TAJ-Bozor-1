@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'notify_store.dart';
 import 'theme.dart';
 
 /// Находит переписку текущего пользователя или создаёт новую.
@@ -52,7 +53,14 @@ class _ChatScreenState extends State<ChatScreen> {
   String? get _me => Supabase.instance.client.auth.currentUser?.id;
 
   @override
+  void initState() {
+    super.initState();
+    markChatRead(widget.conversationId);
+  }
+
+  @override
   void dispose() {
+    markChatRead(widget.conversationId);
     _ctrl.dispose();
     super.dispose();
   }
