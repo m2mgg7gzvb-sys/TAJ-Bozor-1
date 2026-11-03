@@ -149,6 +149,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           builder: (_) => ChatScreen(conversationId: id, title: _item['title'] as String),
         ),
       );
+    } on PostgrestException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Не удалось открыть переписку: ${e.message}')));
     } catch (_) {
       messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть переписку')));
     }
