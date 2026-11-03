@@ -132,6 +132,46 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
 
+  static const _carLabels = {
+    'year': 'Год выпуска',
+    'mileage_km': 'Пробег',
+    'condition': 'Состояние',
+    'body_type': 'Тип кузова',
+    'fuel': 'Топливо',
+    'engine_volume': 'Объём двигателя',
+    'gearbox': 'Коробка',
+    'drive': 'Привод',
+    'steering': 'Руль',
+    'generation': 'Поколение',
+    'trim': 'Комплектация',
+    'color': 'Цвет',
+    'vin': 'VIN',
+  };
+
+  /// Строки характеристик авто (только заполненные поля).
+  List<MapEntry<String, String>> _carRows() {
+    final raw = widget.item['details'];
+    if (raw is! Map) return [];
+    final d = Map<String, dynamic>.from(raw);
+    final rows = <MapEntry<String, String>>[];
+    for (final key in _carLabels.keys) {
+      final v = d[key];
+      if (v == null || '$v'.trim().isEmpty) continue;
+      var text = '$v';
+      if (key == 'mileage_km') text = '$text км';
+      if (key == 'engine_volume') text = '$text л';
+      if (key == 'vin') text = _maskVin(text);
+      rows.add(MapEntry(_carLabels[key]!, text));
+    }
+    return rows;
+  }
+
+  /// VIN показываем частично: первые 3 и последние 4 символа.
+  String _maskVin(String vin) {
+    if (vin.length <= 7) return vin;
+    return '${vin.substring(0, 3)}••••••••${vin.substring(vin.length - 4)}';
+  }
+
   /// Открывает адрес продавца в Яндекс Картах.
   Future<void> _openMap() async {
     final address = widget.item['address'] as String?;
@@ -373,6 +413,32 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     ],
                   ),
                 ),
+
+                // Про автомобиль
+                if (_carRows().isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text('Про автомобиль', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: cardDecoration(radius: 16),
+                    child: Column(
+                      children: [
+                        for (final r in _carRows())
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(r.key, style: const TextStyle(color: AppColors.muted)),
+                                ),
+                                Text(r.value, style: const TextStyle(fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // Описание
                 if (description != null && description.isNotEmpty) ...[
