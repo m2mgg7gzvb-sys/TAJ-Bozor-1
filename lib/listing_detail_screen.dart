@@ -285,27 +285,35 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
                 const SizedBox(height: 18),
 
-                // Кнопки связи, как в макете
-                FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
-                  onPressed: _call,
-                  child: const Text('Позвонить'),
-                ),
-                const SizedBox(height: 10),
+                // Кнопки связи: заказать звонок сверху, ниже «Позвонить» и «Написать»
                 FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2D8CFF)),
                   onPressed: () => showCallbackSheet(context, listingId: _id),
                   child: const Text('Заказать звонок'),
                 ),
                 const SizedBox(height: 10),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(50),
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                  ),
-                  onPressed: _write,
-                  child: const Text('Написать'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
+                        onPressed: _call,
+                        child: const Text('Позвонить'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(40),
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                        ),
+                        onPressed: _write,
+                        child: const Text('Написать'),
+                      ),
+                    ),
+                  ],
                 ),
 
                 // Продавец
