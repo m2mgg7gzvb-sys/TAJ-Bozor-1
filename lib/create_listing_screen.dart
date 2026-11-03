@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'city_store.dart';
 import 'theme.dart';
 
 const _bodyTypes = ['Седан', 'Хэтчбек', 'Универсал', 'Кроссовер', 'Внедорожник', 'Купе', 'Кабриолет', 'Минивэн', 'Пикап'];
@@ -342,9 +343,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             decoration: const InputDecoration(hintText: 'Цена, TJS'),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _cityCtrl,
-            decoration: const InputDecoration(hintText: 'Город'),
+          _drop(
+            'Город',
+            _cityCtrl.text.isEmpty ? null : _cityCtrl.text,
+            [
+              ...tajCities,
+              if (_cityCtrl.text.isNotEmpty && !tajCities.contains(_cityCtrl.text)) _cityCtrl.text,
+            ],
+            (v) => _cityCtrl.text = v ?? '',
           ),
           const SizedBox(height: 12),
           TextField(

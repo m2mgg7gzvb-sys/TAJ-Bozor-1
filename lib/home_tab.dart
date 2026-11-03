@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'all_categories_screen.dart';
+import 'city_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listings_screen.dart';
@@ -29,15 +30,26 @@ class _HomeTabState extends State<HomeTab> {
     super.initState();
     _listings = _loadListings();
     _categories = _loadCategories();
+    selectedCity.addListener(_onCityChanged);
+    loadSelectedCity();
   }
 
+  @override
+  void dispose() {
+    selectedCity.removeListener(_onCityChanged);
+    super.dispose();
+  }
+
+  void _onCityChanged() => _refresh();
+
   Future<List<Map<String, dynamic>>> _loadListings() async {
-    final rows = await Supabase.instance.client
+    var query = Supabase.instance.client
         .from('listings')
         .select(listingSelect)
-        .eq('status', 'active')
-        .order('created_at', ascending: false)
-        .limit(20);
+        .eq('status', 'active');
+    final city = selectedCity.value;
+    if (city != null) query = query.eq('city', city);
+    final rows = await query.order('created_at', ascending: false).limit(20);
     return List<Map<String, dynamic>>.from(rows);
   }
 
@@ -221,6 +233,8 @@ class _HomeTabState extends State<HomeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const _CityButton(),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(child: _SearchField(onTap: _openSearch)),
@@ -436,6 +450,50 @@ class _SearchFieldState extends State<_SearchField> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Кнопка выбора города над поиском: показывает текущий город, по нажатию открывает список.
+class _CityButton extends StatelessWidget {
+  const _CityButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: selectedCity,
+      builder: (context, city, _) {
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: Material(
+            color: Colors.white24,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => showCityPicker(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      city ?? 'Все города',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

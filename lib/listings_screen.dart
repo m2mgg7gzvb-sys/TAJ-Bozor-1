@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'city_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
@@ -39,10 +40,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
     super.initState();
     _searchCtrl.text = widget.initialQuery ?? '';
     _future = _load();
+    selectedCity.addListener(_reload);
   }
 
   @override
   void dispose() {
+    selectedCity.removeListener(_reload);
     _searchCtrl.dispose();
     _brandCtrl.dispose();
     _priceMinCtrl.dispose();
@@ -58,6 +61,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
         .eq('status', 'active');
     if (widget.categoryId != null) {
       query = query.eq('category_id', widget.categoryId!);
+    }
+    final city = selectedCity.value;
+    if (city != null) {
+      query = query.eq('city', city);
     }
     final search = _searchCtrl.text.trim();
     if (search.isNotEmpty) {
