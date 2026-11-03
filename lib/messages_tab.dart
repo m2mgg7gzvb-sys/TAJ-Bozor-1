@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'chat_screen.dart';
+import 'notifications_screen.dart';
 import 'theme.dart';
 
 /// Вкладка «Сообщения» для вошедшего: поддержка, уведомления и переписки.
@@ -70,10 +71,13 @@ class _MessagesTabState extends State<MessagesTab> {
                   onTap: _openSupport,
                 ),
                 const SizedBox(height: 10),
-                const _Tile(
+                _Tile(
                   icon: Icons.notifications_none_rounded,
                   title: 'Уведомления',
-                  subtitle: 'Пока новых уведомлений нет',
+                  subtitle: 'Заказы звонков и другие сообщения',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  ),
                 ),
                 const SizedBox(height: 22),
                 const Text('Переписки', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
