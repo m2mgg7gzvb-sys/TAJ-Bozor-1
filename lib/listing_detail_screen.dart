@@ -88,7 +88,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _loadSimilar() async {
-    final cat = widget.item['category_id'];
+    final cat = _item['category_id'];
     var query = Supabase.instance.client
         .from('listings')
         .select(listingSelect)
@@ -146,7 +146,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => ChatScreen(conversationId: id, title: widget.item['title'] as String),
+          builder: (_) => ChatScreen(conversationId: id, title: _item['title'] as String),
         ),
       );
     } catch (_) {
@@ -172,7 +172,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   /// Строки характеристик авто (только заполненные поля).
   List<MapEntry<String, String>> _carRows() {
-    final raw = widget.item['details'];
+    final raw = _item['details'];
     if (raw is! Map) return [];
     final d = Map<String, dynamic>.from(raw);
     final rows = <MapEntry<String, String>>[];
@@ -196,7 +196,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   /// Открывает адрес продавца в Яндекс Картах.
   Future<void> _openMap() async {
-    final address = widget.item['address'] as String?;
+    final address = _item['address'] as String?;
     if (address == null || address.isEmpty) {
       _toast('Адрес пока не указан');
       return;
@@ -218,7 +218,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   void _share() {
     unawaited(_logEvent('share'));
-    final text = '${widget.item['title']} — ${priceText(widget.item)}\nTAJ Bozor';
+    final text = '${_item['title']} — ${priceText(_item)}\nTAJ Bozor';
     Share.share(text);
   }
 
@@ -228,7 +228,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   String _date() {
-    final raw = widget.item['created_at'] as String?;
+    final raw = _item['created_at'] as String?;
     if (raw == null) return '';
     final d = DateTime.tryParse(raw)?.toLocal();
     if (d == null) return '';
