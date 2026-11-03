@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'notify_store.dart';
 import 'notifications_screen.dart';
+import 'support_tickets_screen.dart';
 import 'theme.dart';
 
 /// Вкладка «Сообщения» для вошедшего: поддержка, уведомления и переписки.
@@ -16,12 +17,19 @@ class MessagesTab extends StatefulWidget {
 
 class _MessagesTabState extends State<MessagesTab> {
   late Future<List<Map<String, dynamic>>> _chats = _loadChats();
+  bool _staff = false;
 
   Future<List<Map<String, dynamic>>> _loadChats() async {
-    final rows = await Supabase.instance.client
+    final db = Supabase.instance.client;
+    final me = db.auth.currentUser?.id;
+    final rows = await db
         .from('conversations')
         .select('id, kind, listing_id, buyer_id, seller_id, created_at')
         .order('created_at', ascending: false);
+    if (me != null) {
+      final prof = await db.from('profiles').select('is_admin').eq('id', me).maybeSingle();
+      _staff = prof?['is_admin'] == true;
+    }
     return List<Map<String, dynamic>>.from(rows);
   }
 
@@ -62,19 +70,19 @@ class _MessagesTabState extends State<MessagesTab> {
           future: _chats,
           builder: (context, snap) {
             final chats = snap.data ?? const <Map<String, dynamic>>[];
-            final me = Supabase.instance.client.auth.currentUser?.id;
-            // Обращения пользователей в поддержку видны только сотрудникам поддержки
-            final supportInbox =
-                chats.where((c) => c['kind'] == 'support' && c['buyer_id'] != me).toList();
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 // Закреплённые разделы сверху
                 _Tile(
-                  icon: Icons.support_agent_rounded,
-                  title: 'Поддержка',
-                  subtitle: 'Чат с командой TAJ Bozor',
-                  onTap: _openSupport,
+                  icon: _staff ? Icons.list_alt_rounded : Icons.support_agent_rounded,
+                  title: _staff ? 'Обращения' : 'Поддержка',
+                  subtitle: _staff ? 'Все обращения пользователей' : 'Чат с командой TAJ Bozor',
+                  onTap: _staff
+                      ? () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const SupportTicketsScreen()),
+                          )
+                      : _openSupport,
                 ),
                 const SizedBox(height: 10),
                 _Tile(
@@ -86,25 +94,6 @@ class _MessagesTabState extends State<MessagesTab> {
                   ),
                 ),
                 const SizedBox(height: 22),
-                if (supportInbox.isNotEmpty) ...[
-                  const Text('Обращения в поддержку',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 10),
-                  for (final c in supportInbox) ...[
-                    ValueListenableBuilder<Set<String>>(
-                      valueListenable: unreadChats,
-                      builder: (_, unread, __) => _Tile(
-                        icon: Icons.support_agent_rounded,
-                        title: 'Обращение пользователя',
-                        subtitle: 'Ответить пользователю',
-                        dot: unread.contains(c['id'] as String),
-                        onTap: () => _openChat(id: c['id'] as String, title: _chatTitle(c)),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  const SizedBox(height: 22),
-                ],
                 const Text('Переписки', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 if (snap.connectionState != ConnectionState.done)
