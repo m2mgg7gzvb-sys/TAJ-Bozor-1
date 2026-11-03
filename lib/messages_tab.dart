@@ -39,10 +39,11 @@ class _MessagesTabState extends State<MessagesTab> {
       final id = await findOrCreateConversation(kind: 'support');
       if (!mounted) return;
       await _openChat(id: id, title: 'Поддержка');
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final reason = e is PostgrestException ? ': ${e.message}' : '';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось открыть чат поддержки')),
+        SnackBar(content: Text('Не удалось открыть чат поддержки$reason')),
       );
     }
   }
@@ -61,6 +62,10 @@ class _MessagesTabState extends State<MessagesTab> {
           future: _chats,
           builder: (context, snap) {
             final chats = snap.data ?? const <Map<String, dynamic>>[];
+            final me = Supabase.instance.client.auth.currentUser?.id;
+            // Обращения пользователей в поддержку видны только сотрудникам поддержки
+            final supportInbox =
+                chats.where((c) => c['kind'] == 'support' && c['buyer_id'] != me).toList();
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -81,6 +86,25 @@ class _MessagesTabState extends State<MessagesTab> {
                   ),
                 ),
                 const SizedBox(height: 22),
+                if (supportInbox.isNotEmpty) ...[
+                  const Text('Обращения в поддержку',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 10),
+                  for (final c in supportInbox) ...[
+                    ValueListenableBuilder<Set<String>>(
+                      valueListenable: unreadChats,
+                      builder: (_, unread, __) => _Tile(
+                        icon: Icons.support_agent_rounded,
+                        title: 'Обращение пользователя',
+                        subtitle: 'Ответить пользователю',
+                        dot: unread.contains(c['id'] as String),
+                        onTap: () => _openChat(id: c['id'] as String, title: _chatTitle(c)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  const SizedBox(height: 22),
+                ],
                 const Text('Переписки', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 if (snap.connectionState != ConnectionState.done)
@@ -118,8 +142,10 @@ class _MessagesTabState extends State<MessagesTab> {
 }
 
 String _chatTitle(Map<String, dynamic> c) {
-  if (c['kind'] == 'support') return 'Поддержка';
   final me = Supabase.instance.client.auth.currentUser?.id;
+  if (c['kind'] == 'support') {
+    return c['buyer_id'] == me ? 'Поддержка' : 'Обращение пользователя';
+  }
   return c['seller_id'] == me ? 'Покупатель по объявлению' : 'Продавец по объявлению';
 }
 
