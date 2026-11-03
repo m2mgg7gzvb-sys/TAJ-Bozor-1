@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'callback_sheet.dart';
 import 'chat_screen.dart';
+import 'create_listing_screen.dart';
 import 'fallback_photo.dart';
 import 'favorites_store.dart';
 import 'listing_card.dart';
@@ -35,13 +36,34 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   late final Future<List<Map<String, dynamic>>> _similar = _loadSimilar();
   late final Future<List<Map<String, dynamic>>> _sellerItems = _loadSellerItems();
 
-  String get _id => widget.item['id'] as String;
-  String? get _userId => widget.item['user_id'] as String?;
+  // Копия объявления: после правки владельцем обновляем её из базы.
+  late Map<String, dynamic> _item = Map<String, dynamic>.from(widget.item);
+
+  String get _id => _item['id'] as String;
+  String? get _userId => _item['user_id'] as String?;
+  bool get _isOwner => _userId != null && _userId == Supabase.instance.client.auth.currentUser?.id;
 
   @override
   void initState() {
     super.initState();
     _loadSeller();
+  }
+
+  Future<void> _edit() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => CreateListingScreen(listing: _item)),
+    );
+    if (saved != true) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('listings')
+          .select(listingSelect)
+          .eq('id', _id)
+          .single();
+      if (mounted) setState(() => _item = Map<String, dynamic>.from(row));
+    } catch (_) {
+      // Если не удалось обновить, покажем старые данные до следующего открытия.
+    }
   }
 
   @override
@@ -216,7 +238,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final item = widget.item;
+    final item = _item;
     final photos = photoUrls(item);
     final city = item['city'] as String?;
     final address = item['address'] as String?;
@@ -228,6 +250,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       appBar: AppBar(
         title: const Text('Объявление'),
         actions: [
+          if (_isOwner)
+            IconButton(
+              tooltip: 'Редактировать',
+              icon: const Icon(Icons.edit_rounded),
+              onPressed: _edit,
+            ),
           IconButton(
             tooltip: 'Поделиться',
             icon: const Icon(Icons.ios_share_rounded),

@@ -13,7 +13,10 @@ const _conditions = ['Новый', 'С пробегом'];
 
 /// Подача объявления: категория, описание, цена, город, фото и для авто — характеристики.
 class CreateListingScreen extends StatefulWidget {
-  const CreateListingScreen({super.key});
+  const CreateListingScreen({super.key, this.listing});
+
+  /// Если передано — экран открывается для правки уже опубликованного объявления.
+  final Map<String, dynamic>? listing;
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -25,6 +28,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _priceCtrl = TextEditingController();
   final _cityCtrl = TextEditingController(text: 'Душанбе');
   final _addressCtrl = TextEditingController();
+  final _brandCtrl = TextEditingController();
   final List<XFile> _photos = [];
 
   // Характеристики автомобиля
@@ -53,6 +57,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.listing != null) _prefill();
     _loadCategories();
   }
 
@@ -64,6 +69,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _priceCtrl,
       _cityCtrl,
       _addressCtrl,
+      _brandCtrl,
       _yearCtrl,
       _mileageCtrl,
       _engineCtrl,
@@ -75,6 +81,34 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  /// Режим правки: заполняем поля уже опубликованного объявления.
+  void _prefill() {
+    final l = widget.listing!;
+    final price = num.tryParse('${l['price']}');
+    _titleCtrl.text = (l['title'] as String?) ?? '';
+    _descCtrl.text = (l['description'] as String?) ?? '';
+    _priceCtrl.text = price == null ? '' : (price % 1 == 0 ? price.toStringAsFixed(0) : '$price');
+    _cityCtrl.text = (l['city'] as String?) ?? '';
+    _addressCtrl.text = (l['address'] as String?) ?? '';
+    _categoryId = l['category_id'] as int?;
+    final d = Map<String, dynamic>.from((l['details'] as Map?) ?? {});
+    String s(String k) => '${d[k] ?? ''}';
+    _brandCtrl.text = s('brand');
+    _yearCtrl.text = s('year');
+    _mileageCtrl.text = s('mileage_km');
+    _engineCtrl.text = s('engine_volume');
+    _generationCtrl.text = s('generation');
+    _trimCtrl.text = s('trim');
+    _colorCtrl.text = s('color');
+    _vinCtrl.text = s('vin');
+    _bodyType = d['body_type'] as String?;
+    _fuel = d['fuel'] as String?;
+    _gearbox = d['gearbox'] as String?;
+    _drive = d['drive'] as String?;
+    _wheel = d['steering'] as String?;
+    _condition = d['condition'] as String?;
   }
 
   Future<void> _loadCategories() async {
@@ -112,6 +146,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       if (value != null && value.trim().isNotEmpty) m[key] = value.trim();
     }
 
+    put('brand', _brandCtrl.text);
     put('year', _yearCtrl.text);
     put('mileage_km', _mileageCtrl.text);
     put('body_type', _bodyType);
@@ -136,7 +171,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (_categoryId == null) return _fail('Выберите категорию');
     if (title.length < 3) return _fail('Название — от 3 символов');
     if (price == null || price < 0) return _fail('Укажите цену числом');
-    if (_photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
+    if (widget.listing == null && _photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
     if (_isAuto) {
       final yearText = _yearCtrl.text.trim();
       final year = int.tryParse(yearText);
@@ -153,6 +188,22 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
     try {
       final db = Supabase.instance.client;
+      final editing = widget.listing;
+      if (editing != null) {
+        // Правка: фото не меняем, обновляем только текстовые поля и характеристики.
+        await db.from('listings').update({
+          'category_id': _categoryId,
+          'title': title,
+          'description': _descCtrl.text.trim(),
+          'price': price,
+          'city': _cityCtrl.text.trim(),
+          'address': _addressCtrl.text.trim(),
+          'details': _isAuto ? _carDetails() : null,
+        }).eq('id', editing['id'] as String);
+        if (!mounted) return;
+        Navigator.of(context).pop(true);
+        return;
+      }
       final row = await db
           .from('listings')
           .insert({
@@ -223,6 +274,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
       const SizedBox(height: 12),
+      _field(_brandCtrl, 'Марка и модель, например Toyota Camry'),
+      const SizedBox(height: 12),
       _field(_yearCtrl, 'Год выпуска, например 2019', type: TextInputType.number, maxLength: 4),
       const SizedBox(height: 12),
       _field(_mileageCtrl, 'Пробег, км', type: TextInputType.number),
@@ -254,7 +307,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Подать объявление')),
+      appBar: AppBar(
+        title: Text(widget.listing == null ? 'Подать объявление' : 'Редактировать объявление'),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
@@ -304,6 +359,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             decoration: const InputDecoration(hintText: 'Описание'),
           ),
           if (_isAuto) ..._carSection(),
+          if (widget.listing == null) ...[
           const SizedBox(height: 16),
           const Text('Фото (до 5)', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
@@ -325,6 +381,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 ),
             ],
           ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 16),
             Text(_error!, style: TextStyle(color: Colors.red.shade700)),
@@ -338,7 +395,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     width: 22,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                   )
-                : const Text('Опубликовать'),
+                : Text(widget.listing == null ? 'Опубликовать' : 'Сохранить'),
           ),
         ],
       ),

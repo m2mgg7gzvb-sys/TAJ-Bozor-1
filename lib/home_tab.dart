@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'all_categories_screen.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listings_screen.dart';
@@ -61,16 +62,18 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _openAll() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ListingsScreen()));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AllCategoriesScreen()));
   }
 
   void _openSearch() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
   }
 
-  void _openCategory(int id, String name) {
+  void _openCategory(int id, String name, {bool carFilter = false}) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ListingsScreen(categoryId: id, title: name)),
+      MaterialPageRoute(
+        builder: (_) => ListingsScreen(categoryId: id, title: name, carFilter: carFilter),
+      ),
     );
   }
 
@@ -140,7 +143,9 @@ class _HomeTabState extends State<HomeTab> {
         icon: cat.icon,
         accent: _accentFor(slug),
         name: _tileLabels[slug] ?? cat.name,
-        onTap: isAll ? _openAll : () => _openCategory(cat.data!['id'] as int, cat.name),
+        onTap: isAll
+            ? _openAll
+            : () => _openCategory(cat.data!['id'] as int, cat.name, carFilter: slug == 'auto'),
       ),
     );
   }
