@@ -349,6 +349,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         'phone': phone.isEmpty ? null : phone,
       });
       if (mounted) Navigator.of(context).pop(true);
+    } on PostgrestException catch (e) {
+      // Показываем причину из базы, чтобы её было видно и можно было исправить.
+      if (mounted) setState(() => _error = 'Не удалось сохранить: ${e.message}');
     } catch (_) {
       if (mounted) setState(() => _error = 'Не удалось сохранить. Попробуйте позже');
     } finally {
