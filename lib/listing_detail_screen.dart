@@ -7,10 +7,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'callback_sheet.dart';
+import 'chat_screen.dart';
 import 'fallback_photo.dart';
 import 'favorites_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'nav_state.dart';
 import 'photo_viewer.dart';
 import 'theme.dart';
 
@@ -98,6 +100,36 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   void _toast(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// «Написать»: открывает переписку с продавцом. Гостя отправляем входить.
+  Future<void> _write() async {
+    final me = Supabase.instance.client.auth.currentUser;
+    final messenger = ScaffoldMessenger.of(context);
+    if (me == null) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      tabIndex.value = loginTabIndex;
+      return;
+    }
+    if (_userId == null) {
+      messenger.showSnackBar(const SnackBar(content: Text('Не удалось найти продавца')));
+      return;
+    }
+    if (_userId == me.id) {
+      messenger.showSnackBar(const SnackBar(content: Text('Это ваше объявление')));
+      return;
+    }
+    try {
+      final id = await findOrCreateConversation(kind: 'listing', listingId: _id, sellerId: _userId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(conversationId: id, title: widget.item['title'] as String),
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть переписку')));
+    }
   }
 
   Future<void> _call() async {
@@ -264,6 +296,16 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2D8CFF)),
                   onPressed: () => showCallbackSheet(context, listingId: _id),
                   child: const Text('Заказать звонок'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                  ),
+                  onPressed: _write,
+                  child: const Text('Написать'),
                 ),
 
                 // Продавец

@@ -6,6 +6,7 @@ import 'favorites_screen.dart';
 import 'favorites_store.dart';
 import 'guest_prompt.dart';
 import 'home_tab.dart';
+import 'messages_tab.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'theme.dart';
@@ -74,16 +75,10 @@ class _MessagesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loggedIn = Supabase.instance.client.auth.currentUser != null;
+    if (loggedIn) return const MessagesTab();
     return Scaffold(
       appBar: AppBar(title: const Text('Сообщения')),
-      body: loggedIn
-          ? const GuestPrompt(
-              icon: Icons.chat_bubble_rounded,
-              title: 'Сообщения скоро появятся',
-              text: 'Здесь будут переписки с продавцами по вашим объявлениям.',
-              showButton: false,
-            )
-          : const GuestPrompt(
+      body: const GuestPrompt(
               icon: Icons.chat_bubble_rounded,
               title: 'Войдите, чтобы писать продавцам',
               text: 'Переписка в приложении удобна и безопасна: все детали по объявлению в одном месте.',
