@@ -10,7 +10,7 @@ import 'nav_state.dart';
 import 'theme.dart';
 
 /// Адрес сайта, куда возвращается вход через Apple и Google.
-const _siteUrl = 'https://tajbozor.netlify.app';
+const _siteUrl = 'https://taj-bozor-1.pages.dev';
 
 /// Экран входа поверх вкладки. Закрывается сам, как только человек вошёл.
 class LoginRoute extends StatefulWidget {
