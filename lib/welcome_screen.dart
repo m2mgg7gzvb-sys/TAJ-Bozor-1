@@ -111,7 +111,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
   Future<void> _oauth(OAuthProvider provider) async {
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(provider, redirectTo: _siteUrl);
+      // prompt=select_account: Google каждый раз спрашивает, каким аккаунтом войти.
+      await Supabase.instance.client.auth.signInWithOAuth(
+        provider,
+        redirectTo: _siteUrl,
+        queryParams: const {'prompt': 'select_account'},
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
