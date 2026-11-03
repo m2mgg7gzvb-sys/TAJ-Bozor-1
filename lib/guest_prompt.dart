@@ -5,11 +5,20 @@ import 'theme.dart';
 
 /// Большой экран для гостя: иконка, заголовок, текст и кнопка входа.
 class GuestPrompt extends StatelessWidget {
-  const GuestPrompt({super.key, required this.icon, required this.title, required this.text});
+  const GuestPrompt({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.text,
+    this.showButton = true,
+  });
 
   final IconData icon;
   final String title;
   final String text;
+
+  /// Кнопка «Войти в профиль». Для вошедшего пользователя её скрывают.
+  final bool showButton;
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +50,13 @@ class GuestPrompt extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16, color: AppColors.muted, height: 1.4),
             ),
-            const SizedBox(height: 28),
-            FilledButton(
-              onPressed: () => tabIndex.value = loginTabIndex,
-              child: const Text('Войти в профиль'),
-            ),
+            if (showButton) ...[
+              const SizedBox(height: 28),
+              FilledButton(
+                onPressed: () => tabIndex.value = loginTabIndex,
+                child: const Text('Войти в профиль'),
+              ),
+            ],
           ],
         ),
       ),

@@ -81,6 +81,7 @@ class _MessagesTab extends StatelessWidget {
               icon: Icons.chat_bubble_rounded,
               title: 'Сообщения скоро появятся',
               text: 'Здесь будут переписки с продавцами по вашим объявлениям.',
+              showButton: false,
             )
           : const GuestPrompt(
               icon: Icons.chat_bubble_rounded,
