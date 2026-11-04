@@ -51,7 +51,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   }
 
   List<Map<String, dynamic>> _sorted(List<Map<String, dynamic>> rows) {
-    final items = rows.where((c) => c['buyer_id'] != _me).toList();
+    final items = rows.toList();
     items.sort((a, b) {
       final sa = _statusOrder[a['status']] ?? 0;
       final sb = _statusOrder[b['status']] ?? 0;
@@ -156,7 +156,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 shape: BoxShape.circle,
               ),
             ),
-            title: Text('Обращение · $short', style: const TextStyle(fontWeight: FontWeight.w700)),
+            title: Text(
+              'Обращение · $short${buyer == _me ? ' (вы)' : ''}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             subtitle: Text(
               _statusLabel[status] ?? status,
               style: const TextStyle(color: AppColors.muted),
