@@ -16,6 +16,7 @@ import 'listing_utils.dart';
 import 'nav_state.dart';
 import 'photo_viewer.dart';
 import 'theme.dart';
+import 'user_profile_screen.dart';
 
 /// Страница объявления: галерея, цена, кнопки связи, описание, продавец,
 /// похожие объявления и другие объявления продавца.
@@ -411,7 +412,15 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
                 // Продавец
                 const SizedBox(height: 20),
-                Container(
+                GestureDetector(
+                  onTap: _item['user_id'] == null
+                      ? null
+                      : () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => UserProfileScreen(userId: _item['user_id'] as String),
+                            ),
+                          ),
+                  child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: cardDecoration(radius: 18),
                   child: Row(
@@ -431,17 +440,13 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              sellerCity != null && sellerCity.isNotEmpty
-                                  ? 'Продавец в $sellerCity'
-                                  : 'Продавец на TAJ Bozor',
-                              style: const TextStyle(color: AppColors.muted, fontSize: 13),
-                            ),
+                            _SellerRating(sellerId: _item['user_id'] as String?),
                           ],
                         ),
                       ),
                     ],
                   ),
+                ),
                 ),
 
                 // Про автомобиль
@@ -548,6 +553,47 @@ class _Strip extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 10),
             itemBuilder: (_, i) => SizedBox(width: 170, child: ListingCard(item: items[i])),
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Строка «Отзывы» с пятью звёздами: закрашены по средней оценке продавца.
+class _SellerRating extends StatelessWidget {
+  const _SellerRating({required this.sellerId});
+
+  final String? sellerId;
+
+  Future<List<Map<String, dynamic>>> _load() async {
+    if (sellerId == null) return [];
+    final rows = await Supabase.instance.client
+        .from('reviews')
+        .select('rating')
+        .eq('reviewed_id', sellerId!);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _load(),
+      builder: (_, snap) {
+        final rows = snap.data ?? const <Map<String, dynamic>>[];
+        final sum = rows.fold<int>(0, (s, r) => s + ((r['rating'] as num?)?.toInt() ?? 0));
+        final filled = rows.isEmpty ? 0 : (sum / rows.length).round();
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Отзывы', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+            const SizedBox(width: 6),
+            for (var i = 1; i <= 5; i++)
+              Icon(
+                i <= filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                size: 16,
+                color: i <= filled ? const Color(0xFFF2B600) : AppColors.muted,
+              ),
+          ],
         );
       },
     );
