@@ -7,6 +7,7 @@ import 'notify_store.dart';
 import 'notifications_screen.dart';
 import 'support_tickets_screen.dart';
 import 'theme.dart';
+import 'user_profile_screen.dart';
 
 /// Вкладка «Сообщения» для вошедшего: поддержка, уведомления и переписки.
 class MessagesTab extends StatefulWidget {
@@ -208,19 +209,26 @@ class _ChatTile extends StatelessWidget {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         contentPadding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: SizedBox(
-            width: 56,
-            height: 56,
-            child: photo == null
-                ? Container(
-                    color: AppColors.mint,
-                    child: const Icon(Icons.image_outlined, color: AppColors.primary),
-                  )
-                : Image.network(photo, fit: BoxFit.cover),
-          ),
-        ),
+        // Переписка из профиля (без объявления) — аватар собеседника
+        leading: listing == null
+            ? UserAvatar(
+                name: _otherName(chat),
+                url: (chat['_other'] as Map<String, dynamic>?)?['avatar_url'] as String?,
+                radius: 28,
+              )
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: photo == null
+                      ? Container(
+                          color: AppColors.mint,
+                          child: const Icon(Icons.image_outlined, color: AppColors.primary),
+                        )
+                      : Image.network(photo, fit: BoxFit.cover),
+                ),
+              ),
         title: Text(
           _otherName(chat),
           maxLines: 1,
@@ -228,7 +236,7 @@ class _ChatTile extends StatelessWidget {
           style: TextStyle(fontWeight: unread ? FontWeight.w800 : FontWeight.w700),
         ),
         subtitle: Text(
-          listingTitle,
+          listing == null ? 'Личная переписка' : listingTitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(color: AppColors.muted),
