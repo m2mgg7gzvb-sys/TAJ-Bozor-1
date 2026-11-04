@@ -167,6 +167,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     'gearbox': 'Коробка',
     'drive': 'Привод',
     'steering': 'Руль',
+    'model': 'Модель',
     'generation': 'Поколение',
     'trim': 'Комплектация',
     'color': 'Цвет',
@@ -495,14 +496,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
                 // Похожие объявления
                 const SizedBox(height: 24),
-                const Text('Найти больше вариантов', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
                 _Strip(future: _similar),
 
                 // Другие объявления продавца
                 const SizedBox(height: 24),
-                const Text('Другие объявления продавца', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
                 _Strip(future: _sellerItems),
 
                 const SizedBox(height: 90),
@@ -512,17 +509,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         ],
       ),
 
-      // Закреплённая кнопка «Позвонить» внизу экрана
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
-            onPressed: _call,
-            child: const Text('Позвонить'),
-          ),
-        ),
-      ),
     );
   }
 }

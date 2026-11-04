@@ -12,6 +12,100 @@ const _drives = ['Передний', 'Задний', 'Полный'];
 const _wheels = ['Левый', 'Правый'];
 const _conditions = ['Новый', 'С пробегом'];
 
+/// Справочник авто: марка → модель → поколения (поколения только там, где они известны).
+const _carCatalog = <String, Map<String, List<String>>>{
+  'Toyota': {
+    'Camry': ['XV70', 'XV50', 'XV40', 'XV30'],
+    'Corolla': ['E210', 'E180', 'E170', 'E160'],
+    'RAV4': ['XA50', 'XA40', 'XA30'],
+    'Land Cruiser': ['300', '200', '100', '80'],
+    'Land Cruiser Prado': ['150', '120', '90'],
+    'Hilux': ['AN120', 'AN10'],
+    'Yaris': [],
+    'Crown': [],
+    'Harrier': [],
+  },
+  'Lexus': {
+    'RX': ['AL20', 'AL10', 'XU30'],
+    'LX': ['J200', 'J100'],
+    'ES': ['XV70', 'XV60'],
+  },
+  'Mercedes-Benz': {
+    'E-Class': ['W213', 'W212', 'W211'],
+    'C-Class': ['W206', 'W205', 'W204'],
+    'S-Class': ['W223', 'W222', 'W221'],
+    'G-Class': ['W463'],
+  },
+  'BMW': {
+    '3 Series': ['G20', 'F30', 'E90'],
+    '5 Series': ['G30', 'F10', 'E60'],
+    'X5': ['G05', 'F15', 'E70'],
+    'X6': ['G06', 'F16'],
+  },
+  'Hyundai': {
+    'Sonata': ['DN8', 'LF', 'YF'],
+    'Elantra': ['CN7', 'AD', 'MD'],
+    'Tucson': ['NX4', 'TL', 'LM'],
+    'Creta': [],
+    'Solaris': [],
+  },
+  'Kia': {
+    'K5': ['DL3'],
+    'Sportage': ['NQ5', 'QL', 'SL'],
+    'Cerato': ['BD', 'YD'],
+    'Rio': [],
+    'Optima': [],
+  },
+  'Honda': {
+    'Accord': ['X', 'IX', 'VIII'],
+    'CR-V': ['RW', 'RT', 'RM'],
+    'Civic': ['XI', 'X', 'IX'],
+  },
+  'Nissan': {
+    'Qashqai': ['J12', 'J11'],
+    'X-Trail': ['T33', 'T32', 'T31'],
+    'Patrol': ['Y62', 'Y61'],
+  },
+  'Mitsubishi': {
+    'Pajero': ['V90', 'V80'],
+    'Outlander': ['GG', 'GF'],
+    'L200': [],
+  },
+  'Mazda': {
+    'CX-5': ['KF', 'KE'],
+    'Mazda 6': ['GJ', 'GH'],
+    'Mazda 3': ['BP', 'BM'],
+  },
+  'Volkswagen': {
+    'Passat': ['B8', 'B7', 'B6'],
+    'Golf': ['VII', 'VI', 'V'],
+    'Tiguan': ['II', 'I'],
+    'Polo': [],
+  },
+  'Audi': {
+    'A6': ['C8', 'C7', 'C6'],
+    'A4': ['B9', 'B8'],
+    'Q7': ['4M', '4L'],
+  },
+  'Ford': {
+    'Focus': ['III', 'II'],
+    'Kuga': [],
+    'Mondeo': [],
+    'Explorer': [],
+  },
+  'Renault': {'Logan': [], 'Duster': [], 'Sandero': []},
+  'Chevrolet': {'Cruze': [], 'Malibu': [], 'Lacetti': [], 'Captiva': [], 'Niva': []},
+  'Lada': {'Granta': [], 'Vesta': [], 'Niva': [], 'Priora': [], '2107': []},
+  'Ravon': {'R4': [], 'Nexia R3': [], 'Gentra': []},
+  'Daewoo': {'Nexia': [], 'Matiz': [], 'Lanos': []},
+  'Haval': {'H6': [], 'Jolion': [], 'H9': []},
+  'Geely': {'Coolray': [], 'Emgrand': [], 'Atlas': []},
+  'Chery': {'Tiggo 4': [], 'Tiggo 7': [], 'Tiggo 8': []},
+};
+
+/// Годы выпуска: от нового к старым.
+final _carYears = [for (var y = 2026; y >= 1970; y--) '$y'];
+
 /// Подача объявления: категория, описание, цена, город, фото и для авто — характеристики.
 class CreateListingScreen extends StatefulWidget {
   const CreateListingScreen({super.key, this.listing});
@@ -30,6 +124,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _cityCtrl = TextEditingController(text: 'Душанбе');
   final _addressCtrl = TextEditingController();
   final _brandCtrl = TextEditingController();
+  final _modelCtrl = TextEditingController();
   final List<XFile> _photos = [];
 
   // Характеристики автомобиля
@@ -71,6 +166,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _cityCtrl,
       _addressCtrl,
       _brandCtrl,
+      _modelCtrl,
       _yearCtrl,
       _mileageCtrl,
       _engineCtrl,
@@ -97,6 +193,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     final d = Map<String, dynamic>.from((l['details'] as Map?) ?? {});
     String s(String k) => '${d[k] ?? ''}';
     _brandCtrl.text = s('brand');
+    _modelCtrl.text = s('model');
     _yearCtrl.text = s('year');
     _mileageCtrl.text = s('mileage_km');
     _engineCtrl.text = s('engine_volume');
@@ -140,6 +237,16 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
   }
 
+  /// Название авто собирается из выбранных марки, модели и года.
+  String _autoTitle() => [_brandCtrl.text, _modelCtrl.text, _yearCtrl.text]
+      .where((e) => e.trim().isNotEmpty)
+      .join(' ');
+
+  /// Выпадающий список, который не падает, если сохранённого значения нет в списке.
+  Widget _pick(String hint, String current, List<String> items, ValueChanged<String> onChanged) {
+    return _drop(hint, items.contains(current) ? current : null, items, (v) => onChanged(v ?? ''));
+  }
+
   /// Характеристики авто: заполненные поля, пустые не сохраняем.
   Map<String, dynamic> _carDetails() {
     final m = <String, dynamic>{};
@@ -148,6 +255,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     }
 
     put('brand', _brandCtrl.text);
+    put('model', _modelCtrl.text);
     put('year', _yearCtrl.text);
     put('mileage_km', _mileageCtrl.text);
     put('body_type', _bodyType);
@@ -165,7 +273,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _submit() async {
-    final title = _titleCtrl.text.trim();
+    final title = _isAuto ? _autoTitle() : _titleCtrl.text.trim();
     final price = num.tryParse(_priceCtrl.text.trim().replaceAll(',', '.'));
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return _fail('Войдите, чтобы подать объявление');
@@ -174,6 +282,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (price == null || price < 0) return _fail('Укажите цену числом');
     if (widget.listing == null && _photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
     if (_isAuto) {
+      if (_brandCtrl.text.isEmpty) return _fail('Выберите марку автомобиля');
+      if (_modelCtrl.text.isEmpty) return _fail('Выберите модель');
       final yearText = _yearCtrl.text.trim();
       final year = int.tryParse(yearText);
       if (yearText.isNotEmpty && (year == null || year < 1950 || year > 2030)) {
@@ -271,13 +381,36 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const Text('Про автомобиль', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       const SizedBox(height: 4),
       const Text(
-        'Чем подробнее, тем больше доверия и звонков. Все поля, кроме VIN, необязательные.',
+        'Марка и модель обязательны, название объявления соберётся из них. Остальное можно не заполнять.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
       const SizedBox(height: 12),
-      _field(_brandCtrl, 'Марка и модель, например Toyota Camry'),
+      _pick('Марка', _brandCtrl.text, _carCatalog.keys.toList(), (v) {
+        _brandCtrl.text = v;
+        _modelCtrl.text = '';
+        _generationCtrl.text = '';
+      }),
       const SizedBox(height: 12),
-      _field(_yearCtrl, 'Год выпуска, например 2019', type: TextInputType.number, maxLength: 4),
+      _pick(
+        'Модель',
+        _modelCtrl.text,
+        _carCatalog[_brandCtrl.text]?.keys.toList() ?? const [],
+        (v) {
+          _modelCtrl.text = v;
+          _generationCtrl.text = '';
+        },
+      ),
+      if ((_carCatalog[_brandCtrl.text]?[_modelCtrl.text] ?? const <String>[]).isNotEmpty) ...[
+        const SizedBox(height: 12),
+        _pick(
+          'Поколение',
+          _generationCtrl.text,
+          _carCatalog[_brandCtrl.text]![_modelCtrl.text]!,
+          (v) => _generationCtrl.text = v,
+        ),
+      ],
+      const SizedBox(height: 12),
+      _pick('Год выпуска', _yearCtrl.text, _carYears, (v) => _yearCtrl.text = v),
       const SizedBox(height: 12),
       _field(_mileageCtrl, 'Пробег, км', type: TextInputType.number),
       const SizedBox(height: 12),
@@ -296,8 +429,6 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _drop('Руль', _wheel, _wheels, (v) => _wheel = v),
       const SizedBox(height: 12),
       _field(_colorCtrl, 'Цвет'),
-      const SizedBox(height: 12),
-      _field(_generationCtrl, 'Поколение, например G82'),
       const SizedBox(height: 12),
       _field(_trimCtrl, 'Комплектация или модификация'),
       const SizedBox(height: 12),
@@ -332,11 +463,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               onChanged: (v) => setState(() => _categoryId = v),
             ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _titleCtrl,
-            decoration: const InputDecoration(hintText: 'Название объявления'),
-          ),
-          const SizedBox(height: 12),
+          if (!_isAuto) ...[
+            TextField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(hintText: 'Название объявления'),
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _priceCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
