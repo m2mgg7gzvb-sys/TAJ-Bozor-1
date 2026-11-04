@@ -1,5 +1,28 @@
 // Справочник марок, моделей и годов для автомобилей (общий для подачи и поиска).
 
+import 'package:flutter/material.dart';
+
+/// Путь к фото поколения: assets/generations/toyota__camry__xv70.jpg
+String _slug(String x) => x.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+
+/// Фото поколения, если оно загружено. Если файла нет — ничего не показывается.
+Widget carGenerationPhoto(String brand, String model, String gen) {
+  final path = 'assets/generations/${_slug(brand)}__${_slug(model)}__${_slug(gen)}.jpg';
+  return Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.asset(
+        path,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      ),
+    ),
+  );
+}
+
 /// Справочник авто: марка → модель → поколения (поколения только там, где они известны).
 const carCatalog = <String, Map<String, List<String>>>{
   'Toyota': {

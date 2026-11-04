@@ -32,6 +32,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   final _searchCtrl = TextEditingController();
   String? _brand;
   String? _model;
+  String? _generation;
   String? _yearMin;
   final _priceMinCtrl = TextEditingController();
   final _priceMaxCtrl = TextEditingController();
@@ -74,6 +75,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     if (widget.carFilter) {
       if (_brand != null) query = query.eq('details->>brand', _brand!);
       if (_model != null) query = query.eq('details->>model', _model!);
+      if (_generation != null) query = query.eq('details->>generation', _generation!);
       final priceMin = num.tryParse(_priceMinCtrl.text.trim());
       if (priceMin != null) query = query.gte('price', priceMin);
       final priceMax = num.tryParse(_priceMaxCtrl.text.trim());
@@ -153,8 +155,24 @@ class _ListingsScreenState extends State<ListingsScreen> {
             value: _model,
             items: models,
             anyLabel: _brand == null ? 'Сначала выберите марку' : 'Все модели',
-            onChanged: (v) => setState(() => _model = v),
+            onChanged: (v) => setState(() {
+              _model = v;
+              _generation = null;
+            }),
           ),
+          if (_brand != null && _model != null) ...[
+            const SizedBox(height: 8),
+            drop(
+              hint: 'Поколение',
+              value: _generation,
+              items: carCatalog[_brand]?[_model] ?? <String>[],
+              anyLabel: (carCatalog[_brand]?[_model] ?? const <String>[]).isEmpty
+                  ? 'Нет данных о поколениях'
+                  : 'Все поколения',
+              onChanged: (v) => setState(() => _generation = v),
+            ),
+            if (_generation != null) carGenerationPhoto(_brand!, _model!, _generation!),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [

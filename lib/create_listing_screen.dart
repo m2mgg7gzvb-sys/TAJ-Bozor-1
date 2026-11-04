@@ -366,6 +366,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           _carCatalog[_brandCtrl.text]![_modelCtrl.text]!,
           (v) => _generationCtrl.text = v,
         ),
+        if (_generationCtrl.text.isNotEmpty)
+          carGenerationPhoto(_brandCtrl.text, _modelCtrl.text, _generationCtrl.text),
       ],
       const SizedBox(height: 12),
       _pick('Год выпуска', _yearCtrl.text, _carYears, (v) => _yearCtrl.text = v),
