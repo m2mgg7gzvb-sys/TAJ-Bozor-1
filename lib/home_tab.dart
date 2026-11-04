@@ -152,7 +152,6 @@ class _HomeTabState extends State<HomeTab> {
     'electronics': 'Электро-\nника',
     'jobs': 'Кор ва\nмузднон',
   };
-  static const _tgWords = ['корро', 'скутерро', 'хонаро', 'телефонро', 'ройгонро', 'фаррошро'];
 
   Color _accentFor(String slug) {
     switch (slug) {
@@ -267,8 +266,8 @@ class _HomeTabState extends State<HomeTab> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(26),
                           onTap: () => tabIndex.value = loginTabIndex,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                             child: Text(
                               tr('Войти', 'Ворид'),
                               style: TextStyle(
@@ -290,7 +289,7 @@ class _HomeTabState extends State<HomeTab> {
                     padding: const EdgeInsets.only(left: 8),
                     child: Row(
                       children: [
-                        const Text(
+                        Text(
                           tr('Поднимите объявление в топ', 'Эълонро дар боло баланд кунед'),
                           style: TextStyle(
                             color: Colors.white,
@@ -372,8 +371,8 @@ class _HomeTabState extends State<HomeTab> {
                 }
                 final items = snapshot.data ?? [];
                 if (items.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(24),
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Center(child: Text(tr('Объявлений пока нет', 'Ҳоло эълон нест'))),
                   );
                 }
@@ -412,6 +411,7 @@ class _SearchField extends StatefulWidget {
 
 class _SearchFieldState extends State<_SearchField> {
   static const _words = ['работу', 'самокат', 'квартиру', 'телефон', 'даром', 'уборщицу'];
+  static const _tgWords = ['корро', 'скутерро', 'хонаро', 'телефонро', 'ройгонро', 'фаррошро'];
   int _i = 0;
   Timer? _timer;
 
