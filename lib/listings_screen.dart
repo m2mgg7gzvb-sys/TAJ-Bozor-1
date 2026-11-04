@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'car_catalog.dart';
 import 'city_store.dart';
 import 'lang_store.dart';
 import 'listing_card.dart';
@@ -29,10 +30,11 @@ class ListingsScreen extends StatefulWidget {
 
 class _ListingsScreenState extends State<ListingsScreen> {
   final _searchCtrl = TextEditingController();
-  final _brandCtrl = TextEditingController();
+  String? _brand;
+  String? _model;
+  String? _yearMin;
   final _priceMinCtrl = TextEditingController();
   final _priceMaxCtrl = TextEditingController();
-  final _yearMinCtrl = TextEditingController();
   late Future<List<Map<String, dynamic>>> _future;
   int? _count;
 
@@ -48,10 +50,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
   void dispose() {
     selectedCity.removeListener(_reload);
     _searchCtrl.dispose();
-    _brandCtrl.dispose();
     _priceMinCtrl.dispose();
     _priceMaxCtrl.dispose();
-    _yearMinCtrl.dispose();
     super.dispose();
   }
 
@@ -72,15 +72,13 @@ class _ListingsScreenState extends State<ListingsScreen> {
       query = query.ilike('title', '%$search%');
     }
     if (widget.carFilter) {
-      final brand = _brandCtrl.text.trim();
-      if (brand.isNotEmpty) {
-        query = query.ilike('details->>brand', '%$brand%');
-      }
+      if (_brand != null) query = query.eq('details->>brand', _brand!);
+      if (_model != null) query = query.eq('details->>model', _model!);
       final priceMin = num.tryParse(_priceMinCtrl.text.trim());
       if (priceMin != null) query = query.gte('price', priceMin);
       final priceMax = num.tryParse(_priceMaxCtrl.text.trim());
       if (priceMax != null) query = query.lte('price', priceMax);
-      final yearMin = int.tryParse(_yearMinCtrl.text.trim());
+      final yearMin = int.tryParse(_yearMin ?? '');
       if (yearMin != null) query = query.gte('details->>year', '$yearMin');
     }
     final rows = await query.order('created_at', ascending: false).limit(100);
@@ -95,7 +93,6 @@ class _ListingsScreenState extends State<ListingsScreen> {
     InputDecoration dec(String hint) => InputDecoration(
           hintText: hint,
           isDense: true,
-          counterText: '',
           filled: true,
           fillColor: const Color(0xFFF1F4F3),
           border: OutlineInputBorder(
@@ -103,6 +100,27 @@ class _ListingsScreenState extends State<ListingsScreen> {
             borderSide: BorderSide.none,
           ),
         );
+
+    DropdownButtonFormField<String?> drop({
+      required String hint,
+      required String? value,
+      required List<String> items,
+      required String anyLabel,
+      required ValueChanged<String?> onChanged,
+    }) {
+      return DropdownButtonFormField<String?>(
+        value: value,
+        isExpanded: true,
+        decoration: dec(hint),
+        items: [
+          DropdownMenuItem<String?>(value: null, child: Text(anyLabel)),
+          for (final i in items) DropdownMenuItem<String?>(value: i, child: Text(i)),
+        ],
+        onChanged: onChanged,
+      );
+    }
+
+    final models = _brand == null ? <String>[] : (carCatalog[_brand]?.keys.toList() ?? <String>[]);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -116,10 +134,27 @@ class _ListingsScreenState extends State<ListingsScreen> {
         children: [
           Text(
             tr('Найти автомобиль', 'Ёфтани мошин'),
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 10),
-          TextField(controller: _brandCtrl, decoration: dec('Марка и модель')),
+          drop(
+            hint: 'Марка',
+            value: _brand,
+            items: carCatalog.keys.toList(),
+            anyLabel: 'Все марки',
+            onChanged: (v) => setState(() {
+              _brand = v;
+              _model = null;
+            }),
+          ),
+          const SizedBox(height: 8),
+          drop(
+            hint: 'Модель',
+            value: _model,
+            items: models,
+            anyLabel: _brand == null ? 'Сначала выберите марку' : 'Все модели',
+            onChanged: (v) => setState(() => _model = v),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -141,11 +176,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          TextField(
-            controller: _yearMinCtrl,
-            keyboardType: TextInputType.number,
-            maxLength: 4,
-            decoration: dec('Год выпуска от'),
+          drop(
+            hint: 'Год выпуска от',
+            value: _yearMin,
+            items: carYears,
+            anyLabel: 'Любой год',
+            onChanged: (v) => setState(() => _yearMin = v),
           ),
           const SizedBox(height: 12),
           FilledButton(
