@@ -413,10 +413,11 @@ class _ChatScreenState extends State<ChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Обращение: на помощи')),
       );
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final reason = e is PostgrestException ? ': ${e.message}' : '';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось изменить статус')),
+        SnackBar(content: Text('Не удалось изменить статус$reason')),
       );
     }
   }
