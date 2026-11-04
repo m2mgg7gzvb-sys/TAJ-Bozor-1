@@ -117,8 +117,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 const Text(
-                  'Зелёный — ждёт ответа, жёлтый — на помощи, красный — отвечено. '
-                  'Отвеченные обращения видит только главный сотрудник.',
+                  'Зелёный — ждёт ответа, жёлтый — на помощи, красный — завершено. '
+                  'Завершённые обращения открывает только главный сотрудник.',
                   style: TextStyle(color: AppColors.muted, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -145,15 +145,17 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final status = (c['status'] as String?) ?? 'waiting';
     final buyer = (c['buyer_id'] as String?) ?? '';
     final short = buyer.length >= 6 ? buyer.substring(0, 6) : buyer;
+    // Завершённое обращение младший админ видит, но открыть не может
+    final closed = status == 'answered' && !_super;
     return ValueListenableBuilder<Set<String>>(
       valueListenable: unreadChats,
       builder: (_, unread, __) {
         final hasNew = unread.contains(id);
         return Material(
-          color: Colors.white,
+          color: closed ? const Color(0xFFEDEFEE) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           child: ListTile(
-            onTap: () => _open(id),
+            onTap: closed ? null : () => _open(id),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             leading: Container(
               width: 16,
