@@ -9,7 +9,7 @@ import 'theme.dart';
 const _statusLabel = {
   'waiting': 'В ожидании',
   'in_progress': 'На помощи',
-  'answered': 'Отвечено',
+  'answered': 'Завершено',
 };
 const _statusColor = {
   'waiting': Color(0xFF2E9E5B),
