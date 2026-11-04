@@ -37,6 +37,7 @@ class ChatScreen extends StatefulWidget {
     required this.conversationId,
     required this.title,
     this.staffTicket = false,
+    this.canFinish = true,
   });
 
   final String conversationId;
@@ -44,6 +45,9 @@ class ChatScreen extends StatefulWidget {
 
   /// Обращение в поддержку, открытое сотрудником: показываем кнопки статуса.
   final bool staffTicket;
+
+  /// Может ли сотрудник завершить обращение (красный статус) — только главный админ.
+  final bool canFinish;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -140,15 +144,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => _setTicket('answered'),
-                      icon: const Icon(Icons.check_circle_rounded),
-                      label: const Text('Завершить'),
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+                  if (widget.canFinish) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => _setTicket('answered'),
+                        icon: const Icon(Icons.check_circle_rounded),
+                        label: const Text('Завершить'),
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -28,10 +28,15 @@ class SupportTicketsScreen extends StatefulWidget {
 
 class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   late Future<List<Map<String, dynamic>>> _future = _load();
+  bool _super = false;
 
   Future<List<Map<String, dynamic>>> _load() async {
     final db = Supabase.instance.client;
     final me = db.auth.currentUser?.id ?? '';
+    if (me.isNotEmpty) {
+      final prof = await db.from('profiles').select('is_super_admin').eq('id', me).maybeSingle();
+      _super = prof?['is_super_admin'] == true;
+    }
     final rows = await db
         .from('conversations')
         .select('id, status, buyer_id, created_at')
@@ -67,7 +72,12 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   Future<void> _open(String id) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChatScreen(conversationId: id, title: 'Обращение', staffTicket: true),
+        builder: (_) => ChatScreen(
+          conversationId: id,
+          title: 'Обращение',
+          staffTicket: true,
+          canFinish: _super,
+        ),
       ),
     );
     if (mounted) _reload();
@@ -168,12 +178,13 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                   ),
                 if (hasNew) const SizedBox(width: 4),
-                PopupMenuButton<String>(
+                if (_super) PopupMenuButton<String>(
                   tooltip: 'Статус',
                   onSelected: (s) => _setStatus(id, s),
                   itemBuilder: (_) => [
                     for (final e in _statusLabel.entries)
-                      PopupMenuItem(value: e.key, child: Text(e.value)),
+                      if (_super || e.key != 'answered')
+                        PopupMenuItem(value: e.key, child: Text(e.value)),
                   ],
                 ),
               ],
