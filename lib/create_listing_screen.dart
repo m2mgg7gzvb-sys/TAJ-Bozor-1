@@ -291,7 +291,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return m;
   }
 
-  /// Удаление: объявление скрывается из поиска (статус «deleted»), данные не теряются.
+  /// Удаление: объявление скрывается (статус «hidden»), данные не теряются.
   Future<void> _delete() async {
     final id = widget.listing!['id'] as String;
     final ok = await showDialog<bool>(
@@ -307,7 +307,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     );
     if (ok != true) return;
     try {
-      await Supabase.instance.client.from('listings').update({'status': 'deleted'}).eq('id', id);
+      await Supabase.instance.client.from('listings').update({'status': 'hidden'}).eq('id', id);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (_) {

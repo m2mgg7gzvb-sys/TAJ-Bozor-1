@@ -31,6 +31,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
         .from('listings')
         .select(listingSelect)
         .eq('user_id', user.id)
+        .neq('status', 'hidden')
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(rows);
   }
