@@ -24,12 +24,13 @@ class AccountTab extends StatelessWidget {
 
 /// Данные профиля и счётчики для шапки.
 class _ProfileData {
-  const _ProfileData({this.name, this.city, this.phone, this.listingsCount = 0});
+  const _ProfileData({this.name, this.city, this.phone, this.listingsCount = 0, this.isAdmin = false});
 
   final String? name;
   final String? city;
   final String? phone;
   final int listingsCount;
+  final bool isAdmin;
 
   static const empty = _ProfileData();
 }
@@ -49,13 +50,18 @@ class _ProfilePageState extends State<_ProfilePage> {
   Future<_ProfileData> _load() async {
     final db = Supabase.instance.client;
     final uid = widget.user.id;
-    final profile = await db.from('profiles').select('name, city, phone').eq('id', uid).maybeSingle();
+    final profile = await db
+        .from('profiles')
+        .select('name, city, phone, is_admin')
+        .eq('id', uid)
+        .maybeSingle();
     final listings = await db.from('listings').select('id').eq('user_id', uid);
     return _ProfileData(
       name: profile?['name'] as String?,
       city: profile?['city'] as String?,
       phone: profile?['phone'] as String?,
       listingsCount: listings.length,
+      isAdmin: profile?['is_admin'] == true,
     );
   }
 
@@ -133,11 +139,12 @@ class _ProfilePageState extends State<_ProfilePage> {
                       title: 'Сообщения',
                       onTap: () => tabIndex.value = 3,
                     ),
-                    _MenuTile(
-                      icon: Icons.support_agent_rounded,
-                      title: 'Поддержка',
-                      onTap: () => tabIndex.value = 3,
-                    ),
+                    if (!d.isAdmin)
+                      _MenuTile(
+                        icon: Icons.support_agent_rounded,
+                        title: 'Поддержка',
+                        onTap: () => tabIndex.value = 3,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 16),

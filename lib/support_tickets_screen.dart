@@ -76,7 +76,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           conversationId: id,
           title: 'Обращение',
           staffTicket: true,
-          canFinish: _super,
+          canFinish: true,
         ),
       ),
     );
