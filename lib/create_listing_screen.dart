@@ -121,7 +121,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
-  final _cityCtrl = TextEditingController(text: 'Душанбе');
+  final _cityCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _brandCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
@@ -289,6 +289,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (_categoryId == null) return _fail('Выберите категорию');
     if (title.length < 3) return _fail('Название — от 3 символов');
     if (price == null || price < 0) return _fail('Укажите цену числом');
+    if (_cityCtrl.text.trim().isEmpty) return _fail('Выберите город');
     if (widget.listing == null && _photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
     if (_isAuto) {
       if (_brandCtrl.text.isEmpty) return _fail('Выберите марку автомобиля');
