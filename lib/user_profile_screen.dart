@@ -279,8 +279,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     const Expanded(
                       child: Text('Отзывы', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                     ),
-                    if (canReview)
-                      TextButton(onPressed: _leaveReview, child: const Text('Оставить отзыв')),
                   ],
                 ),
                 const SizedBox(height: 6),
