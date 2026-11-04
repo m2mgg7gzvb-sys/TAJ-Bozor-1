@@ -26,6 +26,17 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
+      - name: Add security headers for Cloudflare Pages
+        run: |
+          cat > build/web/_headers <<'EOF'
+          /*
+            X-Frame-Options: DENY
+            X-Content-Type-Options: nosniff
+            Referrer-Policy: strict-origin-when-cross-origin
+            Strict-Transport-Security: max-age=31536000; includeSubDomains
+            Permissions-Policy: payment=(), usb=()
+          EOF
+
       - uses: actions/upload-artifact@v4
         with:
           name: tajbozor-web
