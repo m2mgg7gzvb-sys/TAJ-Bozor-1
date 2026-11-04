@@ -19,27 +19,9 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _codeStep = false;
   bool _loading = false;
   String? _error;
-  bool _isRegister = true;
+  bool _isRegister = false;
 
   SupabaseClient get _db => Supabase.instance.client;
-
-  /// Временный тестовый вход без почты (анонимный пользователь).
-  /// Убрать, когда будет настроена почта и регистрация по коду.
-  Future<void> _anonymousLogin() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      await _db.auth.signInAnonymously();
-    } on AuthException catch (e) {
-      setState(() => _error = e.message);
-    } catch (_) {
-      setState(() => _error = 'Не удалось войти. Проверьте сеть');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
 
   bool _validEmail(String v) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(v);
 
@@ -66,7 +48,11 @@ class _AuthScreenState extends State<AuthScreen> {
       );
       setState(() => _codeStep = true);
     } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      final notFound = e.message.toLowerCase().contains('signups not allowed') ||
+          e.message.toLowerCase().contains('signup');
+      setState(() => _error = !_isRegister && notFound
+          ? 'Аккаунта с этой почтой нет. Нажмите «Нет аккаунта? Зарегистрироваться» ниже'
+          : e.message);
     } catch (_) {
       setState(() => _error = 'Не удалось отправить код. Проверьте сеть');
     } finally {
@@ -171,14 +157,6 @@ class _AuthScreenState extends State<AuthScreen> {
                     : Text(_codeStep ? 'Подтвердить' : 'Получить код на почту'),
               ),
               const SizedBox(height: 8),
-              if (!_codeStep) ...[
-                const SizedBox(height: 4),
-                OutlinedButton(
-                  onPressed: _loading ? null : _anonymousLogin,
-                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-                  child: const Text('Тестовый вход без почты'),
-                ),
-              ],
               const SizedBox(height: 8),
               if (!_codeStep)
                 TextButton(
