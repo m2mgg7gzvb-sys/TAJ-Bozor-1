@@ -29,7 +29,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
     if (user == null) return [];
     final rows = await Supabase.instance.client
         .from('listings')
-        .select(listingSelect)
+        .select('$listingSelect, status')
         .eq('user_id', user.id)
         .neq('status', 'hidden')
         .order('created_at', ascending: false);
@@ -42,7 +42,46 @@ class _MyListingsTabState extends State<MyListingsTab> {
     final published = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const CreateListingScreen()),
     );
-    if (published == true) _reload();
+    if (published == true) {
+      _reload();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Объявление отправлено на проверку. Это занимает до 30 минут.')),
+        );
+      }
+    }
+  }
+
+  /// Карточка со статусом: на проверке или заблокировано.
+  Widget _itemCard(Map<String, dynamic> item) {
+    final status = item['status'] as String?;
+    final label = switch (status) {
+      'moderation' => 'На проверке · до 30 минут',
+      'blocked' => 'Заблокировано',
+      _ => null,
+    };
+    final card = ListingCard(item: item);
+    if (label == null) return card;
+    return Stack(
+      children: [
+        card,
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: status == 'blocked' ? Colors.red.shade700 : Colors.orange.shade800,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -97,7 +136,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                   childAspectRatio: 0.66,
-                  children: [for (final item in items) ListingCard(item: item)],
+                  children: [for (final item in items) _itemCard(item)],
                 );
               },
             ),
