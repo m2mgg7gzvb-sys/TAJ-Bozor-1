@@ -88,8 +88,14 @@ Future<void> refreshUnread() async {
     final unread = <String>{};
     for (final c in convs) {
       final id = c['id'] as String;
-      // Завершённые обращения сотрудника не считаются новыми
-      if (c['kind'] == 'support' && c['status'] == 'answered' && c['buyer_id'] != me) continue;
+      // Обращения сотрудника: завершённые не считаются, ожидающие считаются новыми всегда
+      if (c['kind'] == 'support' && c['buyer_id'] != me) {
+        if (c['status'] == 'answered') continue;
+        if (c['status'] == 'waiting') {
+          unread.add(id);
+          continue;
+        }
+      }
       final last = List<Map<String, dynamic>>.from(await db
           .from('messages')
           .select('sender_id, created_at')
