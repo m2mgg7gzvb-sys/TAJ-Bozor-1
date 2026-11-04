@@ -5,7 +5,7 @@ import 'chat_screen.dart';
 import 'notify_store.dart';
 import 'theme.dart';
 
-/// Статусы обращения: зелёный — ждёт ответа, жёлтый — на помощи, красный — отвечено.
+/// Статусы обращения: зелёный — ждёт ответа, жёлтый — на помощи, красный — завершено.
 const _statusLabel = {
   'waiting': 'В ожидании',
   'in_progress': 'На помощи',
@@ -19,6 +19,7 @@ const _statusColor = {
 const _statusOrder = {'waiting': 0, 'in_progress': 1, 'answered': 2};
 
 /// Все обращения пользователей в поддержку (только для сотрудников).
+/// Список обновляется в реальном времени: изменения с других аккаунтов видны сразу.
 class SupportTicketsScreen extends StatefulWidget {
   const SupportTicketsScreen({super.key});
 
@@ -27,40 +28,42 @@ class SupportTicketsScreen extends StatefulWidget {
 }
 
 class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
-  late Future<List<Map<String, dynamic>>> _future = _load();
+  final _db = Supabase.instance.client;
+  late final String _me = _db.auth.currentUser?.id ?? '';
+  late final Stream<List<Map<String, dynamic>>> _stream =
+      _db.from('conversations').stream(primaryKey: ['id']).eq('kind', 'support');
   bool _super = false;
 
-  Future<List<Map<String, dynamic>>> _load() async {
-    final db = Supabase.instance.client;
-    final me = db.auth.currentUser?.id ?? '';
-    if (me.isNotEmpty) {
-      final prof = await db.from('profiles').select('is_super_admin').eq('id', me).maybeSingle();
-      _super = prof?['is_super_admin'] == true;
+  @override
+  void initState() {
+    super.initState();
+    _loadSuper();
+  }
+
+  Future<void> _loadSuper() async {
+    if (_me.isEmpty) return;
+    try {
+      final prof = await _db.from('profiles').select('is_super_admin').eq('id', _me).maybeSingle();
+      if (mounted) setState(() => _super = prof?['is_super_admin'] == true);
+    } catch (_) {
+      // Без этого флага просто не покажем главные права
     }
-    final rows = await db
-        .from('conversations')
-        .select('id, status, buyer_id, created_at')
-        .eq('kind', 'support')
-        .neq('buyer_id', me)
-        .order('created_at', ascending: false);
-    final items = List<Map<String, dynamic>>.from(rows);
+  }
+
+  List<Map<String, dynamic>> _sorted(List<Map<String, dynamic>> rows) {
+    final items = rows.where((c) => c['buyer_id'] != _me).toList();
     items.sort((a, b) {
       final sa = _statusOrder[a['status']] ?? 0;
       final sb = _statusOrder[b['status']] ?? 0;
-      return sa.compareTo(sb);
+      if (sa != sb) return sa.compareTo(sb);
+      return (b['created_at'] as String? ?? '').compareTo(a['created_at'] as String? ?? '');
     });
     return items;
   }
 
-  void _reload() => setState(() => _future = _load());
-
   Future<void> _setStatus(String id, String status) async {
     try {
-      await Supabase.instance.client
-          .from('conversations')
-          .update({'status': status})
-          .eq('id', id);
-      _reload();
+      await _db.from('conversations').update({'status': status}).eq('id', id);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +83,6 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         ),
       ),
     );
-    if (mounted) _reload();
     refreshUnread();
   }
 
@@ -88,54 +90,43 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Обращения')),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _reload();
-          await _future;
-        },
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _future,
-          builder: (context, snap) {
-            if (snap.connectionState != ConnectionState.done) {
-              return ListView(children: const [
-                Padding(
-                  padding: EdgeInsets.all(40),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ]);
-            }
-            if (snap.hasError) {
-              return ListView(children: const [
-                Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('Не удалось загрузить обращения', textAlign: TextAlign.center),
-                ),
-              ]);
-            }
-            final items = snap.data ?? const <Map<String, dynamic>>[];
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                const Text(
-                  'Зелёный — ждёт ответа, жёлтый — на помощи, красный — завершено. '
-                  'Завершённые обращения открывает только главный сотрудник.',
-                  style: TextStyle(color: AppColors.muted, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                if (items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text('Обращений пока нет', style: TextStyle(color: AppColors.muted)),
-                  )
-                else
-                  for (final c in items) ...[
-                    _ticketTile(c),
-                    const SizedBox(height: 10),
-                  ],
-              ],
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _stream,
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('Не удалось загрузить обращения', textAlign: TextAlign.center),
+              ),
             );
-          },
-        ),
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final items = _sorted(snap.data!);
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Зелёный — ждёт ответа, жёлтый — на помощи, красный — завершено. '
+                'Завершённые обращения открывает только главный сотрудник.',
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              if (items.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('Обращений пока нет', style: TextStyle(color: AppColors.muted)),
+                )
+              else
+                for (final c in items) ...[
+                  _ticketTile(c),
+                  const SizedBox(height: 10),
+                ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -180,15 +171,15 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                   ),
                 if (hasNew) const SizedBox(width: 4),
-                if (_super) PopupMenuButton<String>(
-                  tooltip: 'Статус',
-                  onSelected: (s) => _setStatus(id, s),
-                  itemBuilder: (_) => [
-                    for (final e in _statusLabel.entries)
-                      if (_super || e.key != 'answered')
+                if (_super)
+                  PopupMenuButton<String>(
+                    tooltip: 'Статус',
+                    onSelected: (s) => _setStatus(id, s),
+                    itemBuilder: (_) => [
+                      for (final e in _statusLabel.entries)
                         PopupMenuItem(value: e.key, child: Text(e.value)),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           ),
