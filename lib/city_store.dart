@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'lang_store.dart';
 import 'theme.dart';
 
 /// Города для выбора и для поля «Город» при подаче объявления.
@@ -80,7 +81,7 @@ Future<void> showCityPicker(BuildContext context) {
               ),
             ),
             ListTile(
-              title: const Text('Все города'),
+              title: Text(tr('Все города', 'Ҳама шаҳрҳо')),
               trailing: tick(current == null),
               onTap: () {
                 setSelectedCity(null);

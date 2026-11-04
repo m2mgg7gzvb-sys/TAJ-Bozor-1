@@ -9,11 +9,27 @@ import 'all_categories_screen.dart';
 import 'city_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'lang_store.dart';
 import 'listings_screen.dart';
 import 'nav_state.dart';
 import 'theme.dart';
 
 /// Главная вкладка «Поиск»: поиск, баннер, категории и новые объявления.
+const _tgCats = {
+  'real-estate': 'Амлок',
+  'jobs': 'Кор ва музднон',
+  'auto': 'Нақлиёт',
+  'electronics': 'Электроника',
+  'services': 'Хизматҳо',
+  'home': 'Барои хона',
+};
+
+String _catName(Map<String, dynamic> c) {
+  final ru = c['name_ru'] as String;
+  final slug = c['slug'] as String?;
+  return tr(ru, _tgCats[slug] ?? ru);
+}
+
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
@@ -132,6 +148,11 @@ class _HomeTabState extends State<HomeTab> {
     'electronics': 'Элек-\nтроника',
     'jobs': 'Работа и\nподработка',
   };
+  static const _tgTileLabels = {
+    'electronics': 'Электро-\nника',
+    'jobs': 'Кор ва\nмузднон',
+  };
+  static const _tgWords = ['корро', 'скутерро', 'хонаро', 'телефонро', 'ройгонро', 'фаррошро'];
 
   Color _accentFor(String slug) {
     switch (slug) {
@@ -154,7 +175,7 @@ class _HomeTabState extends State<HomeTab> {
       child: _CategoryChip(
         icon: cat.icon,
         accent: _accentFor(slug),
-        name: _tileLabels[slug] ?? cat.name,
+        name: (tajikLang.value ? _tgTileLabels : _tileLabels)[slug] ?? cat.name,
         onTap: isAll
             ? _openAll
             : () => _openCategory(cat.data!['id'] as int, cat.name, carFilter: slug == 'auto'),
@@ -167,12 +188,12 @@ class _HomeTabState extends State<HomeTab> {
     final bySlug = {for (final c in items) c['slug'] as String: c};
     _Cat? catFor(String slug) {
       final c = bySlug[slug];
-      return c == null ? null : _Cat(c['name_ru'] as String, _iconFor(slug), c);
+      return c == null ? null : _Cat(_catName(c), _iconFor(slug), c);
     }
 
     const first = ['real-estate', 'jobs'];
     const second = ['auto', 'electronics', 'services', 'home'];
-    final row1 = <_Cat>[const _Cat('Все', Icons.grid_view_rounded, null)];
+    final row1 = <_Cat>[_Cat(tr('Все', 'Ҳама'), Icons.grid_view_rounded, null)];
     final row2 = <_Cat>[];
     for (final s in first) {
       final c = catFor(s);
@@ -186,7 +207,7 @@ class _HomeTabState extends State<HomeTab> {
     for (final c in items) {
       final slug = c['slug'] as String;
       if (first.contains(slug) || second.contains(slug)) continue;
-      (toRow2 ? row2 : row1).add(_Cat(c['name_ru'] as String, _iconFor(slug), c));
+      (toRow2 ? row2 : row1).add(_Cat(_catName(c), _iconFor(slug), c));
       toRow2 = !toRow2;
     }
 
@@ -249,7 +270,7 @@ class _HomeTabState extends State<HomeTab> {
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                             child: Text(
-                              'Войти',
+                              tr('Войти', 'Ворид'),
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
@@ -270,7 +291,7 @@ class _HomeTabState extends State<HomeTab> {
                     child: Row(
                       children: [
                         const Text(
-                          'Поднимите объявление в топ',
+                          tr('Поднимите объявление в топ', 'Эълонро дар боло баланд кунед'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 17,
@@ -322,7 +343,7 @@ class _HomeTabState extends State<HomeTab> {
                   );
                 }
                 if (snapshot.hasError) {
-                  return const Text('Не удалось загрузить категории');
+                  return Text(tr('Не удалось загрузить категории', 'Категорияҳоро боргирӣ карда натавонистем'));
                 }
                 return _categoryRows(snapshot.data ?? []);
               },
@@ -340,11 +361,11 @@ class _HomeTabState extends State<HomeTab> {
                 if (snapshot.hasError) {
                   return Column(
                     children: [
-                      const Text('Не удалось загрузить объявления'),
+                      Text(tr('Не удалось загрузить объявления', 'Эълонҳоро боргирӣ карда натавонистем')),
                       const SizedBox(height: 8),
                       FilledButton(
                         onPressed: () => setState(() => _listings = _loadListings()),
-                        child: const Text('Повторить'),
+                        child: Text(tr('Повторить', 'Такрор')),
                       ),
                     ],
                   );
@@ -353,7 +374,7 @@ class _HomeTabState extends State<HomeTab> {
                 if (items.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: Text('Объявлений пока нет')),
+                    child: Center(child: Text(tr('Объявлений пока нет', 'Ҳоло эълон нест'))),
                   );
                 }
                 return Padding(
@@ -437,7 +458,7 @@ class _SearchFieldState extends State<_SearchField> {
                     key: ValueKey(_i),
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Найти ${_words[_i]}',
+                      tr('Найти ${_words[_i]}', 'Ёфтани ${_tgWords[_i]}'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: AppColors.muted, fontSize: 16),
@@ -479,7 +500,7 @@ class _CityButton extends StatelessWidget {
                     const Icon(Icons.location_on_rounded, color: Colors.white, size: 18),
                     const SizedBox(width: 4),
                     Text(
-                      city ?? 'Все города',
+                      city ?? tr('Все города', 'Ҳама шаҳрҳо'),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,

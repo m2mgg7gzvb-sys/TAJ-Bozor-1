@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'fallback_photo.dart';
 import 'favorites_store.dart';
 import 'listing_detail_screen.dart';
+import 'lang_store.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
 import 'viewed_store.dart';
@@ -65,8 +66,8 @@ class ListingCard extends StatelessWidget {
                             color: Colors.black54,
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Просмотрено',
+                          child: Text(
+                            tr('Просмотрено', 'Дидашуда'),
                             style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                           ),
                         );

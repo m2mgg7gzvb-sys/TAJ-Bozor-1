@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'city_store.dart';
+import 'lang_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
@@ -113,8 +114,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Найти автомобиль',
+          Text(
+            tr('Найти автомобиль', 'Ёфтани мошин'),
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 10),
@@ -202,7 +203,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 }
                 final items = snapshot.data ?? [];
                 if (items.isEmpty) {
-                  return const Center(child: Text('Ничего не найдено'));
+                  return Center(child: Text(tr('Ничего не найдено', 'Ҳеҷ чиз ёфт нашуд')));
                 }
                 return RefreshIndicator(
                   onRefresh: () async => _reload(),
