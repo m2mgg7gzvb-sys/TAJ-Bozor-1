@@ -39,6 +39,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   // Копия объявления: после правки владельцем обновляем её из базы.
   late Map<String, dynamic> _item = Map<String, dynamic>.from(widget.item);
+  int? _views;
 
   String get _id => _item['id'] as String;
   String? get _userId => _item['user_id'] as String?;
@@ -48,6 +49,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   void initState() {
     super.initState();
     _loadSeller();
+    _countView();
+  }
+
+  /// Засчитывает просмотр (не для владельца) и получает общее число просмотров.
+  Future<void> _countView() async {
+    try {
+      final n = await Supabase.instance.client.rpc('bump_listing_view', params: {'lid': _id});
+      if (mounted) setState(() => _views = (n as num?)?.toInt());
+    } catch (_) {
+      // Без счётчика экран работает как раньше
+    }
   }
 
   Future<void> _edit() async {
@@ -337,9 +349,27 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Цена и название
-                Text(
-                  priceText(item),
-                  style: const TextStyle(color: AppColors.primary, fontSize: 28, fontWeight: FontWeight.w800),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        priceText(item),
+                        style: const TextStyle(color: AppColors.primary, fontSize: 28, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    if (_views != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.visibility_outlined, size: 20, color: AppColors.muted),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$_views',
+                            style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Text(item['title'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
