@@ -296,6 +296,27 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
+          if (_showReview)
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+              decoration: BoxDecoration(
+                color: AppColors.mint,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Оставьте отзыв продавцу',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  TextButton(onPressed: _dismissReview, child: const Text('Отказать')),
+                  FilledButton(onPressed: _writeReview, child: const Text('Оставить отзыв')),
+                ],
+              ),
+            ),
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: _stream,
@@ -366,14 +387,6 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          if (_showReview)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(onPressed: _dismissReview, child: const Text('Отказать')),
-              ),
-            ),
           SafeArea(
             top: false,
             child: Padding(
