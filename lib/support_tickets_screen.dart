@@ -63,7 +63,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
 
   Future<void> _setStatus(String id, String status) async {
     try {
-      await _db.from('conversations').update({'status': status}).eq('id', id);
+      await _db.rpc('set_ticket_status', params: {'cid': id, 'new_status': status});
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

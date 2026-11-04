@@ -400,10 +400,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _setTicket(String status) async {
     try {
-      await Supabase.instance.client
-          .from('conversations')
-          .update({'status': status})
-          .eq('id', widget.conversationId);
+      await Supabase.instance.client.rpc('set_ticket_status', params: {
+        'cid': widget.conversationId,
+        'new_status': status,
+      });
       if (!mounted) return;
       if (status == 'answered') {
         // Завершённое обращение скрывается из списка для сотрудников — возвращаемся назад
