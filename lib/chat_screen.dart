@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -40,10 +41,18 @@ class ChatScreen extends StatefulWidget {
     required this.title,
     this.staffTicket = false,
     this.canFinish = true,
+    this.joinMode = false,
+    this.initialText,
   });
 
   final String conversationId;
   final String title;
+
+  /// Сотрудник открыл чат пользователей по ID: сначала нужно присоединиться.
+  final bool joinMode;
+
+  /// Текст, который появится в поле ввода (например, ID чата для поддержки).
+  final String? initialText;
 
   /// Обращение в поддержку, открытое сотрудником: показываем кнопки статуса.
   final bool staffTicket;
@@ -59,10 +68,123 @@ class _ChatScreenState extends State<ChatScreen> {
   final _ctrl = TextEditingController();
   bool _sending = false;
 
-  late final Stream<List<Map<String, dynamic>>> _stream = Supabase.instance.client
-      .from('messages')
-      .stream(primaryKey: ['id'])
-      .eq('conversation_id', widget.conversationId);
+  Stream<List<Map<String, dynamic>>>? _stream;
+  bool _isStaff = false;
+
+  void _startStream() {
+    _stream = Supabase.instance.client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('conversation_id', widget.conversationId);
+  }
+
+  Future<void> _loadStaff() async {
+    final me = _me;
+    if (me == null) return;
+    try {
+      final prof = await Supabase.instance.client
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', me)
+          .maybeSingle();
+      if (mounted) setState(() => _isStaff = prof?['is_admin'] == true);
+    } catch (_) {
+      // Без этого ID чата просто не будет кликабельным
+    }
+  }
+
+  /// Сотрудник присоединяется к чату пользователей.
+  Future<void> _join() async {
+    final me = _me;
+    if (me == null) return;
+    try {
+      await Supabase.instance.client.from('conversation_members').upsert(
+        {'conversation_id': widget.conversationId, 'user_id': me},
+        onConflict: 'conversation_id,user_id',
+      );
+      if (mounted) setState(_startStream);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось присоединиться к чату')),
+      );
+    }
+  }
+
+  Widget _joinBox() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Вы ещё не в этом чате',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            const SizedBox(height: 8),
+            const Text(
+              'Присоединитесь, чтобы видеть переписку и отвечать',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(onPressed: _join, child: const Text('Присоединиться')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Открыть поддержку с ID этого чата в поле ввода.
+  Future<void> _contactSupport() async {
+    try {
+      final id = await findOrCreateConversation(kind: 'support');
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversationId: id,
+            title: 'Поддержка',
+            initialText: 'ID чата: ${widget.conversationId}\n',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть поддержку')),
+      );
+    }
+  }
+
+  /// Текст сообщения. Для сотрудника ID чата в тексте нажимается и открывает чат.
+  Widget _bodyText(String body, TextStyle style) {
+    final re = RegExp(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+    final matches = re.allMatches(body).toList();
+    if (matches.isEmpty || !_isStaff) return Text(body, style: style);
+    final spans = <InlineSpan>[];
+    var last = 0;
+    for (final m in matches) {
+      if (m.start > last) spans.add(TextSpan(text: body.substring(last, m.start)));
+      final id = m.group(0)!;
+      spans.add(TextSpan(
+        text: id,
+        style: const TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.w700),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChatScreen(
+                    conversationId: id,
+                    title: 'Чат пользователя',
+                    joinMode: true,
+                  ),
+                ),
+              ),
+      ));
+      last = m.end;
+    }
+    if (last < body.length) spans.add(TextSpan(text: body.substring(last)));
+    return Text.rich(TextSpan(style: style, children: spans));
+  }
 
   String? get _me => Supabase.instance.client.auth.currentUser?.id;
 
@@ -189,6 +311,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     markChatRead(widget.conversationId);
+    if (widget.initialText != null) _ctrl.text = widget.initialText!;
+    if (!widget.joinMode) _startStream();
+    _loadStaff();
     _loadConv();
   }
 
@@ -274,7 +399,18 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          if (!widget.joinMode && !widget.staffTicket && _conv?['kind'] != 'support')
+            PopupMenuButton<String>(
+              onSelected: (_) => _contactSupport(),
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'support', child: Text('Поддержка')),
+              ],
+            ),
+        ],
+      ),
       body: Column(
         children: [
           if (widget.staffTicket)
@@ -329,7 +465,9 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
+            child: _stream == null
+                ? _joinBox()
+                : StreamBuilder<List<Map<String, dynamic>>>(
               stream: _stream,
               builder: (context, snap) {
                 if (snap.hasError) {
@@ -368,9 +506,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         color: mine ? AppColors.primary : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Text(
+                      child: _bodyText(
                         m['body'] as String,
-                        style: TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
+                        TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
                       ),
                     );
                     return Padding(
