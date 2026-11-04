@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'auth_screen.dart';
 import 'favorites_store.dart';
 import 'lang_store.dart';
+import 'legal_screen.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'theme.dart';
@@ -191,12 +192,16 @@ class _ProfilePageState extends State<_ProfilePage> {
                     _MenuTile(
                       icon: Icons.privacy_tip_outlined,
                       title: tr('Политика конфиденциальности', 'Сиёсати махфият'),
-                      onTap: () => _openText(context, 'Политика конфиденциальности'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+                      ),
                     ),
                     _MenuTile(
                       icon: Icons.description_outlined,
                       title: tr('Условия использования', 'Шартҳои истифода'),
-                      onTap: () => _openText(context, 'Условия использования'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const TermsPage()),
+                      ),
                     ),
                   ],
                 ),
@@ -215,32 +220,6 @@ class _ProfilePageState extends State<_ProfilePage> {
   }
 }
 
-void _openText(BuildContext context, String title) {
-  Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => _TextPage(title: title)),
-  );
-}
-
-/// Заглушка для юридических текстов. Текст появится после проверки юристом.
-class _TextPage extends StatelessWidget {
-  const _TextPage({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const Padding(
-        padding: EdgeInsets.all(20),
-        child: Text(
-          'Текст появится здесь после проверки юристом.',
-          style: TextStyle(color: AppColors.muted, height: 1.4),
-        ),
-      ),
-    );
-  }
-}
 
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
