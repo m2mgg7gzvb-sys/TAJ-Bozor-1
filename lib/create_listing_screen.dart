@@ -146,6 +146,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool _loadingCategories = true;
   int? _categoryId;
   bool _saving = false;
+  int _days = 14;
   String? _error;
 
   bool get _isAuto => _categories.any((c) => c['id'] == _categoryId && c['slug'] == 'auto');
@@ -237,6 +238,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
   }
 
+  String _daysWord(int n) {
+    final m10 = n % 10;
+    final m100 = n % 100;
+    if (m100 >= 11 && m100 <= 14) return 'дней';
+    if (m10 == 1) return 'день';
+    if (m10 >= 2 && m10 <= 4) return 'дня';
+    return 'дней';
+  }
+
   /// Название авто как на Авито: «Марка Модель объём КПП, год».
   String _autoTitle() {
     const gearShort = {'Автомат': 'AT', 'Механика': 'MT', 'Робот': 'RT', 'Вариатор': 'CVT'};
@@ -279,6 +289,30 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     put('color', _colorCtrl.text);
     put('vin', _vinCtrl.text.toUpperCase());
     return m;
+  }
+
+  /// Удаление: объявление скрывается из поиска (статус «deleted»), данные не теряются.
+  Future<void> _delete() async {
+    final id = widget.listing!['id'] as String;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Удалить объявление?'),
+        content: const Text('Оно пропадёт из поиска и с вашего профиля.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Удалить')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await Supabase.instance.client.from('listings').update({'status': 'deleted'}).eq('id', id);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      _fail('Не удалось удалить. Попробуйте снова');
+    }
   }
 
   Future<void> _submit() async {
@@ -338,6 +372,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'address': _addressCtrl.text.trim(),
             'details': _isAuto ? _carDetails() : null,
             'status': 'active',
+            'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
           })
           .select('id')
           .single();
@@ -521,6 +556,23 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           if (_isAuto) ..._carSection(),
           if (widget.listing == null) ...[
           const SizedBox(height: 16),
+          Text(
+            'Срок объявления: $_days ${_daysWord(_days)}',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          Slider(
+            value: _days.toDouble(),
+            min: 7,
+            max: 30,
+            divisions: 23,
+            label: '$_days',
+            onChanged: (v) => setState(() => _days = v.round()),
+          ),
+          const Text(
+            'От 7 до 30 дней. По истечении срока объявление снимается с публикации.',
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
           const Text('Фото (до 5)', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Wrap(
@@ -545,6 +597,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           if (_error != null) ...[
             const SizedBox(height: 16),
             Text(_error!, style: TextStyle(color: Colors.red.shade700)),
+          ],
+          if (widget.listing != null) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _saving ? null : _delete,
+              child: Text('Удалить объявление', style: TextStyle(color: Colors.red.shade700)),
+            ),
           ],
           const SizedBox(height: 24),
           FilledButton(
