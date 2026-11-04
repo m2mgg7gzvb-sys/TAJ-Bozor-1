@@ -130,7 +130,7 @@ Future<void> markChatRead(String conversationId) async {
 }
 
 /// Баннер сверху экрана на 5 секунд; нажатие закрывает его.
-void showTopBanner(String title, String body) {
+void showTopBanner(String title, String body, {VoidCallback? onTap}) {
   final overlay = appNavigatorKey.currentState?.overlay;
   if (overlay == null) return;
   late OverlayEntry entry;
@@ -149,7 +149,10 @@ void showTopBanner(String title, String body) {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: close,
+              onTap: () {
+                close();
+                onTap?.call();
+              },
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 padding: const EdgeInsets.all(14),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'notify_store.dart';
+import 'review_dialog.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
@@ -69,6 +70,88 @@ class _ChatScreenState extends State<ChatScreen> {
   final Map<String, Map<String, dynamic>> _profiles = {};
   final Set<String> _requested = {};
 
+  /// Отзыв продавцу: покупатель видит предложение, когда продавец ответил.
+  Map<String, dynamic>? _conv;
+  bool _showReview = false;
+  int _msgCount = -1;
+
+  Future<void> _loadConv() async {
+    try {
+      final row = await Supabase.instance.client
+          .from('conversations')
+          .select('kind, buyer_id, seller_id, review_dismissed')
+          .eq('id', widget.conversationId)
+          .maybeSingle();
+      if (!mounted) return;
+      setState(() => _conv = row);
+      await _checkReview();
+    } catch (_) {
+      // Без этого просто не покажем предложение оставить отзыв
+    }
+  }
+
+  Future<void> _checkReview() async {
+    final c = _conv;
+    final me = _me;
+    if (c == null || me == null) return;
+    final seller = c['seller_id'] as String?;
+    final eligible = c['kind'] == 'listing' &&
+        c['buyer_id'] == me &&
+        seller != null &&
+        seller != me &&
+        c['review_dismissed'] != true;
+    if (!eligible) {
+      if (mounted && _showReview) setState(() => _showReview = false);
+      return;
+    }
+    try {
+      final db = Supabase.instance.client;
+      final replied = await db
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', widget.conversationId)
+          .eq('sender_id', seller)
+          .limit(1);
+      final reviewed = await db
+          .from('reviews')
+          .select('id')
+          .eq('reviewed_id', seller)
+          .eq('author_id', me)
+          .limit(1);
+      final show = replied.isNotEmpty && reviewed.isEmpty;
+      if (mounted && show != _showReview) setState(() => _showReview = show);
+    } catch (_) {
+      // Ошибку проверки не показываем: предложение просто не появится
+    }
+  }
+
+  Future<void> _dismissReview() async {
+    setState(() => _showReview = false);
+    try {
+      await Supabase.instance.client
+          .from('conversations')
+          .update({'review_dismissed': true})
+          .eq('id', widget.conversationId);
+    } catch (_) {
+      // Если не сохранилось, предложение может появиться снова
+    }
+  }
+
+  Future<void> _writeReview() async {
+    final seller = _conv?['seller_id'] as String?;
+    if (seller == null) return;
+    final sent = await showReviewSheet(
+      context,
+      sellerId: seller,
+      conversationId: widget.conversationId,
+    );
+    if (!sent || !mounted) return;
+    setState(() => _showReview = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Спасибо за отзыв!')),
+    );
+  }
+
   void _requestProfiles(List<Map<String, dynamic>> items) {
     final missing = <String>{
       for (final m in items)
@@ -106,10 +189,27 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     markChatRead(widget.conversationId);
+    _loadConv();
   }
 
   @override
   void dispose() {
+    // Вышли из переписки, а отзыв ещё не оставлен: напоминаем баннером сверху
+    if (_showReview) {
+      final id = widget.conversationId;
+      final seller = _conv?['seller_id'] as String?;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showTopBanner(
+          'Оставьте отзыв продавцу',
+          'Вы общались с продавцом. Нажмите, чтобы написать отзыв',
+          onTap: () {
+            final ctx = appNavigatorKey.currentState?.overlay?.context;
+            if (ctx == null || seller == null) return;
+            showReviewSheet(ctx, sellerId: seller, conversationId: id);
+          },
+        );
+      });
+    }
     markChatRead(widget.conversationId);
     _ctrl.dispose();
     super.dispose();
@@ -209,6 +309,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 final items = [...snap.data!]
                   ..sort((a, b) => (a['created_at'] as String).compareTo(b['created_at'] as String));
                 _requestProfiles(items);
+                // Новое сообщение могло быть ответом продавца: перепроверяем предложение
+                if (items.length != _msgCount) {
+                  _msgCount = items.length;
+                  WidgetsBinding.instance.addPostFrameCallback((_) => _checkReview());
+                }
                 if (items.isEmpty) {
                   return const Center(
                     child: Text('Напишите первое сообщение', style: TextStyle(color: AppColors.muted)),
@@ -261,6 +366,14 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+          if (_showReview)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(onPressed: _dismissReview, child: const Text('Отказать')),
+              ),
+            ),
           SafeArea(
             top: false,
             child: Padding(
