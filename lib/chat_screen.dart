@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'notify_store.dart';
 import 'theme.dart';
+import 'user_profile_screen.dart';
 
 /// Находит переписку текущего пользователя или создаёт новую.
 /// kind: 'support' (чат с командой) или 'listing' (чат по объявлению).
@@ -63,6 +64,43 @@ class _ChatScreenState extends State<ChatScreen> {
       .eq('conversation_id', widget.conversationId);
 
   String? get _me => Supabase.instance.client.auth.currentUser?.id;
+
+  /// Профили собеседников (имя и фото) для аватаров у сообщений.
+  final Map<String, Map<String, dynamic>> _profiles = {};
+  final Set<String> _requested = {};
+
+  void _requestProfiles(List<Map<String, dynamic>> items) {
+    final missing = <String>{
+      for (final m in items)
+        if (m['sender_id'] is String && m['sender_id'] != _me) m['sender_id'] as String,
+    }.where((id) => !_requested.contains(id)).toList();
+    if (missing.isEmpty) return;
+    _requested.addAll(missing);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadProfiles(missing));
+  }
+
+  Future<void> _loadProfiles(List<String> ids) async {
+    try {
+      final rows = List<Map<String, dynamic>>.from(await Supabase.instance.client
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .inFilter('id', ids));
+      if (!mounted) return;
+      setState(() {
+        for (final r in rows) {
+          _profiles[r['id'] as String] = r;
+        }
+      });
+    } catch (_) {
+      // Без имени и фото сообщения всё равно показываются
+    }
+  }
+
+  void _openProfile(String userId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => UserProfileScreen(userId: userId)),
+    );
+  }
 
   @override
   void initState() {
@@ -170,6 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
                 final items = [...snap.data!]
                   ..sort((a, b) => (a['created_at'] as String).compareTo(b['created_at'] as String));
+                _requestProfiles(items);
                 if (items.isEmpty) {
                   return const Center(
                     child: Text('Напишите первое сообщение', style: TextStyle(color: AppColors.muted)),
@@ -182,20 +221,39 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (_, i) {
                     final m = items[items.length - 1 - i];
                     final mine = m['sender_id'] == _me;
-                    return Align(
-                      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                        constraints: const BoxConstraints(maxWidth: 280),
-                        decoration: BoxDecoration(
-                          color: mine ? AppColors.primary : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          m['body'] as String,
-                          style: TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
-                        ),
+                    final senderId = m['sender_id'] as String?;
+                    final prof = senderId == null ? null : _profiles[senderId];
+                    final name = (prof?['name'] as String?)?.trim();
+                    final bubble = Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      constraints: const BoxConstraints(maxWidth: 260),
+                      decoration: BoxDecoration(
+                        color: mine ? AppColors.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        m['body'] as String,
+                        style: TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
+                      ),
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: mine ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (!mine)
+                            GestureDetector(
+                              onTap: senderId == null ? null : () => _openProfile(senderId),
+                              child: UserAvatar(
+                                name: (name == null || name.isEmpty) ? 'П' : name,
+                                url: prof?['avatar_url'] as String?,
+                                radius: 16,
+                              ),
+                            ),
+                          if (!mine) const SizedBox(width: 8),
+                          Flexible(child: bubble),
+                        ],
                       ),
                     );
                   },
