@@ -82,11 +82,14 @@ Future<void> refreshUnread() async {
         .select('id')
         .eq('user_id', me)
         .eq('is_read', false);
-    final convs = List<Map<String, dynamic>>.from(await db.from('conversations').select('id'));
+    final convs = List<Map<String, dynamic>>.from(
+        await db.from('conversations').select('id, kind, status, buyer_id'));
     final prefs = await SharedPreferences.getInstance();
     final unread = <String>{};
     for (final c in convs) {
       final id = c['id'] as String;
+      // Завершённые обращения сотрудника не считаются новыми
+      if (c['kind'] == 'support' && c['status'] == 'answered' && c['buyer_id'] != me) continue;
       final last = List<Map<String, dynamic>>.from(await db
           .from('messages')
           .select('sender_id, created_at')
