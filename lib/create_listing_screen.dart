@@ -237,10 +237,19 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
   }
 
-  /// Название авто собирается из выбранных марки, модели и года.
-  String _autoTitle() => [_brandCtrl.text, _modelCtrl.text, _yearCtrl.text]
-      .where((e) => e.trim().isNotEmpty)
-      .join(' ');
+  /// Название авто как на Авито: «Марка Модель объём КПП, год».
+  String _autoTitle() {
+    const gearShort = {'Автомат': 'AT', 'Механика': 'MT', 'Робот': 'RT', 'Вариатор': 'CVT'};
+    final head = [
+      _brandCtrl.text.trim(),
+      _modelCtrl.text.trim(),
+      _engineCtrl.text.trim(),
+      if (_gearbox != null) gearShort[_gearbox] ?? '',
+    ].where((e) => e.isNotEmpty).join(' ');
+    final year = _yearCtrl.text.trim();
+    if (head.isEmpty) return year;
+    return year.isEmpty ? head : '$head, $year';
+  }
 
   /// Выпадающий список, который не падает, если сохранённого значения нет в списке.
   Widget _pick(String hint, String current, List<String> items, ValueChanged<String> onChanged) {
@@ -355,11 +364,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     }
   }
 
-  Widget _field(TextEditingController c, String hint, {TextInputType? type, int? maxLength}) {
+  Widget _field(TextEditingController c, String hint, {TextInputType? type, int? maxLength, ValueChanged<String>? onChanged}) {
     return TextField(
       controller: c,
       keyboardType: type,
       maxLength: maxLength,
+      onChanged: onChanged,
       decoration: InputDecoration(hintText: hint, counterText: ''),
     );
   }
@@ -412,6 +422,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 12),
       _pick('Год выпуска', _yearCtrl.text, _carYears, (v) => _yearCtrl.text = v),
       const SizedBox(height: 12),
+      Text(
+        'Название: ${_autoTitle()}',
+        style: const TextStyle(color: AppColors.muted, fontSize: 13),
+      ),
+      const SizedBox(height: 12),
       _field(_mileageCtrl, 'Пробег, км', type: TextInputType.number),
       const SizedBox(height: 12),
       _drop('Состояние', _condition, _conditions, (v) => _condition = v),
@@ -420,7 +435,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 12),
       _drop('Топливо', _fuel, _fuels, (v) => _fuel = v),
       const SizedBox(height: 12),
-      _field(_engineCtrl, 'Объём двигателя, л, например 2.0', type: const TextInputType.numberWithOptions(decimal: true)),
+      _field(
+        _engineCtrl,
+        'Объём двигателя, л, например 2.0',
+        type: const TextInputType.numberWithOptions(decimal: true),
+        onChanged: (_) => setState(() {}),
+      ),
       const SizedBox(height: 12),
       _drop('Коробка передач', _gearbox, _gearboxes, (v) => _gearbox = v),
       const SizedBox(height: 12),
