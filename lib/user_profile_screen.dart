@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'chat_screen.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
@@ -84,6 +85,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         .eq('reviewed_id', widget.userId)
         .order('created_at', ascending: false));
     return _UserData(profile: profile ?? {}, listings: listings, reviews: reviews);
+  }
+
+  /// Открывает личную переписку с этим пользователем.
+  Future<void> _write(String title) async {
+    try {
+      final id = await findOrCreateConversation(kind: 'listing', sellerId: widget.userId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ChatScreen(conversationId: id, title: title)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть переписку')),
+      );
+    }
   }
 
   Future<void> _leaveReview() async {
@@ -213,6 +230,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ],
                   ),
                 ),
+                if (canReview) ...[
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: () => _write(displayName),
+                    icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    label: const Text('Написать'),
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Row(
                   children: [

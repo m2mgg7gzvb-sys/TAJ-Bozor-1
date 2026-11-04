@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:image_picker/image_picker.dart';
+
 import 'auth_screen.dart';
 import 'favorites_store.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'theme.dart';
+import 'user_profile_screen.dart';
 import 'welcome_screen.dart';
 
 /// Вкладка «Войти»: форма входа, если никто не вошёл, иначе профиль.
@@ -24,13 +27,21 @@ class AccountTab extends StatelessWidget {
 
 /// Данные профиля и счётчики для шапки.
 class _ProfileData {
-  const _ProfileData({this.name, this.city, this.phone, this.listingsCount = 0, this.isAdmin = false});
+  const _ProfileData({
+    this.name,
+    this.city,
+    this.phone,
+    this.listingsCount = 0,
+    this.isAdmin = false,
+    this.avatarUrl,
+  });
 
   final String? name;
   final String? city;
   final String? phone;
   final int listingsCount;
   final bool isAdmin;
+  final String? avatarUrl;
 
   static const empty = _ProfileData();
 }
@@ -52,7 +63,7 @@ class _ProfilePageState extends State<_ProfilePage> {
     final uid = widget.user.id;
     final profile = await db
         .from('profiles')
-        .select('name, city, phone, is_admin')
+        .select('name, city, phone, is_admin, avatar_url')
         .eq('id', uid)
         .maybeSingle();
     final listings = await db.from('listings').select('id').eq('user_id', uid);
@@ -62,6 +73,7 @@ class _ProfilePageState extends State<_ProfilePage> {
       phone: profile?['phone'] as String?,
       listingsCount: listings.length,
       isAdmin: profile?['is_admin'] == true,
+      avatarUrl: profile?['avatar_url'] as String?,
     );
   }
 
@@ -99,6 +111,7 @@ class _ProfilePageState extends State<_ProfilePage> {
               children: [
                 _ProfileHeader(
                   name: name,
+                  avatarUrl: d.avatarUrl,
                   city: d.city,
                   phone: d.phone,
                   email: widget.user.email,
@@ -223,6 +236,7 @@ class _ProfileHeader extends StatelessWidget {
     required this.city,
     required this.phone,
     required this.email,
+    this.avatarUrl,
     this.onEdit,
   });
 
@@ -230,11 +244,11 @@ class _ProfileHeader extends StatelessWidget {
   final String? city;
   final String? phone;
   final String? email;
+  final String? avatarUrl;
   final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: cardDecoration(radius: 20),
@@ -242,14 +256,7 @@ class _ProfileHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 34,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  initial,
-                  style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
-                ),
-              ),
+              UserAvatar(name: name, url: avatarUrl, radius: 34),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -327,8 +334,43 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final _name = TextEditingController(text: widget.data.name ?? '');
   late final _city = TextEditingController(text: widget.data.city ?? '');
   late final _phone = TextEditingController(text: widget.data.phone ?? '');
+  late String? _avatarUrl = widget.data.avatarUrl;
+  bool _uploading = false;
   bool _saving = false;
   String? _error;
+
+  /// Выбор фото из галереи и загрузка в бакет avatars (путь: <id пользователя>/avatar.jpg).
+  Future<void> _pickAvatar() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 800,
+    );
+    if (picked == null) return;
+    setState(() {
+      _uploading = true;
+      _error = null;
+    });
+    try {
+      final db = Supabase.instance.client;
+      final bytes = await picked.readAsBytes();
+      final path = '${widget.user.id}/avatar.jpg';
+      await db.storage.from('avatars').uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+          );
+      final url = db.storage.from('avatars').getPublicUrl(path);
+      // Метка времени, чтобы браузер не показывал старое фото из кеша
+      if (mounted) {
+        setState(() => _avatarUrl = '$url?v=${DateTime.now().millisecondsSinceEpoch}');
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Не удалось загрузить фото');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -354,6 +396,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         'name': _name.text.trim(),
         'city': _city.text.trim(),
         'phone': phone.isEmpty ? null : phone,
+        'avatar_url': _avatarUrl,
       });
       if (mounted) Navigator.of(context).pop(true);
     } on PostgrestException catch (e) {
@@ -379,6 +422,36 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 16),
+          Center(
+            child: GestureDetector(
+              onTap: _uploading ? null : _pickAvatar,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  UserAvatar(
+                    name: _name.text.trim().isEmpty ? 'П' : _name.text.trim(),
+                    url: _avatarUrl,
+                    radius: 40,
+                  ),
+                  if (_uploading) const CircularProgressIndicator(strokeWidth: 2),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: CircleAvatar(
+                      radius: 13,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.camera_alt_rounded, size: 15, color: AppColors.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Center(
+            child: Text('Нажмите, чтобы сменить фото', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _name,
             decoration: const InputDecoration(labelText: 'Имя'),
