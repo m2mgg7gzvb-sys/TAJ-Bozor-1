@@ -207,6 +207,17 @@ class _ChatScreenState extends State<ChatScreen> {
             if (ctx == null || seller == null) return;
             showReviewSheet(ctx, sellerId: seller, conversationId: id);
           },
+          secondaryLabel: 'Отказать',
+          onSecondary: () async {
+            try {
+              await Supabase.instance.client
+                  .from('conversations')
+                  .update({'review_dismissed': true})
+                  .eq('id', id);
+            } catch (_) {
+              // Если не сохранилось, предложение может появиться снова
+            }
+          },
         );
       });
     }
