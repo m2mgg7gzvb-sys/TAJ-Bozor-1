@@ -347,6 +347,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       if (editing != null) {
         // Правка: фото не меняем, обновляем только текстовые поля и характеристики.
         await db.from('listings').update({
+          'status': 'moderation',
           'category_id': _categoryId,
           'title': title,
           'description': _descCtrl.text.trim(),
@@ -371,7 +372,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'city': _cityCtrl.text.trim(),
             'address': _addressCtrl.text.trim(),
             'details': _isAuto ? _carDetails() : null,
-            'status': 'active',
+            'status': 'moderation',
             'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
           })
           .select('id')

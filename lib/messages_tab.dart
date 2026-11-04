@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'chat_screen.dart';
 import 'listing_utils.dart';
+import 'moderation_screen.dart';
 import 'notify_store.dart';
 import 'notifications_screen.dart';
 import 'support_tickets_screen.dart';
@@ -123,6 +124,17 @@ class _MessagesTabState extends State<MessagesTab> {
                       : _openSupport,
                 ),
                 const SizedBox(height: 10),
+                if (_staff) ...[
+                  _Tile(
+                    icon: Icons.fact_check_outlined,
+                    title: 'Проверка объявлений',
+                    subtitle: 'Новые и изменённые объявления',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ModerationScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 _Tile(
                   icon: Icons.notifications_none_rounded,
                   title: 'Уведомления',
