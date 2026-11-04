@@ -6,6 +6,7 @@ import 'favorites_screen.dart';
 import 'favorites_store.dart';
 import 'guest_prompt.dart';
 import 'home_tab.dart';
+import 'lang_store.dart';
 import 'messages_tab.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
@@ -58,9 +59,9 @@ class _HomeShellState extends State<HomeShell> {
         selectedIndex: _index,
         onDestinationSelected: (i) => tabIndex.value = i,
         destinations: [
-          const NavigationDestination(icon: Icon(Icons.search_rounded), label: 'Поиск'),
-          const NavigationDestination(icon: Icon(Icons.favorite_border_rounded), label: 'Избранное'),
-          const NavigationDestination(icon: Icon(Icons.post_add_rounded), label: 'Объявления'),
+          NavigationDestination(icon: const Icon(Icons.search_rounded), label: tr('Поиск', 'Ҷустуҷӯ')),
+          NavigationDestination(icon: const Icon(Icons.favorite_border_rounded), label: tr('Избранное', 'Интихобшуда')),
+          NavigationDestination(icon: const Icon(Icons.post_add_rounded), label: tr('Объявления', 'Эълонҳо')),
           NavigationDestination(
             icon: ValueListenableBuilder<bool>(
               valueListenable: hasUnread,
@@ -71,9 +72,9 @@ class _HomeShellState extends State<HomeShell> {
                 child: const Icon(Icons.chat_bubble_outline_rounded),
               ),
             ),
-            label: 'Сообщения',
+            label: tr('Сообщения', 'Паёмҳо'),
           ),
-          const NavigationDestination(icon: Icon(Icons.person_outline_rounded), label: 'Войти'),
+          NavigationDestination(icon: const Icon(Icons.person_outline_rounded), label: tr('Войти', 'Ворид')),
         ],
       ),
     );

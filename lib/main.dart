@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'lang_store.dart';
 import 'notify_store.dart';
 import 'splash_screen.dart';
 import 'theme.dart';
@@ -14,6 +15,7 @@ Future<void> main() async {
     anonKey: AppConfig.supabaseKey,
   );
   await ViewedStore.load();
+  await loadLang();
   startNotifications();
   runApp(const TajBozorApp());
 }
@@ -23,12 +25,15 @@ class TajBozorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: appNavigatorKey,
-      title: 'TAJ Bozor',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
-      home: const SplashScreen(),
+    return ValueListenableBuilder<bool>(
+      valueListenable: tajikLang,
+      builder: (_, __, ___) => MaterialApp(
+        navigatorKey: appNavigatorKey,
+        title: 'TAJ Bozor',
+        debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(),
+        home: const SplashScreen(),
+      ),
     );
   }
 }

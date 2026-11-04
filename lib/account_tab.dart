@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'auth_screen.dart';
 import 'favorites_store.dart';
+import 'lang_store.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'theme.dart';
@@ -94,7 +95,7 @@ class _ProfilePageState extends State<_ProfilePage> {
   Widget build(BuildContext context) {
     final isGuest = widget.user.isAnonymous;
     return Scaffold(
-      appBar: AppBar(title: const Text('Профиль')),
+      appBar: AppBar(title: Text(tr('Профиль', 'Профил'))),
       body: FutureBuilder<_ProfileData>(
         future: _data,
         builder: (context, snap) {
@@ -109,6 +110,17 @@ class _ProfilePageState extends State<_ProfilePage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                ValueListenableBuilder<bool>(
+                  valueListenable: tajikLang,
+                  builder: (_, tg, __) => Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton(
+                      onPressed: () => showLanguagePicker(context),
+                      child: Text(tg ? '🌍 Русский' : '🌍 Тоҷикӣ'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 _ProfileHeader(
                   name: name,
                   avatarUrl: d.avatarUrl,
@@ -122,9 +134,9 @@ class _ProfilePageState extends State<_ProfilePage> {
                   valueListenable: FavoritesStore.ids,
                   builder: (_, favIds, __) => Row(
                     children: [
-                      Expanded(child: _Stat(value: '${d.listingsCount}', label: 'Объявления')),
+                      Expanded(child: _Stat(value: '${d.listingsCount}', label: tr('Объявления', 'Эълонҳо'))),
                       const SizedBox(width: 10),
-                      Expanded(child: _Stat(value: '${favIds.length}', label: 'Избранное')),
+                      Expanded(child: _Stat(value: '${favIds.length}', label: tr('Избранное', 'Интихобшуда'))),
                     ],
                   ),
                 ),
@@ -137,34 +149,34 @@ class _ProfilePageState extends State<_ProfilePage> {
                   children: [
                     _MenuTile(
                       icon: Icons.list_alt_rounded,
-                      title: 'Мои объявления',
+                      title: tr('Мои объявления', 'Эълонҳои ман'),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const MyListingsTab()),
                       ),
                     ),
                     _MenuTile(
                       icon: Icons.favorite_border_rounded,
-                      title: 'Избранное',
+                      title: tr('Избранное', 'Интихобшуда'),
                       onTap: () => tabIndex.value = 1,
                     ),
                     _MenuTile(
                       icon: Icons.chat_bubble_outline_rounded,
-                      title: 'Сообщения',
+                      title: tr('Сообщения', 'Паёмҳо'),
                       onTap: () => tabIndex.value = 3,
                     ),
                     if (!d.isAdmin)
                       _MenuTile(
                         icon: Icons.support_agent_rounded,
-                        title: 'Поддержка',
+                        title: tr('Поддержка', 'Дастгирӣ'),
                         onTap: () => tabIndex.value = 3,
                       ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Padding(
-                  padding: EdgeInsets.only(left: 4, bottom: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 8),
                   child: Text(
-                    'Настройки',
+                    tr('Настройки', 'Танзимот'),
                     style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -173,17 +185,17 @@ class _ProfilePageState extends State<_ProfilePage> {
                     if (!isGuest)
                       _MenuTile(
                         icon: Icons.edit_outlined,
-                        title: 'Редактировать профиль',
+                        title: tr('Редактировать профиль', 'Тағйири профил'),
                         onTap: () => _edit(d),
                       ),
                     _MenuTile(
                       icon: Icons.privacy_tip_outlined,
-                      title: 'Политика конфиденциальности',
+                      title: tr('Политика конфиденциальности', 'Сиёсати махфият'),
                       onTap: () => _openText(context, 'Политика конфиденциальности'),
                     ),
                     _MenuTile(
                       icon: Icons.description_outlined,
-                      title: 'Условия использования',
+                      title: tr('Условия использования', 'Шартҳои истифода'),
                       onTap: () => _openText(context, 'Условия использования'),
                     ),
                   ],
@@ -192,7 +204,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 if (!isGuest)
                   OutlinedButton(
                     onPressed: () => Supabase.instance.client.auth.signOut(),
-                    child: const Text('Выйти'),
+                    child: Text(tr('Выйти', 'Баромадан')),
                   ),
               ],
             ),
