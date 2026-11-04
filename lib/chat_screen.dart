@@ -373,6 +373,31 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  static final _uuidRe = RegExp(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+
+  /// Кнопка для сотрудника под сообщением в поддержке, где есть ID чата.
+  List<Widget> _openChatButtons(String body) {
+    if (!_isStaff || _conv?['kind'] != 'support') return const [];
+    final id = _uuidRe.firstMatch(body)?.group(0);
+    if (id == null) return const [];
+    return [
+      const SizedBox(height: 4),
+      OutlinedButton.icon(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: id,
+              title: 'Чат пользователя',
+              joinMode: true,
+            ),
+          ),
+        ),
+        icon: const Icon(Icons.login_rounded, size: 18),
+        label: const Text('Открыть чат пользователя'),
+      ),
+    ];
+  }
+
   Future<void> _setTicket(String status) async {
     try {
       await Supabase.instance.client
@@ -527,7 +552,17 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             ),
                           if (!mine) const SizedBox(width: 8),
-                          Flexible(child: bubble),
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment:
+                                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                bubble,
+                                ..._openChatButtons(m['body'] as String),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     );
