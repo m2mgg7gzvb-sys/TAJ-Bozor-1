@@ -45,47 +45,48 @@ class _MapPickerPage extends StatefulWidget {
 }
 
 class _MapPickerPageState extends State<_MapPickerPage> {
-  LatLng? _point;
+  final _mapController = MapController();
+  late LatLng _center = widget.initial ?? _cityCenter(widget.city);
 
   @override
-  void initState() {
-    super.initState();
-    _point = widget.initial;
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final center = _point ?? _cityCenter(widget.city);
     return Scaffold(
       appBar: AppBar(title: const Text('Точка на карте')),
       body: Column(
         children: [
           Expanded(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 13,
-                onTap: (_, p) => setState(() => _point = p),
-              ),
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.tajbozor.app',
-                ),
-                if (_point != null)
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _point!,
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.topCenter,
-                        child: const Icon(Icons.location_pin, color: Colors.red, size: 44),
-                      ),
-                    ],
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _center,
+                    initialZoom: 13,
+                    onPositionChanged: (camera, _) => _center = camera.center,
                   ),
-                const RichAttributionWidget(
-                  attributions: [TextSourceAttribution('© OpenStreetMap contributors')],
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.tajbozor.app',
+                    ),
+                    const RichAttributionWidget(
+                      attributions: [TextSourceAttribution('© OpenStreetMap contributors')],
+                    ),
+                  ],
+                ),
+                // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
+                IgnorePointer(
+                  child: Transform.translate(
+                    offset: const Offset(0, -22),
+                    child: const Icon(Icons.location_pin, color: Colors.red, size: 44),
+                  ),
                 ),
               ],
             ),
@@ -96,16 +97,14 @@ class _MapPickerPageState extends State<_MapPickerPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  _point == null
-                      ? 'Нажмите на карту, чтобы поставить точку'
-                      : 'Точка выбрана. Можно нажать в другом месте, чтобы передвинуть',
+                const Text(
+                  'Передвигайте карту, чтобы красный маркер стоял на нужном месте',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: AppColors.muted),
                 ),
                 const SizedBox(height: 10),
                 FilledButton(
-                  onPressed: _point == null ? null : () => Navigator.of(context).pop(_point),
+                  onPressed: () => Navigator.of(context).pop(_center),
                   child: const Text('Готово'),
                 ),
               ],
