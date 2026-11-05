@@ -50,15 +50,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
   late Future<List<Map<String, dynamic>>> _future = _load();
 
   Future<List<Map<String, dynamic>>> _load() async {
+    // Основной запрос не трогает колонку заявителя: список жалоб грузится в любом случае.
     final rows = List<Map<String, dynamic>>.from(await _db
         .from('listing_reports')
-        .select('id, reason, created_at, listing_id, reporter_id, listings(id, title, status, price, currency)')
+        .select('id, reason, created_at, listing_id, listings(id, title, status, price, currency)')
         .eq('status', 'open')
         .order('created_at', ascending: false));
-    // Имена заявителей берём отдельным запросом: так список жалоб загружается, даже если имя не пришло.
-    final ids = {for (final r in rows) if (r['reporter_id'] != null) r['reporter_id'] as String};
-    if (ids.isNotEmpty) {
-      try {
+    if (rows.isEmpty) return rows;
+    try {
+      // Заявители отдельным запросом; если его не выполнить, карточки покажем без имени.
+      final who = List<Map<String, dynamic>>.from(await _db
+          .from('listing_reports')
+          .select('id, reporter_id')
+          .inFilter('id', [for (final r in rows) r['id']]));
+      final reporterOf = {for (final w in who) w['id'] as String: w['reporter_id'] as String?};
+      for (final r in rows) {
+        r['reporter_id'] = reporterOf[r['id'] as String];
+      }
+      final ids = {for (final r in rows) if (r['reporter_id'] != null) r['reporter_id'] as String};
+      if (ids.isNotEmpty) {
         final ps = List<Map<String, dynamic>>.from(
             await _db.from('profiles').select('id, name').inFilter('id', ids.toList()));
         final byId = {for (final p in ps) p['id'] as String: p};
@@ -66,9 +76,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
           final rid = r['reporter_id'] as String?;
           if (rid != null) r['reporter'] = byId[rid];
         }
-      } catch (_) {
-        // Без имён список всё равно показываем
       }
+    } catch (_) {
+      // Без заявителей жалобы всё равно показываем
     }
     return rows;
   }
@@ -177,7 +187,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             }
             if (snap.hasError) {
               return ListView(children: const [
-                Padding(padding: EdgeInsets.all(24), child: Text('Не удалось загрузить жалобы', textAlign: TextAlign.center)),
+                Padding(padding: const EdgeInsets.all(24), child: Text('Не удалось загрузить жалобы: ${snap.error}', textAlign: TextAlign.center)),
               ]);
             }
             final items = snap.data ?? const <Map<String, dynamic>>[];
