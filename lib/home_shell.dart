@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -23,6 +25,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   late int _index;
+  late final StreamSubscription<AuthState> _authSub;
 
   @override
   void initState() {
@@ -30,11 +33,16 @@ class _HomeShellState extends State<HomeShell> {
     _index = tabIndex.value;
     tabIndex.addListener(_onTabChanged);
     FavoritesStore.load();
+    // Подпись последней вкладки меняется после входа и выхода: «Войти» → «Профиль».
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     tabIndex.removeListener(_onTabChanged);
+    _authSub.cancel();
     super.dispose();
   }
 
@@ -74,7 +82,12 @@ class _HomeShellState extends State<HomeShell> {
             ),
             label: tr('Сообщения', 'Паёмҳо'),
           ),
-          NavigationDestination(icon: const Icon(Icons.person_outline_rounded), label: tr('Войти', 'Ворид')),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline_rounded),
+            label: Supabase.instance.client.auth.currentSession != null
+                ? tr('Профиль', 'Профил')
+                : tr('Войти', 'Ворид'),
+          ),
         ],
       ),
     );
