@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'admin_threads.dart';
 import 'theme.dart';
 
-const _actionNames = <String, String>{
+const adminActionNames = <String, String>{
   'approve': 'Опубликовано',
   'freeze': 'Заморожено',
   'unfreeze': 'Разморожено',
@@ -13,6 +14,7 @@ const _actionNames = <String, String>{
   'restore': 'Возвращено в активные',
   'report_closed': 'Жалоба закрыта',
   'report_block': 'Жалоба: объявление заблокировано',
+  'message': 'Сообщение администратора',
 };
 
 /// Меняет статус объявления от имени админа, сохраняет причину для владельца и пишет в журнал.
@@ -49,6 +51,25 @@ Future<void> _notifyOwner(Map<String, dynamic>? listing, String action, String? 
     });
   } catch (_) {
     // Уведомление не критично для решения админа
+  }
+}
+
+/// Сообщение владельцу от имени администратора: пишется в журнал по объявлению и уходит уведомлением.
+Future<void> adminSendMessage(String listingId, String text) async {
+  final db = Supabase.instance.client;
+  final listing = await db.from('listings').select('user_id, title').eq('id', listingId).maybeSingle();
+  await db.from('admin_log').insert({'listing_id': listingId, 'action': 'message', 'note': text});
+  final ownerId = listing?['user_id'] as String?;
+  if (ownerId == null) return;
+  try {
+    await db.from('notifications').insert({
+      'user_id': ownerId,
+      'title': 'Сообщение от администратора',
+      'body': 'По объявлению «${listing?['title'] ?? ''}»: $text',
+      'is_read': false,
+    });
+  } catch (_) {
+    // Сообщение в журнале уже сохранено
   }
 }
 
@@ -120,17 +141,29 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
               final action = (e['action'] as String?) ?? '';
               final note = e['note'] as String?;
               final date = ((e['created_at'] as String?) ?? '').replaceFirst('T', ' ').split('.').first;
-              return Container(
+              final listingId = e['listing_id'] as String?;
+              return InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: listingId == null
+                    ? null
+                    : () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => AdminThreadScreen(listingId: listingId)),
+                        ),
+                child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: cardDecoration(radius: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_actionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    Text(adminActionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    if (listingId != null)
+                      SelectableText('ID объявления: $listingId',
+                          style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
-                      Text('Причина: $note', style: const TextStyle(fontSize: 13)),
+                      Text(action == 'message' ? note : 'Причина: $note', style: const TextStyle(fontSize: 13)),
                     Text(date, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                   ],
+                ),
                 ),
               );
             },

@@ -5,6 +5,7 @@ import 'chat_screen.dart';
 import 'listing_utils.dart';
 import 'admin_listings_screen.dart';
 import 'admin_log.dart';
+import 'admin_threads.dart';
 import 'listing_reports.dart';
 import 'moderation_screen.dart';
 import 'notify_store.dart';
@@ -161,6 +162,15 @@ class _MessagesTabState extends State<MessagesTab> {
                     subtitle: 'Кто и что менял у объявлений',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AdminLogScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.forum_outlined,
+                    title: 'Чаты по объявлениям',
+                    subtitle: 'Решения и сообщения владельцам по ID',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AdminChatsScreen()),
                     ),
                   ),
                   const SizedBox(height: 10),
