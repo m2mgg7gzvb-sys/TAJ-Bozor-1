@@ -5,6 +5,7 @@ import 'admin_log.dart';
 import 'confirm_delete.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
+import 'user_profile_screen.dart';
 import 'theme.dart';
 
 const _statusNames = <String, String>{
@@ -357,6 +358,21 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
     setState(() => _searching = true);
     try {
       final code = id.toUpperCase();
+      if (code.startsWith('PR-')) {
+        // Аккаунт пользователя: открываем его профиль.
+        final prof = await _db.from('profiles').select('id').eq('public_id', code).maybeSingle();
+        if (!mounted) return;
+        if (prof == null) {
+          messenger.showSnackBar(const SnackBar(content: Text('Аккаунт с таким ID не найден')));
+          return;
+        }
+        final userId = prof['id'] as String;
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => UserProfileScreen(userId: userId)),
+        );
+        _idCtrl.clear();
+        return;
+      }
       final row = code.startsWith('OB-')
           ? await _db.from('listings').select('id').eq('public_id', code).maybeSingle()
           : await _db.from('listings').select('id').eq('id', id).maybeSingle();
@@ -380,7 +396,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Поиск объявления')),
+      appBar: AppBar(title: const Text('Поиск по ID')),
       body: Column(
         children: [
           Padding(
@@ -393,7 +409,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _search(),
                   decoration: InputDecoration(
-                    hintText: 'Например OB-1A2B3C4D',
+                    hintText: 'Например OB-1A2B3C4D или PR-1A2B3C4D',
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: const Color(0xFFE6ECEA),
@@ -407,7 +423,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                 const SizedBox(height: 10),
                 FilledButton(
                   onPressed: _searching ? null : _search,
-                  child: const Text('Найти объявление'),
+                  child: const Text('Найти'),
                 ),
               ],
             ),
@@ -425,7 +441,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Введите ID объявления, чтобы открыть его\nи управлять им',
+                    'Введите ID объявления (OB-…) или аккаунта (PR-…),\nчтобы открыть его',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.muted),
                   ),
