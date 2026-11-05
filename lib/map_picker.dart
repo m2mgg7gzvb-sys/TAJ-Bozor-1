@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'theme.dart';
@@ -47,6 +48,34 @@ class _MapPickerPage extends StatefulWidget {
 class _MapPickerPageState extends State<_MapPickerPage> {
   final _mapController = MapController();
   late LatLng _center = widget.initial ?? _cityCenter(widget.city);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initial == null) _moveToMe();
+  }
+
+  /// Если человек в этом городе, карта сразу встаёт на его место. Иначе остаётся центр города.
+  Future<void> _moveToMe() async {
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) return;
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
+      );
+      if (!mounted) return;
+      final me = LatLng(pos.latitude, pos.longitude);
+      final city = _cityCenter(widget.city);
+      if (const Distance().as(LengthUnit.Kilometer, city, me) < 60) {
+        _mapController.move(me, 16);
+      }
+    } catch (_) {
+      // Нет геолокации: остаёмся на центре города
+    }
+  }
 
   @override
   void dispose() {
