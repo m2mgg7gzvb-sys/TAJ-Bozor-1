@@ -49,12 +49,6 @@ class _MapPickerPageState extends State<_MapPickerPage> {
   final _mapController = MapController();
   late LatLng _center = widget.initial ?? _cityCenter(widget.city);
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initial == null) _moveToMe();
-  }
-
   /// Если человек в этом городе, карта сразу встаёт на его место. Иначе остаётся центр города.
   Future<void> _moveToMe() async {
     try {
@@ -99,6 +93,9 @@ class _MapPickerPageState extends State<_MapPickerPage> {
                     initialCenter: _center,
                     initialZoom: 13,
                     onPositionChanged: (camera, _) => _center = camera.center,
+                    onMapReady: () {
+                      if (widget.initial == null) _moveToMe();
+                    },
                   ),
                   children: [
                     TileLayer(
