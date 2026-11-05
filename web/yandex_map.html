@@ -65,7 +65,8 @@
 
       if (!picker) {
         map.geoObjects.add(new ymaps.Placemark([lat, lng], {}, { preset: 'islands#redDotIcon' }));
-        map.behaviors.disable(['scrollZoom']);
+        // Превью в объявлении не двигаем, чтобы точка оставалась в рамке.
+        map.behaviors.disable(['scrollZoom', 'drag']);
         return;
       }
 
