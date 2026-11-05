@@ -15,6 +15,8 @@ import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'nav_state.dart';
 import 'photo_viewer.dart';
+import 'lang_store.dart';
+import 'listing_reports.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
@@ -264,8 +266,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Объявление'),
+        title: Text(tr('Объявление', 'Эълон'),
         actions: [
+          if (!_isOwner && Supabase.instance.client.auth.currentUser != null)
+            IconButton(
+              tooltip: 'Пожаловаться',
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: () => showReportDialog(context, _id),
+            ),
           if (_isOwner)
             IconButton(
               tooltip: 'Редактировать',
@@ -404,17 +412,26 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   TextButton.icon(
                     onPressed: _openMap,
                     icon: const Icon(Icons.map_outlined, size: 18),
-                    label: const Text('Показать на карте'),
+                    label: Text(tr('Показать на карте', 'Дар харита нишон додан'),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: AppColors.primary),
                   ),
                   const SizedBox(height: 8),
                 ],
 
+                if (_isOwner && item['status'] == 'moderation') ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFFFFF4DE), borderRadius: BorderRadius.circular(14)),
+                    child: const Text('На проверке · до 30 минут',
+                        style: TextStyle(color: Color(0xFF9A5B00), fontWeight: FontWeight.w700)),
+                  ),
+                  const SizedBox(height: 14),
+                ],
                 // Кнопки связи: заказать звонок сверху, ниже «Позвонить» и «Написать»
                 FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2D8CFF)),
                   onPressed: () => showCallbackSheet(context, listingId: _id),
-                  child: const Text('Заказать звонок'),
+                  child: Text(tr('Заказать звонок', 'Занг сафориш додан'),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -423,7 +440,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       child: FilledButton(
                         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
                         onPressed: _call,
-                        child: const Text('Позвонить'),
+                        child: Text(tr('Позвонить', 'Занг задан'),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -435,7 +452,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           side: const BorderSide(color: AppColors.primary),
                         ),
                         onPressed: _write,
-                        child: const Text('Написать'),
+                        child: Text(tr('Написать', 'Навиштан'),
                       ),
                     ),
                   ],
@@ -483,7 +500,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 // Про автомобиль
                 if (_carRows().isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  const Text('Про автомобиль', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  Text(tr('Про автомобиль', 'Дар бораи мошин'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 8),
                   Container(
                     decoration: cardDecoration(radius: 16),
@@ -509,7 +526,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 // Описание
                 if (description != null && description.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  const Text('Описание', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  Text(tr('Описание', 'Тавсиф'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 8),
                   Text(
                     description,
@@ -559,7 +576,7 @@ class _Strip extends StatelessWidget {
         }
         final items = snap.data ?? [];
         if (items.isEmpty) {
-          return const Text('Пока ничего нет', style: TextStyle(color: AppColors.muted));
+          return Text(tr('Пока ничего нет', 'Ҳоло ҳеҷ чиз нест'), style: TextStyle(color: AppColors.muted));
         }
         return SizedBox(
           height: 270,
@@ -601,7 +618,7 @@ class _SellerRating extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Отзывы', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+            Text(tr('Отзывы', 'Шарҳҳо'), style: TextStyle(color: AppColors.muted, fontSize: 13)),
             const SizedBox(width: 6),
             for (var i = 1; i <= 5; i++)
               Icon(

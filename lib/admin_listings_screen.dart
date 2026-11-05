@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
+import 'admin_log.dart';
 import 'confirm_delete.dart';
 import 'theme.dart';
 
@@ -51,9 +52,10 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
     _reload();
   }
 
-  Future<void> _set(String id, String status, String message) async {
+  Future<void> _set(String id, String status, String message,
+      {required String action, String? note}) async {
     try {
-      await _db.from('listings').update({'status': status}).eq('id', id);
+      await adminSetStatus(listingId: id, status: status, action: action, note: note);
       _reload();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
@@ -63,20 +65,6 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
         );
       }
     }
-  }
-
-  Future<bool> _confirm(String text) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        content: Text(text),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Да')),
-        ],
-      ),
-    );
-    return ok == true;
   }
 
   @override
@@ -161,17 +149,25 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                           onOpen: () => Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
                           ),
-                          onFreeze: () => _set(item['id'] as String, 'frozen', 'Объявление заморожено'),
-                          onUnfreeze: () => _set(item['id'] as String, 'active', 'Объявление разморожено'),
-                          onRestore: () => _set(item['id'] as String, 'active', 'Объявление активно'),
+                          onFreeze: () async {
+                            final note = await askReason(context, 'Заморозить объявление?');
+                            if (note == null) return;
+                            _set(item['id'] as String, 'frozen', 'Объявление заморожено',
+                                action: 'freeze', note: note.isEmpty ? null : note);
+                          },
+                          onUnfreeze: () => _set(item['id'] as String, 'active', 'Объявление разморожено',
+                              action: 'unfreeze'),
+                          onRestore: () => _set(item['id'] as String, 'active', 'Объявление активно',
+                              action: 'restore'),
                           onBlock: () async {
-                            if (await _confirm('Заблокировать объявление?')) {
-                              _set(item['id'] as String, 'blocked', 'Объявление заблокировано');
-                            }
+                            final note = await askReason(context, 'Заблокировать объявление?');
+                            if (note == null) return;
+                            _set(item['id'] as String, 'blocked', 'Объявление заблокировано',
+                                action: 'block', note: note.isEmpty ? null : note);
                           },
                           onDelete: () async {
                             if (await confirmDeleteByTyping(context)) {
-                              _set(item['id'] as String, 'hidden', 'Объявление удалено');
+                              _set(item['id'] as String, 'hidden', 'Объявление удалено', action: 'delete');
                             }
                           },
                         ),

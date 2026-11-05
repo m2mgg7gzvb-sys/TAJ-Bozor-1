@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'listing_utils.dart';
 import 'admin_listings_screen.dart';
+import 'admin_log.dart';
+import 'listing_reports.dart';
 import 'moderation_screen.dart';
 import 'notify_store.dart';
 import 'notifications_screen.dart';
@@ -141,6 +143,24 @@ class _MessagesTabState extends State<MessagesTab> {
                     subtitle: 'Заморозка, блокировка, удаление',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AdminListingsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.flag_outlined,
+                    title: 'Жалобы',
+                    subtitle: 'Жалобы пользователей на объявления',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ReportsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.history_rounded,
+                    title: 'Журнал действий',
+                    subtitle: 'Кто и что менял у объявлений',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AdminLogScreen()),
                     ),
                   ),
                   const SizedBox(height: 10),

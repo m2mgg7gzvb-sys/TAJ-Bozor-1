@@ -29,7 +29,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
     if (user == null) return [];
     final rows = await Supabase.instance.client
         .from('listings')
-        .select('$listingSelect, status')
+        .select('$listingSelect, status, admin_note')
         .eq('user_id', user.id)
         .neq('status', 'hidden')
         .order('created_at', ascending: false);
@@ -52,17 +52,47 @@ class _MyListingsTabState extends State<MyListingsTab> {
     }
   }
 
-  /// Карточка со статусом: на проверке или заблокировано.
+  /// Продлевает истекшее объявление на 14 дней: оно снова идёт на проверку.
+  Future<void> _renew(Map<String, dynamic> item) async {
+    try {
+      await Supabase.instance.client.from('listings').update({
+        'status': 'moderation',
+        'expires_at': DateTime.now().toUtc().add(const Duration(days: 14)).toIso8601String(),
+      }).eq('id', item['id'] as String);
+      _reload();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Объявление продлено. Оно снова на проверке, это займёт до 30 минут.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не удалось продлить')));
+      }
+    }
+  }
+
+  /// Карточка со статусом: на проверке, заблокировано, заморожено или истекло.
+  /// Для заблокированного и замороженного показывается причина от администратора.
   Widget _itemCard(Map<String, dynamic> item) {
     final status = item['status'] as String?;
+    final note = (item['admin_note'] as String?)?.trim();
     final label = switch (status) {
       'moderation' => 'На проверке · до 30 минут',
       'blocked' => 'Заблокировано',
       'frozen' => 'Заморожено администратором',
+      'expired' => 'Срок истёк',
       _ => null,
     };
     final card = ListingCard(item: item);
     if (label == null) return card;
+    final badgeColor = switch (status) {
+      'blocked' => Colors.red.shade700,
+      'frozen' => Colors.blueGrey.shade700,
+      'expired' => Colors.grey.shade700,
+      _ => Colors.orange.shade800,
+    };
+    final showNote = (status == 'blocked' || status == 'frozen') && note != null && note.isNotEmpty;
     return Stack(
       children: [
         card,
@@ -71,20 +101,43 @@ class _MyListingsTabState extends State<MyListingsTab> {
           right: 8,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: switch (status) {
-                'blocked' => Colors.red.shade700,
-                'frozen' => Colors.blueGrey.shade700,
-                _ => Colors.orange.shade800,
-              },
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(8)),
             child: Text(
               label,
               style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ),
         ),
+        if (status == 'expired')
+          Positioned(
+            left: 8,
+            right: 8,
+            bottom: 8,
+            child: FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(36)),
+              onPressed: () => _renew(item),
+              child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
+            ),
+          ),
+        if (showNote)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.7),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
+              ),
+              child: Text(
+                'Причина: $note',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 11),
+              ),
+            ),
+          ),
       ],
     );
   }

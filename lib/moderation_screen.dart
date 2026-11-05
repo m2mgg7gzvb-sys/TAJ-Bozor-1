@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
+import 'admin_log.dart';
 import 'confirm_delete.dart';
 import 'theme.dart';
 
@@ -30,9 +31,9 @@ class _ModerationScreenState extends State<ModerationScreen> {
   void _reload() => setState(() => _future = _load());
 
   /// Меняет статус объявления: active — разрешить, blocked — заблокировать, hidden — удалить.
-  Future<void> _set(String id, String status, String message) async {
+  Future<void> _set(String id, String status, String message, String action) async {
     try {
-      await _db.from('listings').update({'status': status}).eq('id', id);
+      await adminSetStatus(listingId: id, status: status, action: action);
       _reload();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
@@ -97,11 +98,11 @@ class _ModerationScreenState extends State<ModerationScreen> {
                     onOpen: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
                     ),
-                    onApprove: () => _set(item['id'] as String, 'active', 'Объявление опубликовано'),
-                    onBlock: () => _set(item['id'] as String, 'blocked', 'Объявление заблокировано'),
+                    onApprove: () => _set(item['id'] as String, 'active', 'Объявление опубликовано', 'approve'),
+                    onBlock: () => _set(item['id'] as String, 'blocked', 'Объявление заблокировано', 'block'),
                     onDelete: () async {
                       if (await confirmDeleteByTyping(context)) {
-                        _set(item['id'] as String, 'hidden', 'Объявление удалено');
+                        _set(item['id'] as String, 'hidden', 'Объявление удалено', 'delete');
                       }
                     },
                   ),

@@ -103,66 +103,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  Future<void> _leaveReview() async {
-    var rating = 5;
-    final ctrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setD) => AlertDialog(
-          title: const Text('Оставить отзыв'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 1; i <= 5; i++)
-                    IconButton(
-                      onPressed: () => setD(() => rating = i),
-                      icon: Icon(
-                        i <= rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                        color: const Color(0xFFF2B600),
-                      ),
-                    ),
-                ],
-              ),
-              TextField(
-                controller: ctrl,
-                maxLines: 3,
-                decoration: const InputDecoration(hintText: 'Комментарий (необязательно)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Отправить')),
-          ],
-        ),
-      ),
-    );
-    if (ok == true) {
-      try {
-        await _db.from('reviews').upsert(
-          {
-            'reviewed_id': widget.userId,
-            'author_id': _me,
-            'rating': rating,
-            'body': ctrl.text.trim(),
-          },
-          onConflict: 'reviewed_id,author_id',
-        );
-        if (mounted) setState(() => _future = _load());
-      } catch (_) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не удалось отправить отзыв')),
-        );
-      }
-    }
-    ctrl.dispose();
-  }
-
   Widget _stat(String value, String label) => Expanded(
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
