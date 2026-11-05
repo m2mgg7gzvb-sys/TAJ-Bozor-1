@@ -67,6 +67,19 @@ void _onSession(Session? session) {
         refreshUnread();
       },
     )
+    // Для админа: новые жалобы, объявления на проверке и обращения тоже обновляют точку.
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'listing_reports',
+      callback: (_) => refreshUnread(),
+    )
+    ..onPostgresChanges(
+      event: PostgresChangeEvent.all,
+      schema: 'public',
+      table: 'listings',
+      callback: (_) => refreshUnread(),
+    )
     ..subscribe();
   refreshUnread();
 }
@@ -112,7 +125,16 @@ Future<void> refreshUnread() async {
       }
     }
     unreadChats.value = unread;
-    hasUnread.value = notes.isNotEmpty || unread.isNotEmpty;
+    // Админу точка горит и при новых жалобах, объявлениях на проверке или обращениях.
+    var staffNew = false;
+    final prof = await db.from('profiles').select('is_admin').eq('id', me).maybeSingle();
+    if (prof?['is_admin'] == true) {
+      final mod = await db.from('listings').select('id').eq('status', 'moderation').limit(1);
+      final rep = await db.from('listing_reports').select('id').eq('status', 'open').limit(1);
+      final sup = await db.from('conversations').select('id').eq('kind', 'support').eq('status', 'waiting').limit(1);
+      staffNew = mod.isNotEmpty || rep.isNotEmpty || sup.isNotEmpty;
+    }
+    hasUnread.value = notes.isNotEmpty || unread.isNotEmpty || staffNew;
   } catch (_) {
     // Без подсчёта точка просто не изменится.
   }
