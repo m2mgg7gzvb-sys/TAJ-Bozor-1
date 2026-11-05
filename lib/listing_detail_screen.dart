@@ -111,7 +111,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     try {
       final row = await Supabase.instance.client
           .from('profiles')
-          .select('name, city, phone')
+          .select('name, city, phone, avatar_url')
           .eq('id', uid)
           .maybeSingle();
       if (mounted && row != null) setState(() => _seller = Map<String, dynamic>.from(row));
@@ -530,10 +530,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   decoration: cardDecoration(radius: 18),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      UserAvatar(
+                        name: (_seller?['name'] as String?) ?? '',
+                        url: _seller?['avatar_url'] as String?,
                         radius: 24,
-                        backgroundColor: AppColors.mint,
-                        child: Icon(Icons.person_rounded, color: AppColors.primary),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

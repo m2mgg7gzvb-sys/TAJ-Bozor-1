@@ -170,7 +170,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 ),
                                 if (d.profile['is_admin'] == true) ...[
                                   const SizedBox(width: 6),
-                                  Image.asset('assets/admin_badge.png', height: 22),
+                                  Image.asset('assets/admin_badge.png', height: 56),
                                 ],
                               ],
                             ),
