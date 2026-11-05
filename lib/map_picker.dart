@@ -149,63 +149,68 @@ class _MapPickerPageState extends State<_MapPickerPage> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    // Карта и кнопки разведены по разным областям: иначе встроенная карта перехватывает нажатия на кнопки.
     return Scaffold(
       appBar: AppBar(title: const Text('Точка на карте')),
-      body: Stack(
+      body: Column(
         children: [
-          Positioned.fill(child: _buildMap()),
-          // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
-          IgnorePointer(
-            child: Center(
-              child: Transform.translate(
-                offset: const Offset(0, -22),
-                child: const Icon(Icons.location_pin, color: AppColors.primary, size: 44),
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(child: _buildMap()),
+                // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
+                IgnorePointer(
+                  child: Center(
+                    child: Transform.translate(
+                      offset: const Offset(0, -22),
+                      child: const Icon(Icons.location_pin, color: AppColors.primary, size: 44),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FloatingActionButton.small(
+                heroTag: 'locate-me',
+                backgroundColor: Colors.white,
+                foregroundColor: AppColors.primary,
+                onPressed: _locating ? null : _moveToMe,
+                child: _locating
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.my_location_rounded),
               ),
             ),
           ),
-          Positioned(
-            right: 16,
-            bottom: 170 + bottomPadding,
-            child: FloatingActionButton.small(
-              heroTag: 'locate-me',
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-              onPressed: _locating ? null : _moveToMe,
-              child: _locating
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.my_location_rounded),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4)),
+              ],
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4)),
-                ],
-              ),
-              padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPadding + 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  Text(
-                    _address.isEmpty ? 'Передвигайте карту, чтобы поставить точку' : _address,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 14),
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(_center),
-                    child: const Text('Готово'),
-                  ),
-                ],
-              ),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPadding + 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                const SizedBox(height: 4),
+                Text(
+                  _address.isEmpty ? 'Передвигайте карту, чтобы поставить точку' : _address,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(_center),
+                  child: const Text('Готово'),
+                ),
+              ],
             ),
           ),
         ],
