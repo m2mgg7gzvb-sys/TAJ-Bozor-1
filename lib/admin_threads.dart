@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_log.dart';
 import 'confirm_delete.dart';
+import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
 
@@ -44,6 +45,20 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
   void dispose() {
     _msgCtrl.dispose();
     super.dispose();
+  }
+
+  /// Открывает объявление так, как его видит покупатель. Управление остаётся на этом экране.
+  Future<void> _openListing() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final row = await _db.from('listings').select('$listingSelect, status').eq('id', widget.listingId).single();
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ListingDetailScreen(item: Map<String, dynamic>.from(row))),
+      );
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть объявление')));
+    }
   }
 
   Future<_Thread> _load() async {
@@ -164,7 +179,16 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Объявление')),
+      appBar: AppBar(
+        title: const Text('Объявление'),
+        actions: [
+          IconButton(
+            tooltip: 'Открыть объявление',
+            icon: const Icon(Icons.open_in_new_rounded),
+            onPressed: _openListing,
+          ),
+        ],
+      ),
       body: FutureBuilder<_Thread>(
         future: _future,
         builder: (context, snap) {
