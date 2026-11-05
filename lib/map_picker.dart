@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -46,27 +47,31 @@ class _MapPickerPage extends StatefulWidget {
 }
 
 class _MapPickerPageState extends State<_MapPickerPage> {
-  YandexMapHandle? _map;
+  /// Яндекс-карта; если она не открылась, показываем запасную карту OpenStreetMap.
+  YandexMapHandle? _yandex;
+  final _fallbackController = MapController();
+  bool _yandexFailed = false;
+
   late LatLng _center = widget.initial ?? _cityCenter(widget.city);
+
   /// Пока адрес не определён, показываем название выбранного города: точка уже стоит в его центре.
   late String _address = (widget.city?.trim().isNotEmpty ?? false) ? widget.city!.trim() : '';
   bool _locating = false;
-  bool _mapFailed = false;
 
-  /// Карта не открылась: точка остаётся в центре выбранного города, адрес — название города.
-  void _onMapError() {
-    if (!mounted) return;
+  /// Яндекс-карта не открылась: переходим на запасную карту в центре выбранного города.
+  void _onYandexError() {
+    if (!mounted || _yandexFailed) return;
     setState(() {
-      _mapFailed = true;
+      _yandexFailed = true;
       _center = _cityCenter(widget.city);
-      _address = (widget.city?.trim().isNotEmpty ?? false) ? widget.city!.trim() : 'Город не выбран';
     });
   }
 
   /// Если человек в этом городе, карта сразу встаёт на его место. Иначе остаётся центр города.
   Future<void> _moveToMe() async {
-    final map = _map;
-    if (map == null) return;
+    if (_locating) return;
+    final useFallback = _yandexFailed;
+    if (!useFallback && _yandex == null) return;
     setState(() => _locating = true);
     try {
       var permission = await Geolocator.checkPermission();
@@ -81,7 +86,12 @@ class _MapPickerPageState extends State<_MapPickerPage> {
       final me = LatLng(pos.latitude, pos.longitude);
       final city = _cityCenter(widget.city);
       if (const Distance().as(LengthUnit.Kilometer, city, me) < 60) {
-        map.move(me, zoom: 16);
+        _center = me;
+        if (useFallback) {
+          _fallbackController.move(me, 16);
+        } else {
+          _yandex?.move(me, zoom: 16);
+        }
       }
     } catch (_) {
       // Нет геолокации: остаёмся на центре города
@@ -91,29 +101,59 @@ class _MapPickerPageState extends State<_MapPickerPage> {
   }
 
   @override
+  void dispose() {
+    _fallbackController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildMap() {
+    if (!_yandexFailed) {
+      return YandexMap(
+        center: _center,
+        zoom: 13,
+        picker: true,
+        onReady: (map) {
+          _yandex = map;
+          if (widget.initial == null) _moveToMe();
+        },
+        onCenter: (point) => _center = point,
+        onAddress: (text) {
+          // Пустой ответ геокодера не стирает название города.
+          if (text.isNotEmpty) setState(() => _address = text);
+        },
+        onError: _onYandexError,
+      );
+    }
+    return FlutterMap(
+      mapController: _fallbackController,
+      options: MapOptions(
+        initialCenter: _center,
+        initialZoom: 13,
+        onPositionChanged: (camera, _) => _center = camera.center,
+        onMapReady: () {
+          if (widget.initial == null) _moveToMe();
+        },
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.tajbozor.app',
+        ),
+        const RichAttributionWidget(
+          attributions: [TextSourceAttribution('© OpenStreetMap contributors')],
+        ),
+      ],
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       appBar: AppBar(title: const Text('Точка на карте')),
       body: Stack(
         children: [
-          Positioned.fill(
-            child: YandexMap(
-              center: _center,
-              zoom: 13,
-              picker: true,
-              onReady: (map) {
-                _map = map;
-                if (widget.initial == null) _moveToMe();
-              },
-              onCenter: (point) => _center = point,
-              onAddress: (text) {
-                // Пустой ответ геокодера не стирает название города.
-                if (text.isNotEmpty) setState(() => _address = text);
-              },
-              onError: _onMapError,
-            ),
-          ),
+          Positioned.fill(child: _buildMap()),
           // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
           IgnorePointer(
             child: Center(
@@ -153,23 +193,12 @@ class _MapPickerPageState extends State<_MapPickerPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _mapFailed ? 'Карта не загрузилась' : 'Адрес',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
-                  ),
+                  const Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
                   const SizedBox(height: 4),
                   Text(
-                    _address.isEmpty ? 'Определяем адрес…' : _address,
+                    _address.isEmpty ? 'Передвигайте карту, чтобы поставить точку' : _address,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
-                  if (_mapFailed)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
-                      child: Text(
-                        'Точка поставлена в центре города. Проверьте интернет, если нужно уточнить место.',
-                        style: TextStyle(color: AppColors.muted, fontSize: 13),
-                      ),
-                    ),
                   const SizedBox(height: 14),
                   FilledButton(
                     onPressed: () => Navigator.of(context).pop(_center),

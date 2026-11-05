@@ -71,8 +71,8 @@ class _YandexMapState extends State<YandexMap> {
   }
 
   void _onMessage(web.MessageEvent event) {
-    // Принимаем сообщения только от нашего фрейма.
-    if (event.source != _frame.contentWindow) return;
+    // Принимаем сообщения только с нашего сайта (фрейм лежит на том же домене).
+    if (event.origin != web.window.location.origin) return;
     final raw = event.data;
     if (raw == null || !raw.isA<JSString>()) return;
     final Map<String, dynamic> data;
