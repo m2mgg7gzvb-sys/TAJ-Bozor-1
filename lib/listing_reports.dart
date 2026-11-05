@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_log.dart';
+import 'chat_screen.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
@@ -51,7 +52,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Future<List<Map<String, dynamic>>> _load() async {
     final rows = await _db
         .from('listing_reports')
-        .select('id, reason, created_at, listing_id, listings(id, title, status, price, currency)')
+        .select('id, reason, created_at, listing_id, reporter_id, listings(id, title, status, price, currency), reporter:profiles!reporter_id(id, name)')
         .eq('status', 'open')
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(rows);
@@ -75,6 +76,39 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const SnackBar(content: Text('Объявление удалено или недоступно')),
         );
       }
+    }
+  }
+
+  /// Открывает переписку поддержки с тем, кто отправил жалобу. Если она уже есть, открываем её.
+  Future<void> _writeReporter(Map<String, dynamic> report) async {
+    final reporterId = report['reporter_id'] as String?;
+    if (reporterId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final found = await _db
+          .from('conversations')
+          .select('id')
+          .eq('kind', 'support')
+          .eq('buyer_id', reporterId)
+          .limit(1);
+      final String id;
+      if (found.isNotEmpty) {
+        id = found.first['id'] as String;
+      } else {
+        final created = await _db
+            .from('conversations')
+            .insert({'kind': 'support', 'buyer_id': reporterId})
+            .select('id')
+            .single();
+        id = created['id'] as String;
+      }
+      if (!mounted) return;
+      final name = ((report['reporter'] as Map?)?['name'] as String?) ?? 'Заявитель';
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ChatScreen(conversationId: id, title: name)),
+      );
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть чат с заявителем')));
     }
   }
 
@@ -153,12 +187,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ((r['listings'] as Map?)?['title'] as String?) ?? 'Объявление удалено',
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Заявитель: ${((r['reporter'] as Map?)?['name'] as String?)?.trim().isNotEmpty == true ? (r['reporter'] as Map)['name'] : 'неизвестно'}',
+                          style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                        ),
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 8,
                           children: [
                             OutlinedButton(onPressed: () => _viewListing(r), child: const Text('Просмотреть объявление')),
                             FilledButton(onPressed: () => _blockListing(r), child: const Text('Заблокировать')),
+                            OutlinedButton(onPressed: () => _writeReporter(r), child: const Text('Написать заявителю')),
                             OutlinedButton(onPressed: () => _dismiss(r), child: const Text('Закрыть жалобу')),
                           ],
                         ),
