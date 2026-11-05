@@ -201,7 +201,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final row = await Supabase.instance.client
           .from('conversations')
-          .select('kind, buyer_id, seller_id, review_dismissed')
+          .select('kind, buyer_id, seller_id, review_dismissed, chat_no')
           .eq('id', widget.conversationId)
           .maybeSingle();
       if (!mounted) return;
@@ -426,7 +426,16 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.title),
+            if (_conv?['chat_no'] != null)
+              Text('Чат №${_conv!['chat_no']}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
+          ],
+        ),
         actions: [
           if (!widget.joinMode && !widget.staffTicket && _conv?['kind'] != 'support')
             PopupMenuButton<String>(
