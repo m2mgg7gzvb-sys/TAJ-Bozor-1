@@ -186,7 +186,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              return ListView(children: const [
+              return ListView(children: [
                 Padding(padding: const EdgeInsets.all(24), child: Text('Не удалось загрузить жалобы: ${snap.error}', textAlign: TextAlign.center)),
               ]);
             }
