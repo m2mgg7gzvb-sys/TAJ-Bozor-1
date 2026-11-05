@@ -124,6 +124,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 const SizedBox(height: 10),
                 _ProfileHeader(
                   name: name,
+                  isAdmin: d.isAdmin,
                   avatarUrl: d.avatarUrl,
                   city: d.city,
                   phone: d.phone,
@@ -229,6 +230,7 @@ class _ProfileHeader extends StatelessWidget {
     required this.email,
     this.avatarUrl,
     this.onEdit,
+    this.isAdmin = false,
   });
 
   final String name;
@@ -237,6 +239,7 @@ class _ProfileHeader extends StatelessWidget {
   final String? email;
   final String? avatarUrl;
   final VoidCallback? onEdit;
+  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +256,18 @@ class _ProfileHeader extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                        ),
+                        if (isAdmin) ...[
+                          const SizedBox(width: 6),
+                          Image.asset('assets/admin_badge.png', height: 44),
+                        ],
+                      ],
+                    ),
                     if (city != null && city!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(city!, style: const TextStyle(color: AppColors.muted)),
