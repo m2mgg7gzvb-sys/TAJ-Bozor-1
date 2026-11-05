@@ -4,14 +4,28 @@ import 'package:latlong2/latlong.dart';
 
 import 'theme.dart';
 
-/// Центр карты по городу: если город неизвестен, открываем Душанбе.
-LatLng _cityCenter(String? city) {
-  final c = city ?? '';
-  if (c.contains('Худжанд')) return const LatLng(40.2833, 69.6221);
-  if (c.contains('Бохтар')) return const LatLng(37.8386, 68.7756);
-  if (c.contains('Кулоб')) return const LatLng(37.9144, 69.7858);
-  return const LatLng(38.5598, 68.7870);
-}
+/// Центры городов из списка tajCities. Для неизвестного города открываем Душанбе.
+const _cityCenters = <String, LatLng>{
+  'Душанбе': LatLng(38.5598, 68.7870),
+  'Худжанд': LatLng(40.2833, 69.6221),
+  'Куляб': LatLng(37.9144, 69.7858),
+  'Бохтар': LatLng(37.8386, 68.7756),
+  'Турсунзода': LatLng(38.5144, 68.2500),
+  'Истаравшан': LatLng(40.1500, 69.0000),
+  'Пенджикент': LatLng(39.4900, 67.6100),
+  'Исфара': LatLng(40.1000, 70.6000),
+  'Кайраккум': LatLng(40.1500, 69.1500),
+  'Канибадам': LatLng(40.2700, 70.4000),
+  'Гиссар': LatLng(38.5000, 68.6000),
+  'Вахдат': LatLng(38.5667, 69.0000),
+  'Хорог': LatLng(37.4933, 71.5528),
+  'Рогун': LatLng(38.7000, 69.2000),
+  'Нурек': LatLng(38.3667, 69.3500),
+  'Яван': LatLng(38.0000, 69.0000),
+  'Ховалинг': LatLng(37.6000, 69.6000),
+};
+
+LatLng _cityCenter(String? city) => _cityCenters[city?.trim()] ?? const LatLng(38.5598, 68.7870);
 
 /// Открывает карту, где пользователь ставит точку. Возвращает точку или null, если отменили.
 Future<LatLng?> pickMapPoint(BuildContext context, {LatLng? initial, String? city}) {
@@ -50,7 +64,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
             child: FlutterMap(
               options: MapOptions(
                 initialCenter: center,
-                initialZoom: 14,
+                initialZoom: 13,
                 onTap: (_, p) => setState(() => _point = p),
               ),
               children: [
