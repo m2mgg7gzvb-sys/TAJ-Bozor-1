@@ -50,12 +50,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
   late Future<List<Map<String, dynamic>>> _future = _load();
 
   Future<List<Map<String, dynamic>>> _load() async {
-    final rows = await _db
+    final rows = List<Map<String, dynamic>>.from(await _db
         .from('listing_reports')
-        .select('id, reason, created_at, listing_id, reporter_id, listings(id, title, status, price, currency), reporter:profiles!reporter_id(id, name)')
+        .select('id, reason, created_at, listing_id, reporter_id, listings(id, title, status, price, currency)')
         .eq('status', 'open')
-        .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(rows);
+        .order('created_at', ascending: false));
+    // Имена заявителей берём отдельным запросом: так список жалоб загружается, даже если имя не пришло.
+    final ids = {for (final r in rows) if (r['reporter_id'] != null) r['reporter_id'] as String};
+    if (ids.isNotEmpty) {
+      try {
+        final ps = List<Map<String, dynamic>>.from(
+            await _db.from('profiles').select('id, name').inFilter('id', ids.toList()));
+        final byId = {for (final p in ps) p['id'] as String: p};
+        for (final r in rows) {
+          final rid = r['reporter_id'] as String?;
+          if (rid != null) r['reporter'] = byId[rid];
+        }
+      } catch (_) {
+        // Без имён список всё равно показываем
+      }
+    }
+    return rows;
   }
 
   void _reload() => setState(() => _future = _load());
