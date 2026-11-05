@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'chat_screen.dart';
 import 'listing_utils.dart';
+import 'admin_listings_screen.dart';
 import 'moderation_screen.dart';
 import 'notify_store.dart';
 import 'notifications_screen.dart';
@@ -131,6 +132,15 @@ class _MessagesTabState extends State<MessagesTab> {
                     subtitle: 'Новые и изменённые объявления',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const ModerationScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Все объявления',
+                    subtitle: 'Заморозка, блокировка, удаление',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AdminListingsScreen()),
                     ),
                   ),
                   const SizedBox(height: 10),

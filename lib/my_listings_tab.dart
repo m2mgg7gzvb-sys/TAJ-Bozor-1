@@ -58,6 +58,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
     final label = switch (status) {
       'moderation' => 'На проверке · до 30 минут',
       'blocked' => 'Заблокировано',
+      'frozen' => 'Заморожено администратором',
       _ => null,
     };
     final card = ListingCard(item: item);
@@ -71,7 +72,11 @@ class _MyListingsTabState extends State<MyListingsTab> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: status == 'blocked' ? Colors.red.shade700 : Colors.orange.shade800,
+              color: switch (status) {
+                'blocked' => Colors.red.shade700,
+                'frozen' => Colors.blueGrey.shade700,
+                _ => Colors.orange.shade800,
+              },
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
