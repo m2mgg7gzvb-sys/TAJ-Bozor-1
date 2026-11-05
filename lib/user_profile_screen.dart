@@ -71,7 +71,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<_UserData> _load() async {
     final profile = await _db
         .from('profiles')
-        .select('name, city, avatar_url, profile_no')
+        .select('name, city, avatar_url, public_id')
         .eq('id', widget.userId)
         .maybeSingle();
     final listings = List<Map<String, dynamic>>.from(await _db
@@ -164,8 +164,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                             if (city != null && city.isNotEmpty)
                               Text(city, style: const TextStyle(color: AppColors.muted)),
-                            if (d.profile['profile_no'] != null)
-                              SelectableText('Профиль №${d.profile['profile_no']}',
+                            if (d.profile['public_id'] != null)
+                              SelectableText('ID профиля: ${d.profile['public_id']}',
                                   style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                           ],
                         ),

@@ -201,7 +201,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final row = await Supabase.instance.client
           .from('conversations')
-          .select('kind, buyer_id, seller_id, review_dismissed, chat_no')
+          .select('kind, buyer_id, seller_id, review_dismissed, public_id')
           .eq('id', widget.conversationId)
           .maybeSingle();
       if (!mounted) return;
@@ -431,8 +431,8 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.title),
-            if (_conv?['chat_no'] != null)
-              Text('Чат №${_conv!['chat_no']}',
+            if (_conv?['public_id'] != null)
+              Text('ID чата: ${_conv!['public_id']}',
                   style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
           ],
         ),

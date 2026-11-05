@@ -49,7 +49,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
   Future<_Thread> _load() async {
     final listing = await _db
         .from('listings')
-        .select('id, title, status, price, currency, city, admin_note, listing_no')
+        .select('id, title, status, price, currency, city, admin_note, public_id')
         .eq('id', widget.listingId)
         .maybeSingle();
     final logs = await _db
@@ -201,7 +201,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                                 style: const TextStyle(color: AppColors.muted, fontSize: 13)),
                           ],
                           const SizedBox(height: 6),
-                          Text('Объявление №${listing?['listing_no'] ?? '—'}',
+                          Text('ID: ${listing?['public_id'] ?? '—'}',
                               style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                         ],
                       ),
@@ -343,14 +343,14 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
     if (latest.isEmpty) return latest;
     final titles = await _db
         .from('listings')
-        .select('id, title, listing_no')
+        .select('id, title, public_id')
         .inFilter('id', latest.map((e) => e['listing_id']).toList());
     final byId = {for (final t in titles) t['id'] as String: t};
     return [
       for (final e in latest) {
         ...e,
         'title': byId[e['listing_id'] as String]?['title'],
-        'no': byId[e['listing_id'] as String]?['listing_no'],
+        'no': byId[e['listing_id'] as String]?['public_id'],
       },
     ];
   }
@@ -360,9 +360,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
     if (id.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final number = int.tryParse(id.replaceFirst('№', '').trim());
-      final row = number != null
-          ? await _db.from('listings').select('id').eq('listing_no', number).maybeSingle()
+      final code = id.toUpperCase();
+      final row = code.startsWith('OB-')
+          ? await _db.from('listings').select('id').eq('public_id', code).maybeSingle()
           : await _db.from('listings').select('id').eq('id', id).maybeSingle();
       if (!mounted) return;
       if (row == null) {
@@ -394,7 +394,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   child: TextField(
                     controller: _idCtrl,
                     decoration: InputDecoration(
-                      hintText: 'Введите номер объявления, например 123',
+                      hintText: 'ID объявления, например OB-1A2B3C4D',
                       isDense: true,
                       filled: true,
                       fillColor: Colors.white,
@@ -460,7 +460,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                               const SizedBox(height: 2),
                               Text(adminActionNames[e['action']] ?? '',
                                   style: const TextStyle(fontSize: 13)),
-                              Text('Объявление №${e['no'] ?? '—'}',
+                              Text('ID: ${e['no'] ?? '—'}',
                                   style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                             ],
                           ),
