@@ -11,6 +11,7 @@ import 'lang_store.dart';
 import 'legal_screen.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
+import 'push.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 import 'welcome_screen.dart';
@@ -189,6 +190,18 @@ class _ProfilePageState extends State<_ProfilePage> {
                         icon: Icons.edit_outlined,
                         title: tr('Редактировать профиль', 'Тағйири профил'),
                         onTap: () => _edit(d),
+                      ),
+                    if (!isGuest)
+                      _MenuTile(
+                        icon: Icons.notifications_active_outlined,
+                        title: tr('Включить уведомления на телефон', 'Огоҳиҳо ба телефон'),
+                        onTap: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final err = await enablePush();
+                          messenger.showSnackBar(SnackBar(
+                            content: Text(err ?? tr('Уведомления включены', 'Огоҳиҳо фаъол шуд')),
+                          ));
+                        },
                       ),
                     _MenuTile(
                       icon: Icons.privacy_tip_outlined,
