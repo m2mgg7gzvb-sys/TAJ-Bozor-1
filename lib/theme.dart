@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 /// Фирменные цвета TAJBozor (из макета).
 class AppColors {
-  static const primary = Color(0xFF0B7A5A);
-  static const deep = Color(0xFF07503B);
-  static const saffron = Color(0xFFF5B301);
+  static const primary = Color(0xFF0E7C66);
+  static const deep = Color(0xFF0A5C4B);
+  static const saffron = Color(0xFFF5A524);
   static const ruby = Color(0xFFD62D4A);
-  static const ink = Color(0xFF14211B);
-  static const background = Color(0xFFF4F6F5);
-  static const mint = Color(0xFFE3F2EC);
-  static const muted = Color(0xFF6B7A73);
+  static const ink = Color(0xFF0B1F1A);
+  static const background = Color(0xFFF4F7F6);
+  static const mint = Color(0xFFEAF2EF);
+  static const muted = Color(0xFF5C6F68);
 }
 
 ThemeData buildAppTheme() {
@@ -47,7 +47,7 @@ ThemeData buildAppTheme() {
         minimumSize: const Size.fromHeight(54),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),
     ),
@@ -55,14 +55,14 @@ ThemeData buildAppTheme() {
 }
 
 /// Белая карточка с мягкой тенью.
-BoxDecoration cardDecoration({double radius = 20}) => BoxDecoration(
+BoxDecoration cardDecoration({double radius = 24}) => BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(radius),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 16,
-          offset: const Offset(0, 6),
+          color: const Color(0xFF0B1F1A).withValues(alpha: 0.05),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
         ),
       ],
     );
