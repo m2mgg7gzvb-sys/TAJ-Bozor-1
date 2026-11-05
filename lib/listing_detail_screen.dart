@@ -19,6 +19,7 @@ import 'nav_state.dart';
 import 'photo_viewer.dart';
 import 'lang_store.dart';
 import 'listing_reports.dart';
+import 'copy_id.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
@@ -393,9 +394,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 if (item['public_id'] != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: SelectableText(
-                      'ID объявления: ${item['public_id']} · укажите его в поддержке',
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                    child: CopyIdLine(
+                      label: 'ID объявления:',
+                      id: '${item['public_id']}',
+                      suffix: ' · укажите его в поддержке',
                     ),
                   ),
                 const SizedBox(height: 10),

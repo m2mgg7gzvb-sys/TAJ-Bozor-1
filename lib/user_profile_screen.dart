@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'copy_id.dart';
 import 'theme.dart';
 
 /// Кружок с буквой имени или фото пользователя.
@@ -165,8 +166,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             if (city != null && city.isNotEmpty)
                               Text(city, style: const TextStyle(color: AppColors.muted)),
                             if (d.profile['public_id'] != null)
-                              SelectableText('ID профиля: ${d.profile['public_id']}',
-                                  style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                              CopyIdLine(label: 'ID профиля:', id: '${d.profile['public_id']}'),
                           ],
                         ),
                       ),
