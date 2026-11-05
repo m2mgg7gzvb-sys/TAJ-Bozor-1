@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Какие поля объявления загружать вместе с фото.
 const listingSelect =
-    'id, public_id, user_id, title, description, price, currency, city, address, details, created_at, category_id, listing_images(path, position), categories(slug)';
+    'id, user_id, title, description, price, currency, city, address, details, created_at, category_id, listing_images(path, position), categories(slug)';
 
 /// Публичная ссылка на первое фото объявления (или null).
 String? photoUrl(Map<String, dynamic> item) {

@@ -201,7 +201,7 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final row = await Supabase.instance.client
           .from('conversations')
-          .select('kind, buyer_id, seller_id, review_dismissed, public_id')
+          .select('kind, buyer_id, seller_id, review_dismissed')
           .eq('id', widget.conversationId)
           .maybeSingle();
       if (!mounted) return;
