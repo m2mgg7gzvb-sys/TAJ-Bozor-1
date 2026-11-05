@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -28,6 +30,24 @@ const _cityCenters = <String, LatLng>{
 };
 
 LatLng _cityCenter(String? city) => _cityCenters[city?.trim()] ?? const LatLng(38.5598, 68.7870);
+
+/// Карту можно двигать только в квадрате вокруг города, радиус в км.
+const _limitKm = 10.0;
+
+LatLng _clampToBox(LatLng p, LatLng c, double km) {
+  final dLat = km / 111.0;
+  final dLng = km / (111.0 * math.cos(c.latitude * math.pi / 180));
+  return LatLng(
+    p.latitude.clamp(c.latitude - dLat, c.latitude + dLat).toDouble(),
+    p.longitude.clamp(c.longitude - dLng, c.longitude + dLng).toDouble(),
+  );
+}
+
+LatLngBounds _cityBox(LatLng c, double km) {
+  final dLat = km / 111.0;
+  final dLng = km / (111.0 * math.cos(c.latitude * math.pi / 180));
+  return LatLngBounds(LatLng(c.latitude - dLat, c.longitude - dLng), LatLng(c.latitude + dLat, c.longitude + dLng));
+}
 
 /// Открывает карту, где пользователь ставит точку. Возвращает точку или null, если отменили.
 Future<LatLng?> pickMapPoint(BuildContext context, {LatLng? initial, String? city}) {
@@ -86,11 +106,12 @@ class _MapPickerPageState extends State<_MapPickerPage> {
       final me = LatLng(pos.latitude, pos.longitude);
       final city = _cityCenter(widget.city);
       if (const Distance().as(LengthUnit.Kilometer, city, me) < 60) {
-        _center = me;
+        final target = _clampToBox(me, city, _limitKm);
+        _center = target;
         if (useFallback) {
-          _fallbackController.move(me, 16);
+          _fallbackController.move(target, 16);
         } else {
-          _yandex?.move(me, zoom: 16);
+          _yandex?.move(target, zoom: 16);
         }
       }
     } catch (_) {
@@ -112,6 +133,8 @@ class _MapPickerPageState extends State<_MapPickerPage> {
         center: _center,
         zoom: 13,
         picker: true,
+        limitCenter: _cityCenter(widget.city),
+        limitKm: _limitKm,
         onReady: (map) {
           _yandex = map;
           if (widget.initial == null) _moveToMe();
@@ -129,6 +152,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
       options: MapOptions(
         initialCenter: _center,
         initialZoom: 13,
+        cameraConstraint: CameraConstraint.containCenter(bounds: _cityBox(_cityCenter(widget.city), _limitKm)),
         onPositionChanged: (camera, _) => _center = camera.center,
         onMapReady: () {
           if (widget.initial == null) _moveToMe();

@@ -18,6 +18,8 @@ class YandexMap extends StatefulWidget {
     this.onCenter,
     this.onAddress,
     this.onError,
+    this.limitCenter,
+    this.limitKm,
   });
 
   final LatLng center;
@@ -28,8 +30,19 @@ class YandexMap extends StatefulWidget {
   final ValueChanged<String>? onAddress;
   final VoidCallback? onError;
 
+  /// Центр области, за которую карту нельзя увести, и её радиус в км (для выбора точки в городе).
+  final LatLng? limitCenter;
+  final double? limitKm;
+
   @override
   State<YandexMap> createState() => _YandexMapState();
+}
+
+String _limitQuery(YandexMap w) {
+  final c = w.limitCenter;
+  final km = w.limitKm;
+  if (c == null || km == null) return '';
+  return '&clat=${c.latitude}&clng=${c.longitude}&limit=$km';
 }
 
 /// Команды карте из Flutter.
@@ -56,6 +69,7 @@ class _YandexMapState extends State<YandexMap> {
         '&lng=${widget.center.longitude}'
         '&zoom=${widget.zoom.round()}'
         '&mode=${widget.picker ? 'picker' : 'view'}'
+        '${_limitQuery(widget)}'
     ..style.border = '0'
     ..style.width = '100%'
     ..style.height = '100%';

@@ -27,6 +27,20 @@
     var zoom = parseInt(params.get('zoom'), 10) || 13;
     var picker = params.get('mode') === 'picker';
 
+    // Ограничение области: центр карты не выходит за квадрат вокруг города (радиус limit, км).
+    var clat = parseFloat(params.get('clat'));
+    var clng = parseFloat(params.get('clng'));
+    var limit = parseFloat(params.get('limit'));
+    function clampPoint(p) {
+      if (isNaN(clat) || isNaN(clng) || isNaN(limit)) return p;
+      var dLat = limit / 111;
+      var dLng = limit / (111 * Math.cos(clat * Math.PI / 180));
+      return [
+        Math.min(Math.max(p[0], clat - dLat), clat + dLat),
+        Math.min(Math.max(p[1], clng - dLng), clng + dLng)
+      ];
+    }
+
     function send(message) {
       window.parent.postMessage(JSON.stringify(message), '*');
     }
@@ -57,7 +71,13 @@
 
       // Точка под маркером — центр карты. Когда карту перестали двигать, отправляем центр и адрес.
       map.events.add('actionend', function () {
-        var c = map.getCenter();
+        var raw = map.getCenter();
+        var c = clampPoint(raw);
+        if (c[0] !== raw[0] || c[1] !== raw[1]) {
+          // Карту увели за границу города: возвращаем её к краю. Этот вызов сам запустит actionend ещё раз.
+          map.setCenter(c, map.getZoom(), { duration: 300 });
+          return;
+        }
         send({ type: 'center', lat: c[0], lng: c[1] });
         ymaps.geocode(c, { results: 1 }).then(function (res) {
           var obj = res.geoObjects.get(0);
