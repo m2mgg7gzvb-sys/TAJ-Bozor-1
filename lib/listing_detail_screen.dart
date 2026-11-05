@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'yandex_map_view.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -429,29 +429,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     borderRadius: BorderRadius.circular(16),
                     child: SizedBox(
                       height: 180,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: LatLng((item['lat'] as num).toDouble(), (item['lng'] as num).toDouble()),
-                          initialZoom: 15,
-                          interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.tajbozor.app',
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: LatLng((item['lat'] as num).toDouble(), (item['lng'] as num).toDouble()),
-                                width: 40,
-                                height: 40,
-                                alignment: Alignment.topCenter,
-                                child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
-                              ),
-                            ],
-                          ),
-                        ],
+                      child: YandexMap(
+                        center: LatLng((item['lat'] as num).toDouble(), (item['lng'] as num).toDouble()),
+                        zoom: 15,
                       ),
                     ),
                   ),

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Карта</title>
+  <style>
+    html, body, #map { margin: 0; height: 100%; width: 100%; }
+    body { background: #F4F7F6; }
+  </style>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=588d700f-7444-4686-b0ee-8d11c4c6c687&lang=ru_RU"></script>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    // Параметры: lat, lng, zoom, mode=picker (выбор точки) или view (просмотр).
+    var params = new URLSearchParams(location.search);
+    var lat = parseFloat(params.get('lat')) || 38.5598;
+    var lng = parseFloat(params.get('lng')) || 68.7870;
+    var zoom = parseInt(params.get('zoom'), 10) || 13;
+    var picker = params.get('mode') === 'picker';
+
+    function send(message) {
+      window.parent.postMessage(JSON.stringify(message), '*');
+    }
+
+    ymaps.ready(function () {
+      var map = new ymaps.Map('map', {
+        center: [lat, lng],
+        zoom: zoom,
+        controls: ['zoomControl', 'geolocationControl']
+      });
+
+      if (!picker) {
+        map.geoObjects.add(new ymaps.Placemark([lat, lng], {}, { preset: 'islands#redDotIcon' }));
+        map.behaviors.disable(['scrollZoom']);
+        return;
+      }
+
+      // Точка под маркером — центр карты. Когда карту перестали двигать, отправляем центр и адрес.
+      map.events.add('actionend', function () {
+        var c = map.getCenter();
+        send({ type: 'center', lat: c[0], lng: c[1] });
+        ymaps.geocode(c, { results: 1 }).then(function (res) {
+          var obj = res.geoObjects.get(0);
+          send({ type: 'address', text: obj ? obj.getAddressLine() : '' });
+        });
+      });
+
+      // Команды от Flutter: переместить карту (например, к месту пользователя).
+      window.addEventListener('message', function (e) {
+        var data;
+        try { data = JSON.parse(e.data); } catch (_) { return; }
+        if (data && data.type === 'move') {
+          map.setCenter([data.lat, data.lng], data.zoom || 16, { duration: 300 });
+        }
+      });
+
+      send({ type: 'ready' });
+    });
+  </script>
+</body>
+</html>

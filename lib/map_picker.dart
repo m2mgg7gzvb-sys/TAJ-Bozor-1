@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'theme.dart';
+import 'yandex_map_view.dart';
 
 /// Центры городов из списка tajCities. Для неизвестного города открываем Душанбе.
 const _cityCenters = <String, LatLng>{
@@ -46,11 +46,16 @@ class _MapPickerPage extends StatefulWidget {
 }
 
 class _MapPickerPageState extends State<_MapPickerPage> {
-  final _mapController = MapController();
+  YandexMapHandle? _map;
   late LatLng _center = widget.initial ?? _cityCenter(widget.city);
+  String _address = '';
+  bool _locating = false;
 
   /// Если человек в этом городе, карта сразу встаёт на его место. Иначе остаётся центр города.
   Future<void> _moveToMe() async {
+    final map = _map;
+    if (map == null) return;
+    setState(() => _locating = true);
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -64,76 +69,87 @@ class _MapPickerPageState extends State<_MapPickerPage> {
       final me = LatLng(pos.latitude, pos.longitude);
       final city = _cityCenter(widget.city);
       if (const Distance().as(LengthUnit.Kilometer, city, me) < 60) {
-        _mapController.move(me, 16);
+        map.move(me, zoom: 16);
       }
     } catch (_) {
       // Нет геолокации: остаёмся на центре города
+    } finally {
+      if (mounted) setState(() => _locating = false);
     }
   }
 
   @override
-  void dispose() {
-    _mapController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       appBar: AppBar(title: const Text('Точка на карте')),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _center,
-                    initialZoom: 13,
-                    onPositionChanged: (camera, _) => _center = camera.center,
-                    onMapReady: () {
-                      if (widget.initial == null) _moveToMe();
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.tajbozor.app',
-                    ),
-                    const RichAttributionWidget(
-                      attributions: [TextSourceAttribution('© OpenStreetMap contributors')],
-                    ),
-                  ],
-                ),
-                // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
-                IgnorePointer(
-                  child: Transform.translate(
-                    offset: const Offset(0, -22),
-                    child: const Icon(Icons.location_pin, color: Colors.red, size: 44),
-                  ),
-                ),
-              ],
+          Positioned.fill(
+            child: YandexMap(
+              center: _center,
+              zoom: 13,
+              picker: true,
+              onReady: (map) {
+                _map = map;
+                if (widget.initial == null) _moveToMe();
+              },
+              onCenter: (point) => _center = point,
+              onAddress: (text) => setState(() => _address = text),
             ),
           ),
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Передвигайте карту, чтобы красный маркер стоял на нужном месте',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.muted),
-                ),
-                const SizedBox(height: 10),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(_center),
-                  child: const Text('Готово'),
-                ),
-              ],
+          // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
+          IgnorePointer(
+            child: Center(
+              child: Transform.translate(
+                offset: const Offset(0, -22),
+                child: const Icon(Icons.location_pin, color: AppColors.primary, size: 44),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 170 + bottomPadding,
+            child: FloatingActionButton.small(
+              heroTag: 'locate-me',
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              onPressed: _locating ? null : _moveToMe,
+              child: _locating
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.my_location_rounded),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4)),
+                ],
+              ),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPadding + 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  Text(
+                    _address.isEmpty ? 'Определяем адрес…' : _address,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 14),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(_center),
+                    child: const Text('Готово'),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
