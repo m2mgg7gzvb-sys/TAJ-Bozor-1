@@ -26,6 +26,22 @@ class _MessagesTabState extends State<MessagesTab> {
   late Future<List<Map<String, dynamic>>> _chats = _loadChats();
   bool _staff = false;
 
+  /// Счётчики для админа: 'mod' — объявления на проверке, 'rep' — открытые жалобы, 'sup' — новые обращения.
+  Map<String, int> _badges = {};
+
+  Future<void> _loadBadges() async {
+    final db = Supabase.instance.client;
+    try {
+      final mod = await db.from('listings').select('id').eq('status', 'moderation');
+      final rep = await db.from('listing_reports').select('id').eq('status', 'open');
+      final sup = await db.from('conversations').select('id').eq('kind', 'support').eq('status', 'waiting');
+      if (!mounted) return;
+      setState(() => _badges = {'mod': mod.length, 'rep': rep.length, 'sup': sup.length});
+    } catch (_) {
+      // Счётчики не критичны: без них список работает как раньше
+    }
+  }
+
   /// Переписки вместе с объявлением (_listing) и собеседником (_other) для карточек.
   Future<List<Map<String, dynamic>>> _loadChats() async {
     final db = Supabase.instance.client;
@@ -73,6 +89,7 @@ class _MessagesTabState extends State<MessagesTab> {
       c['_listing'] = c['listing_id'] == null ? null : listings[c['listing_id'] as String];
       c['_other'] = otherId == null ? null : people[otherId as String];
     }
+    if (_staff) _loadBadges();
     return rows;
   }
 
@@ -121,10 +138,11 @@ class _MessagesTabState extends State<MessagesTab> {
                   icon: _staff ? Icons.list_alt_rounded : Icons.support_agent_rounded,
                   title: _staff ? 'Обращения' : 'Поддержка',
                   subtitle: _staff ? 'Все обращения пользователей' : 'Чат с командой TAJ Bozor',
+                  badge: _staff ? _badges['sup'] : null,
                   onTap: _staff
-                      ? () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const SupportTicketsScreen()),
-                          )
+                      ? () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => const SupportTicketsScreen()))
+                          .then((_) => _reload())
                       : _openSupport,
                 ),
                 const SizedBox(height: 10),
@@ -133,9 +151,10 @@ class _MessagesTabState extends State<MessagesTab> {
                     icon: Icons.fact_check_outlined,
                     title: 'Проверка объявлений',
                     subtitle: 'Новые и изменённые объявления',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ModerationScreen()),
-                    ),
+                    badge: _badges['mod'],
+                    onTap: () => Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (_) => const ModerationScreen()))
+                        .then((_) => _reload()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
@@ -151,9 +170,10 @@ class _MessagesTabState extends State<MessagesTab> {
                     icon: Icons.flag_outlined,
                     title: 'Жалобы',
                     subtitle: 'Жалобы пользователей на объявления',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ReportsScreen()),
-                    ),
+                    badge: _badges['rep'],
+                    onTap: () => Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (_) => const ReportsScreen()))
+                        .then((_) => _reload()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
@@ -312,12 +332,15 @@ class _ChatTile extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, required this.subtitle, this.onTap});
+  const _Tile({required this.icon, required this.title, required this.subtitle, this.onTap, this.badge});
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+
+  /// Число новых записей; при 0 или null метка не показывается.
+  final int? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +356,22 @@ class _Tile extends StatelessWidget {
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle, style: const TextStyle(color: AppColors.muted)),
-        trailing: onTap == null ? null : const Icon(Icons.chevron_right_rounded),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (badge != null && badge! > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(999)),
+                child: Text(
+                  '$badge',
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
+                ),
+              ),
+            if (badge != null && badge! > 0) const SizedBox(width: 8),
+            if (onTap != null) const Icon(Icons.chevron_right_rounded),
+          ],
+        ),
       ),
     );
   }
