@@ -108,12 +108,24 @@ class AdminLogScreen extends StatefulWidget {
 }
 
 class _AdminLogScreenState extends State<AdminLogScreen> {
-  late final Future<List<Map<String, dynamic>>> _future = Supabase.instance.client
-      .from('admin_log')
-      .select('action, note, created_at, listing_id')
-      .order('created_at', ascending: false)
-      .limit(200)
-      .then((rows) => List<Map<String, dynamic>>.from(rows));
+  late final Future<List<Map<String, dynamic>>> _future = _load();
+
+  /// Журнал с номерами объявлений (listing_no) вместо длинных ID.
+  Future<List<Map<String, dynamic>>> _load() async {
+    final db = Supabase.instance.client;
+    final rows = List<Map<String, dynamic>>.from(await db
+        .from('admin_log')
+        .select('action, note, created_at, listing_id')
+        .order('created_at', ascending: false)
+        .limit(200));
+    final ids = rows.map((r) => r['listing_id']).whereType<String>().toSet().toList();
+    if (ids.isEmpty) return rows;
+    final nums = await db.from('listings').select('id, listing_no').inFilter('id', ids);
+    final byId = {for (final n in nums) n['id'] as String: n['listing_no']};
+    return [
+      for (final r in rows) {...r, 'no': byId[r['listing_id']]},
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +169,7 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
                   children: [
                     Text(adminActionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
                     if (listingId != null)
-                      SelectableText('ID объявления: $listingId',
+                      Text('Объявление №${e['no'] ?? '—'}',
                           style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
                       Text(action == 'message' ? note : 'Причина: $note', style: const TextStyle(fontSize: 13)),
