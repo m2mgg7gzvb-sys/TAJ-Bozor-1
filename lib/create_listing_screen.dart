@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -83,7 +84,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     try {
       final p = await Supabase.instance.client.from('profiles').select('phone').eq('id', me).maybeSingle();
       final phone = p?['phone'] as String?;
-      if (mounted && phone != null && _phoneCtrl.text.isEmpty) _phoneCtrl.text = phone;
+      // В поле храним только 9 цифр без +992: из «+992929990835» получаем «929990835».
+      if (mounted && phone != null && _phoneCtrl.text.isEmpty) {
+        var digits = phone.replaceAll(RegExp(r'\D'), '');
+        if (digits.startsWith('992')) digits = digits.substring(3);
+        _phoneCtrl.text = digits.length > 9 ? digits.substring(0, 9) : digits;
+      }
     } catch (_) {
       // Телефон введут вручную
     }
@@ -259,8 +265,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (title.length < 3) return _fail('Название — от 3 символов');
     if (price == null || price < 0) return _fail('Укажите цену числом');
     if (_cityCtrl.text.trim().isEmpty) return _fail('Выберите город');
-    final phoneDigits = _phoneCtrl.text.replaceAll(RegExp(r'\D'), '');
-    if (phoneDigits.length < 9) return _fail('Укажите номер телефона: без него объявление не отправится');
+    if (_phoneCtrl.text.length != 9) return _fail('Номер телефона: +992 и 9 цифр');
     if (widget.listing == null && _photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
     if (_isAuto) {
       if (_brandCtrl.text.isEmpty) return _fail('Выберите марку автомобиля');
@@ -281,7 +286,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     try {
       final db = Supabase.instance.client;
       // Телефон сохраняем в профиле: по нему с объявлением связываются покупатели.
-      await db.from('profiles').update({'phone': _phoneCtrl.text.trim()}).eq('id', user.id);
+      await db.from('profiles').update({'phone': '+992${_phoneCtrl.text}'}).eq('id', user.id);
       final editing = widget.listing;
       if (editing != null) {
         // Правка: фото не меняем, обновляем только текстовые поля и характеристики.
@@ -475,7 +480,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           TextField(
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(hintText: 'Номер телефона, обязательно'),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(9),
+            ],
+            decoration: const InputDecoration(
+              hintText: '9 цифр, например 901234567',
+              prefixText: '+992 ',
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
