@@ -23,8 +23,33 @@ Future<void> adminSetStatus({
   String? note,
 }) async {
   final db = Supabase.instance.client;
+  final listing = await db.from('listings').select('user_id, title').eq('id', listingId).maybeSingle();
   await db.from('listings').update({'status': status, 'admin_note': note}).eq('id', listingId);
   await db.from('admin_log').insert({'listing_id': listingId, 'action': action, 'note': note});
+  await _notifyOwner(listing, action, note);
+}
+
+/// Уведомление владельцу о решении по объявлению. Ошибка уведомления не отменяет решение.
+Future<void> _notifyOwner(Map<String, dynamic>? listing, String action, String? note) async {
+  final ownerId = listing?['user_id'] as String?;
+  final title = (listing?['title'] as String?) ?? '';
+  final texts = <String, (String, String)>{
+    'approve': ('Объявление опубликовано', '«$title» успешно прошло проверку и опубликовано.'),
+    'block': ('Объявление заблокировано', '«$title» заблокировано администрацией.${note == null ? '' : ' Причина: $note'}'),
+    'freeze': ('Объявление заморожено', '«$title» временно скрыто администрацией.${note == null ? '' : ' Причина: $note'}'),
+  };
+  final t = texts[action];
+  if (ownerId == null || t == null) return;
+  try {
+    await Supabase.instance.client.from('notifications').insert({
+      'user_id': ownerId,
+      'title': t.$1,
+      'body': t.$2,
+      'is_read': false,
+    });
+  } catch (_) {
+    // Уведомление не критично для решения админа
+  }
 }
 
 /// Окно с причиной. Возвращает текст (может быть пустым) или null, если отменили.
