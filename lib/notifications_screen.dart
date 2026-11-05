@@ -90,9 +90,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      (n['title'] as String?) ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    Row(
+                      children: [
+                        // Красная точка: уведомление было непрочитанным, когда экран открыли.
+                        if (unread) ...[
+                          Container(
+                            width: 9,
+                            height: 9,
+                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            (n['title'] as String?) ?? '',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                          ),
+                        ),
+                      ],
                     ),
                     if ((n['body'] as String?)?.isNotEmpty ?? false) ...[
                       const SizedBox(height: 4),
