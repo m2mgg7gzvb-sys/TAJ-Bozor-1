@@ -48,7 +48,8 @@ class _MapPickerPage extends StatefulWidget {
 class _MapPickerPageState extends State<_MapPickerPage> {
   YandexMapHandle? _map;
   late LatLng _center = widget.initial ?? _cityCenter(widget.city);
-  String _address = '';
+  /// Пока адрес не определён, показываем название выбранного города: точка уже стоит в его центре.
+  late String _address = (widget.city?.trim().isNotEmpty ?? false) ? widget.city!.trim() : '';
   bool _locating = false;
   bool _mapFailed = false;
 
@@ -106,7 +107,10 @@ class _MapPickerPageState extends State<_MapPickerPage> {
                 if (widget.initial == null) _moveToMe();
               },
               onCenter: (point) => _center = point,
-              onAddress: (text) => setState(() => _address = text),
+              onAddress: (text) {
+                // Пустой ответ геокодера не стирает название города.
+                if (text.isNotEmpty) setState(() => _address = text);
+              },
               onError: _onMapError,
             ),
           ),

@@ -52,7 +52,7 @@ class _YandexMapState extends State<YandexMap> {
 
   late final String _viewType = 'yandex-map-${_counter++}';
   late final web.HTMLIFrameElement _frame = web.HTMLIFrameElement()
-    ..src = 'yandex_map.html?lat=${widget.center.latitude}'
+    ..src = 'yandex_map.html?v=2&lat=${widget.center.latitude}'
         '&lng=${widget.center.longitude}'
         '&zoom=${widget.zoom.round()}'
         '&mode=${widget.picker ? 'picker' : 'view'}'

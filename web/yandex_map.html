@@ -31,8 +31,15 @@
       window.parent.postMessage(JSON.stringify(message), '*');
     }
 
-    // Если за 8 секунд карта не стала готовой, тоже считаем это ошибкой.
-    setTimeout(function () { reportError('timeout'); }, 8000);
+    // Если за 8 секунд карта не стала готовой, показываем текст прямо на странице и сообщаем приложению.
+    setTimeout(function () {
+      if (mapLoaded) return;
+      document.getElementById('map').innerHTML =
+        '<div style="display:flex;height:100%;align-items:center;justify-content:center;padding:24px;' +
+        'box-sizing:border-box;text-align:center;font:15px system-ui,sans-serif;color:#5C6F68">' +
+        'Карта не загрузилась. Проверьте интернет и попробуйте позже.</div>';
+      reportError('timeout');
+    }, 8000);
 
     ymaps.ready(function () {
       mapLoaded = true;
