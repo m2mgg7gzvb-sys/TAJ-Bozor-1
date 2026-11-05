@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -214,6 +216,13 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   /// Открывает адрес продавца в Яндекс Картах.
   Future<void> _openMap() async {
+    final lat = (_item['lat'] as num?)?.toDouble();
+    final lng = (_item['lng'] as num?)?.toDouble();
+    if (lat != null && lng != null) {
+      final url = Uri.parse('https://yandex.ru/maps/?pt=$lng,$lat&z=16&l=map');
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+      return;
+    }
     final address = _item['address'] as String?;
     if (address == null || address.isEmpty) {
       _toast('Адрес пока не указан');
@@ -415,6 +424,39 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
                 const SizedBox(height: 18),
 
+                if (item['lat'] != null && item['lng'] != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      height: 180,
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: LatLng((item['lat'] as num).toDouble(), (item['lng'] as num).toDouble()),
+                          initialZoom: 15,
+                          interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.tajbozor.app',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng((item['lat'] as num).toDouble(), (item['lng'] as num).toDouble()),
+                                width: 40,
+                                height: 40,
+                                alignment: Alignment.topCenter,
+                                child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (address != null && address.isNotEmpty) ...[
                   Text(address, style: const TextStyle(fontSize: 15)),
                   TextButton.icon(

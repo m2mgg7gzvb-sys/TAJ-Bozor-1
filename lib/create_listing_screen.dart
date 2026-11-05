@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'car_catalog.dart';
 import 'city_store.dart';
 import 'confirm_delete.dart';
+import 'map_picker.dart';
 import 'theme.dart';
 
 const _bodyTypes = ['Седан', 'Хэтчбек', 'Универсал', 'Кроссовер', 'Внедорожник', 'Купе', 'Кабриолет', 'Минивэн', 'Пикап'];
@@ -35,6 +37,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _priceCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  double? _lat;
+  double? _lng;
   final _brandCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
   final List<XFile> _photos = [];
@@ -102,6 +106,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _priceCtrl.text = price == null ? '' : (price % 1 == 0 ? price.toStringAsFixed(0) : '$price');
     _cityCtrl.text = (l['city'] as String?) ?? '';
     _addressCtrl.text = (l['address'] as String?) ?? '';
+    _lat = (l['lat'] as num?)?.toDouble();
+    _lng = (l['lng'] as num?)?.toDouble();
     _categoryId = l['category_id'] as int?;
     final d = Map<String, dynamic>.from((l['details'] as Map?) ?? {});
     String s(String k) => '${d[k] ?? ''}';
@@ -176,6 +182,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   /// Выпадающий список, который не падает, если сохранённого значения нет в списке.
   Widget _pick(String hint, String current, List<String> items, ValueChanged<String> onChanged) {
     return _drop(hint, items.contains(current) ? current : null, items, (v) => onChanged(v ?? ''));
+  }
+
+  /// Открывает карту и сохраняет выбранную точку.
+  Future<void> _pickPoint() async {
+    final initial = (_lat != null && _lng != null) ? LatLng(_lat!, _lng!) : null;
+    final p = await pickMapPoint(context, initial: initial, city: _cityCtrl.text);
+    if (p == null || !mounted) return;
+    setState(() {
+      _lat = p.latitude;
+      _lng = p.longitude;
+    });
   }
 
   /// Характеристики авто: заполненные поля, пустые не сохраняем.
@@ -256,6 +273,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'price': price,
           'city': _cityCtrl.text.trim(),
           'address': _addressCtrl.text.trim(),
+          'lat': _lat,
+          'lng': _lng,
           'details': _isAuto ? _carDetails() : null,
         }).eq('id', editing['id'] as String);
         if (!mounted) return;
@@ -273,6 +292,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'currency': 'TJS',
             'city': _cityCtrl.text.trim(),
             'address': _addressCtrl.text.trim(),
+            'lat': _lat,
+            'lng': _lng,
             'details': _isAuto ? _carDetails() : null,
             'status': 'moderation',
             'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
@@ -450,6 +471,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           TextField(
             controller: _addressCtrl,
             decoration: const InputDecoration(hintText: 'Адрес (улица, дом) для карты'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _pickPoint,
+            icon: const Icon(Icons.location_on_outlined),
+            label: Text(_lat == null ? 'Указать точку на карте' : 'Точка выбрана · изменить'),
           ),
           const SizedBox(height: 12),
           TextField(
