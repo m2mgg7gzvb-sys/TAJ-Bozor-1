@@ -71,7 +71,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<_UserData> _load() async {
     final profile = await _db
         .from('profiles')
-        .select('name, city, avatar_url')
+        .select('name, city, avatar_url, public_id')
         .eq('id', widget.userId)
         .maybeSingle();
     final listings = List<Map<String, dynamic>>.from(await _db
