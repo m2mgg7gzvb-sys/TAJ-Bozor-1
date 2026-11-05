@@ -266,7 +266,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('Объявление', 'Эълон'),
+        title: Text(tr('Объявление', 'Эълон'')),
         actions: [
           if (!_isOwner && Supabase.instance.client.auth.currentUser != null)
             IconButton(
@@ -412,7 +412,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   TextButton.icon(
                     onPressed: _openMap,
                     icon: const Icon(Icons.map_outlined, size: 18),
-                    label: Text(tr('Показать на карте', 'Дар харита нишон додан'),
+                    label: Text(tr('Показать на карте', 'Дар харита нишон додан'')),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero, foregroundColor: AppColors.primary),
                   ),
                   const SizedBox(height: 8),
@@ -431,7 +431,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2D8CFF)),
                   onPressed: () => showCallbackSheet(context, listingId: _id),
-                  child: Text(tr('Заказать звонок', 'Занг сафориш додан'),
+                  child: Text(tr('Заказать звонок', 'Занг сафориш додан'')),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -440,7 +440,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       child: FilledButton(
                         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
                         onPressed: _call,
-                        child: Text(tr('Позвонить', 'Занг задан'),
+                        child: Text(tr('Позвонить', 'Занг задан'')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -452,7 +452,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           side: const BorderSide(color: AppColors.primary),
                         ),
                         onPressed: _write,
-                        child: Text(tr('Написать', 'Навиштан'),
+                        child: Text(tr('Написать', 'Навиштан'')),
                       ),
                     ),
                   ],
