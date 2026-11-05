@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'car_catalog.dart';
 import 'city_store.dart';
+import 'confirm_delete.dart';
 import 'theme.dart';
 
 const _bodyTypes = ['Седан', 'Хэтчбек', 'Универсал', 'Кроссовер', 'Внедорожник', 'Купе', 'Кабриолет', 'Минивэн', 'Пикап'];
@@ -205,17 +206,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   /// Удаление: объявление скрывается (статус «hidden»), данные не теряются.
   Future<void> _delete() async {
     final id = widget.listing!['id'] as String;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Удалить объявление?'),
-        content: const Text('Оно пропадёт из поиска и с вашего профиля.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Удалить')),
-        ],
-      ),
-    );
+    final ok = await confirmDeleteByTyping(context);
     if (ok != true) return;
     try {
       await Supabase.instance.client.from('listings').update({'status': 'hidden'}).eq('id', id);

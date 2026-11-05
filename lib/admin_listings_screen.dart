@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
+import 'confirm_delete.dart';
 import 'theme.dart';
 
 /// Все объявления для админов: фильтр по статусу, поиск по названию и действия
@@ -169,7 +170,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                             }
                           },
                           onDelete: () async {
-                            if (await _confirm('Удалить объявление? Его не будет видно никому.')) {
+                            if (await confirmDeleteByTyping(context)) {
                               _set(item['id'] as String, 'hidden', 'Объявление удалено');
                             }
                           },

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
+import 'confirm_delete.dart';
 import 'theme.dart';
 
 /// Проверка объявлений для админов: новые и изменённые объявления ждут решения.
@@ -98,7 +99,11 @@ class _ModerationScreenState extends State<ModerationScreen> {
                     ),
                     onApprove: () => _set(item['id'] as String, 'active', 'Объявление опубликовано'),
                     onBlock: () => _set(item['id'] as String, 'blocked', 'Объявление заблокировано'),
-                    onDelete: () => _set(item['id'] as String, 'hidden', 'Объявление удалено'),
+                    onDelete: () async {
+                      if (await confirmDeleteByTyping(context)) {
+                        _set(item['id'] as String, 'hidden', 'Объявление удалено');
+                      }
+                    },
                   ),
                   const SizedBox(height: 10),
                 ],
