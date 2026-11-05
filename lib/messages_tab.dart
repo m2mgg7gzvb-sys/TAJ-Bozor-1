@@ -166,9 +166,9 @@ class _MessagesTabState extends State<MessagesTab> {
                   ),
                   const SizedBox(height: 10),
                   _Tile(
-                    icon: Icons.forum_outlined,
-                    title: 'Чаты по объявлениям',
-                    subtitle: 'Решения и сообщения владельцам по ID',
+                    icon: Icons.manage_search_rounded,
+                    title: 'Поиск по ID',
+                    subtitle: 'Открыть объявление и управлять им',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AdminChatsScreen()),
                     ),
