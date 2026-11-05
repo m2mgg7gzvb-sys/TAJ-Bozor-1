@@ -54,7 +54,22 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   void initState() {
     super.initState();
     _loadSeller();
+    _loadRole();
     _countView();
+  }
+
+  bool _isAdmin = false;
+
+  /// Узнаём, админ ли текущий пользователь: ID объявления видят только владелец и админы.
+  Future<void> _loadRole() async {
+    final me = Supabase.instance.client.auth.currentUser?.id;
+    if (me == null) return;
+    try {
+      final p = await Supabase.instance.client.from('profiles').select('is_admin').eq('id', me).maybeSingle();
+      if (mounted) setState(() => _isAdmin = p?['is_admin'] == true);
+    } catch (_) {
+      // Без роли ID просто не показывается
+    }
   }
 
   /// Засчитывает просмотр (не для владельца) и получает общее число просмотров.
@@ -391,7 +406,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(item['title'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                if (item['public_id'] != null)
+                if (item['public_id'] != null && (_isOwner || _isAdmin))
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: CopyIdLine(
@@ -488,6 +503,16 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => showReportDialog(context, _id),
+                    icon: const Icon(Icons.flag_outlined, size: 18),
+                    label: Text(tr('Пожаловаться на объявление', 'Шикоят аз эълон')),
+                    style: TextButton.styleFrom(foregroundColor: AppColors.muted),
+                  ),
                 ),
 
                 // Продавец

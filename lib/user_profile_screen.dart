@@ -72,7 +72,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<_UserData> _load() async {
     final profile = await _db
         .from('profiles')
-        .select('name, city, avatar_url, public_id')
+        .select('name, city, avatar_url, public_id, is_admin')
         .eq('id', widget.userId)
         .maybeSingle();
     final listings = List<Map<String, dynamic>>.from(await _db
@@ -161,8 +161,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(displayName,
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(displayName,
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                                ),
+                                if (d.profile['is_admin'] == true) ...[
+                                  const SizedBox(width: 6),
+                                  Image.asset('assets/admin_badge.png', height: 22),
+                                ],
+                              ],
+                            ),
                             if (city != null && city.isNotEmpty)
                               Text(city, style: const TextStyle(color: AppColors.muted)),
                             if (d.profile['public_id'] != null)

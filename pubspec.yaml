@@ -29,5 +29,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo.svg
+    - assets/admin_badge.png
     - assets/photos/
     - assets/generations/

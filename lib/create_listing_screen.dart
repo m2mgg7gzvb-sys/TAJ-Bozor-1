@@ -37,6 +37,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _priceCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   double? _lat;
   double? _lng;
   final _brandCtrl = TextEditingController();
@@ -72,6 +73,20 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     super.initState();
     if (widget.listing != null) _prefill();
     _loadCategories();
+    _loadPhone();
+  }
+
+  /// Подставляем телефон из профиля, чтобы не вводить его каждый раз.
+  Future<void> _loadPhone() async {
+    final me = Supabase.instance.client.auth.currentUser?.id;
+    if (me == null) return;
+    try {
+      final p = await Supabase.instance.client.from('profiles').select('phone').eq('id', me).maybeSingle();
+      final phone = p?['phone'] as String?;
+      if (mounted && phone != null && _phoneCtrl.text.isEmpty) _phoneCtrl.text = phone;
+    } catch (_) {
+      // Телефон введут вручную
+    }
   }
 
   @override
@@ -82,6 +97,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _priceCtrl,
       _cityCtrl,
       _addressCtrl,
+      _phoneCtrl,
       _brandCtrl,
       _modelCtrl,
       _yearCtrl,
@@ -243,6 +259,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (title.length < 3) return _fail('Название — от 3 символов');
     if (price == null || price < 0) return _fail('Укажите цену числом');
     if (_cityCtrl.text.trim().isEmpty) return _fail('Выберите город');
+    final phoneDigits = _phoneCtrl.text.replaceAll(RegExp(r'\D'), '');
+    if (phoneDigits.length < 9) return _fail('Укажите номер телефона: без него объявление не отправится');
     if (widget.listing == null && _photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
     if (_isAuto) {
       if (_brandCtrl.text.isEmpty) return _fail('Выберите марку автомобиля');
@@ -262,6 +280,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
     try {
       final db = Supabase.instance.client;
+      // Телефон сохраняем в профиле: по нему с объявлением связываются покупатели.
+      await db.from('profiles').update({'phone': _phoneCtrl.text.trim()}).eq('id', user.id);
       final editing = widget.listing;
       if (editing != null) {
         // Правка: фото не меняем, обновляем только текстовые поля и характеристики.
@@ -452,6 +472,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             ),
             const SizedBox(height: 12),
           ],
+          TextField(
+            controller: _phoneCtrl,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(hintText: 'Номер телефона, обязательно'),
+          ),
+          const SizedBox(height: 12),
           TextField(
             controller: _priceCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
