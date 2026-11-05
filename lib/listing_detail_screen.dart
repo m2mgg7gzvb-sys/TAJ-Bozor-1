@@ -381,6 +381,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(item['title'] as String, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                if (item['listing_no'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: SelectableText(
+                      'Объявление №${item['listing_no']} · укажите номер в поддержке',
+                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
+                  ),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
