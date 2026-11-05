@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_log.dart';
+import 'listing_detail_screen.dart';
+import 'listing_utils.dart';
 import 'theme.dart';
 
 const _reportReasons = ['Мошенничество', 'Запрещённый товар', 'Неверная информация', 'Другое'];
@@ -56,6 +58,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   void _reload() => setState(() => _future = _load());
+
+  /// Открывает объявление, на которое пожаловались, так, как его видит покупатель.
+  Future<void> _viewListing(Map<String, dynamic> report) async {
+    final listingId = report['listing_id'] as String?;
+    if (listingId == null) return;
+    try {
+      final row = await _db.from('listings').select('$listingSelect, status').eq('id', listingId).single();
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ListingDetailScreen(item: Map<String, dynamic>.from(row))),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Объявление удалено или недоступно')),
+        );
+      }
+    }
+  }
 
   Future<void> _closeReport(String reportId) async {
     await _db.from('listing_reports').update({'status': 'closed'}).eq('id', reportId);
@@ -136,6 +157,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         Wrap(
                           spacing: 8,
                           children: [
+                            OutlinedButton(onPressed: () => _viewListing(r), child: const Text('Просмотреть объявление')),
                             FilledButton(onPressed: () => _blockListing(r), child: const Text('Заблокировать')),
                             OutlinedButton(onPressed: () => _dismiss(r), child: const Text('Закрыть жалобу')),
                           ],
