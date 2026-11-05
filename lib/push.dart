@@ -34,7 +34,7 @@ Future<String?> enablePush() async {
   final error = data['error'];
   if (error == 'denied') return 'Разрешите уведомления в настройках браузера';
   if (error == 'unsupported') {
-    return 'На iPhone сначала добавьте сайт на экран «Домой», затем откройте его оттуда';
+    return 'Этот браузер не поддерживает уведомления. Откройте сайт в Chrome или Samsung Internet. На iPhone сначала добавьте сайт на экран «Домой»';
   }
   if (error != null) return 'Не удалось включить уведомления: $error';
 
