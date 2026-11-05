@@ -360,31 +360,30 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _idCtrl,
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _search(),
-                    decoration: InputDecoration(
-                      hintText: 'ID объявления, например OB-1A2B3C4D',
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
+                TextField(
+                  controller: _idCtrl,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _search(),
+                  decoration: InputDecoration(
+                    hintText: 'Например OB-1A2B3C4D',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    filled: true,
+                    fillColor: const Color(0xFFE6ECEA),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(height: 10),
                 FilledButton(
                   onPressed: _searching ? null : _search,
-                  child: const Text('Найти'),
+                  child: const Text('Найти объявление'),
                 ),
               ],
             ),
