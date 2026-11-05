@@ -50,6 +50,17 @@ class _MapPickerPageState extends State<_MapPickerPage> {
   late LatLng _center = widget.initial ?? _cityCenter(widget.city);
   String _address = '';
   bool _locating = false;
+  bool _mapFailed = false;
+
+  /// Карта не открылась: точка остаётся в центре выбранного города, адрес — название города.
+  void _onMapError() {
+    if (!mounted) return;
+    setState(() {
+      _mapFailed = true;
+      _center = _cityCenter(widget.city);
+      _address = (widget.city?.trim().isNotEmpty ?? false) ? widget.city!.trim() : 'Город не выбран';
+    });
+  }
 
   /// Если человек в этом городе, карта сразу встаёт на его место. Иначе остаётся центр города.
   Future<void> _moveToMe() async {
@@ -96,6 +107,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
               },
               onCenter: (point) => _center = point,
               onAddress: (text) => setState(() => _address = text),
+              onError: _onMapError,
             ),
           ),
           // Неподвижный маркер по центру: карту двигает пользователь, точка остаётся под маркером.
@@ -137,12 +149,23 @@ class _MapPickerPageState extends State<_MapPickerPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                  Text(
+                    _mapFailed ? 'Карта не загрузилась' : 'Адрес',
+                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     _address.isEmpty ? 'Определяем адрес…' : _address,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
+                  if (_mapFailed)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Text(
+                        'Точка поставлена в центре города. Проверьте интернет, если нужно уточнить место.',
+                        style: TextStyle(color: AppColors.muted, fontSize: 13),
+                      ),
+                    ),
                   const SizedBox(height: 14),
                   FilledButton(
                     onPressed: () => Navigator.of(context).pop(_center),

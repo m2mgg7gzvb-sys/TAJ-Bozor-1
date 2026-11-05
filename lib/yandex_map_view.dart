@@ -17,6 +17,7 @@ class YandexMap extends StatefulWidget {
     this.onReady,
     this.onCenter,
     this.onAddress,
+    this.onError,
   });
 
   final LatLng center;
@@ -25,6 +26,7 @@ class YandexMap extends StatefulWidget {
   final ValueChanged<YandexMapHandle>? onReady;
   final ValueChanged<LatLng>? onCenter;
   final ValueChanged<String>? onAddress;
+  final VoidCallback? onError;
 
   @override
   State<YandexMap> createState() => _YandexMapState();
@@ -60,7 +62,6 @@ class _YandexMapState extends State<YandexMap> {
 
   late final YandexMapHandle _handle = YandexMapHandle._(_frame);
   late final JSFunction _listener = _onMessage.toJS;
-  bool _ready = false;
 
   @override
   void initState() {
@@ -82,12 +83,13 @@ class _YandexMapState extends State<YandexMap> {
     }
     switch (data['type']) {
       case 'ready':
-        _ready = true;
         widget.onReady?.call(_handle);
       case 'center':
         widget.onCenter?.call(LatLng((data['lat'] as num).toDouble(), (data['lng'] as num).toDouble()));
       case 'address':
         widget.onAddress?.call((data['text'] as String?) ?? '');
+      case 'error':
+        widget.onError?.call();
     }
   }
 

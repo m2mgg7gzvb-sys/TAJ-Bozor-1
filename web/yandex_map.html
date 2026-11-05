@@ -8,7 +8,14 @@
     html, body, #map { margin: 0; height: 100%; width: 100%; }
     body { background: #F4F7F6; }
   </style>
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=588d700f-7444-4686-b0ee-8d11c4c6c687&lang=ru_RU"></script>
+  <script>
+    // Сообщаем Flutter об ошибке загрузки карты (ключ, домен или сеть).
+    var mapLoaded = false;
+    function reportError(reason) {
+      if (!mapLoaded) window.parent.postMessage(JSON.stringify({ type: 'error', reason: reason }), '*');
+    }
+  </script>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=588d700f-7444-4686-b0ee-8d11c4c6c687&lang=ru_RU" onerror="reportError('script')"></script>
 </head>
 <body>
   <div id="map"></div>
@@ -24,7 +31,11 @@
       window.parent.postMessage(JSON.stringify(message), '*');
     }
 
+    // Если за 8 секунд карта не стала готовой, тоже считаем это ошибкой.
+    setTimeout(function () { reportError('timeout'); }, 8000);
+
     ymaps.ready(function () {
+      mapLoaded = true;
       var map = new ymaps.Map('map', {
         center: [lat, lng],
         zoom: zoom,
@@ -57,6 +68,14 @@
       });
 
       send({ type: 'ready' });
+
+      // Адрес стартовой точки, чтобы снизу не висело «Определяем адрес…» до первого движения карты.
+      ymaps.geocode([lat, lng], { results: 1 }).then(function (res) {
+        var obj = res.geoObjects.get(0);
+        send({ type: 'address', text: obj ? obj.getAddressLine() : '' });
+      }, function () {
+        send({ type: 'address', text: '' });
+      });
     });
   </script>
 </body>
