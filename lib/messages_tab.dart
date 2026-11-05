@@ -29,6 +29,26 @@ class _MessagesTabState extends State<MessagesTab> {
   /// Счётчики для админа: 'mod' — объявления на проверке, 'rep' — открытые жалобы, 'sup' — новые обращения.
   Map<String, int> _badges = {};
 
+  /// Есть ли непрочитанные уведомления: тогда у плитки «Уведомления» горит точка.
+  bool _hasUnreadNotes = false;
+
+  Future<void> _loadNotesDot() async {
+    final me = Supabase.instance.client.auth.currentUser?.id;
+    if (me == null) return;
+    try {
+      final rows = await Supabase.instance.client
+          .from('notifications')
+          .select('id')
+          .eq('user_id', me)
+          .eq('is_read', false)
+          .limit(1);
+      if (!mounted) return;
+      setState(() => _hasUnreadNotes = rows.isNotEmpty);
+    } catch (_) {
+      // Точка не критична
+    }
+  }
+
   Future<void> _loadBadges() async {
     final db = Supabase.instance.client;
     try {
@@ -90,6 +110,7 @@ class _MessagesTabState extends State<MessagesTab> {
       c['_other'] = otherId == null ? null : people[otherId as String];
     }
     if (_staff) _loadBadges();
+    _loadNotesDot();
     return rows;
   }
 
@@ -199,9 +220,10 @@ class _MessagesTabState extends State<MessagesTab> {
                   icon: Icons.notifications_none_rounded,
                   title: 'Уведомления',
                   subtitle: 'Заказы звонков и другие сообщения',
+                  dot: _hasUnreadNotes,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                  ),
+                  ).then((_) => _loadNotesDot()),
                 ),
                 const SizedBox(height: 22),
                 const Text('Переписки', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
@@ -332,7 +354,7 @@ class _ChatTile extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, required this.subtitle, this.onTap, this.badge});
+  const _Tile({required this.icon, required this.title, required this.subtitle, this.onTap, this.badge, this.dot = false});
 
   final IconData icon;
   final String title;
@@ -341,6 +363,9 @@ class _Tile extends StatelessWidget {
 
   /// Число новых записей; при 0 или null метка не показывается.
   final int? badge;
+
+  /// Красная точка для непрочитанного.
+  final bool dot;
 
   @override
   Widget build(BuildContext context) {
@@ -369,6 +394,13 @@ class _Tile extends StatelessWidget {
                 ),
               ),
             if (badge != null && badge! > 0) const SizedBox(width: 8),
+            if (dot)
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+              ),
             if (onTap != null) const Icon(Icons.chevron_right_rounded),
           ],
         ),
