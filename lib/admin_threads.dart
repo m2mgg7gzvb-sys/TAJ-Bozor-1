@@ -307,7 +307,7 @@ class _Bubble extends StatelessWidget {
   }
 }
 
-/// Чаты по объявлениям: список объявлений, с которыми работали, и открытие по ID.
+/// Поиск объявления по ID для админа: открывает управление объявлением.
 class AdminChatsScreen extends StatefulWidget {
   const AdminChatsScreen({super.key});
 
@@ -318,7 +318,7 @@ class AdminChatsScreen extends StatefulWidget {
 class _AdminChatsScreenState extends State<AdminChatsScreen> {
   final _db = Supabase.instance.client;
   final _idCtrl = TextEditingController();
-  late Future<List<Map<String, dynamic>>> _future = _load();
+  bool _searching = false;
 
   @override
   void dispose() {
@@ -326,39 +326,11 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
     super.dispose();
   }
 
-  /// Последнее действие по каждому объявлению из журнала, с названием объявления.
-  Future<List<Map<String, dynamic>>> _load() async {
-    final logs = await _db
-        .from('admin_log')
-        .select('listing_id, action, created_at')
-        .not('listing_id', 'is', null)
-        .order('created_at', ascending: false)
-        .limit(400);
-    final seen = <String>{};
-    final latest = <Map<String, dynamic>>[];
-    for (final row in logs) {
-      final id = row['listing_id'] as String;
-      if (seen.add(id)) latest.add(Map<String, dynamic>.from(row));
-    }
-    if (latest.isEmpty) return latest;
-    final titles = await _db
-        .from('listings')
-        .select('id, title, public_id')
-        .inFilter('id', latest.map((e) => e['listing_id']).toList());
-    final byId = {for (final t in titles) t['id'] as String: t};
-    return [
-      for (final e in latest) {
-        ...e,
-        'title': byId[e['listing_id'] as String]?['title'],
-        'no': byId[e['listing_id'] as String]?['public_id'],
-      },
-    ];
-  }
-
-  Future<void> _openById() async {
+  Future<void> _search() async {
     final id = _idCtrl.text.trim();
-    if (id.isEmpty) return;
+    if (id.isEmpty || _searching) return;
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _searching = true);
     try {
       final code = id.toUpperCase();
       final row = code.startsWith('OB-')
@@ -369,21 +341,22 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
         messenger.showSnackBar(const SnackBar(content: Text('Объявление с таким ID не найдено')));
         return;
       }
-      _idCtrl.clear();
       final uuid = row['id'] as String;
       await Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => AdminThreadScreen(listingId: uuid)),
       );
-      if (mounted) setState(() => _future = _load());
+      _idCtrl.clear();
     } catch (_) {
       messenger.showSnackBar(const SnackBar(content: Text('Проверьте ID объявления')));
+    } finally {
+      if (mounted) setState(() => _searching = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Чаты по объявлениям')),
+      appBar: AppBar(title: const Text('Поиск объявления')),
       body: Column(
         children: [
           Padding(
@@ -393,8 +366,11 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                 Expanded(
                   child: TextField(
                     controller: _idCtrl,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _search(),
                     decoration: InputDecoration(
                       hintText: 'ID объявления, например OB-1A2B3C4D',
+                      prefixIcon: const Icon(Icons.search_rounded),
                       isDense: true,
                       filled: true,
                       fillColor: Colors.white,
@@ -406,69 +382,31 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(onPressed: _openById, child: const Text('Открыть')),
+                FilledButton(
+                  onPressed: _searching ? null : _search,
+                  child: const Text('Найти'),
+                ),
               ],
             ),
           ),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async => setState(() => _future = _load()),
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _future,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snap.hasError) {
-                    return ListView(children: const [
-                      Padding(padding: EdgeInsets.all(24), child: Text('Не удалось загрузить чаты', textAlign: TextAlign.center)),
-                    ]);
-                  }
-                  final items = snap.data ?? const <Map<String, dynamic>>[];
-                  if (items.isEmpty) {
-                    return ListView(children: const [
-                      Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text('Чатов пока нет. Они появятся после первого действия с объявлением.',
-                            textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
-                      ),
-                    ]);
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final e = items[i];
-                      final id = e['listing_id'] as String;
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => AdminThreadScreen(listingId: id)),
-                          );
-                          if (mounted) setState(() => _future = _load());
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: cardDecoration(radius: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text((e['title'] as String?) ?? 'Объявление удалено',
-                                  style: const TextStyle(fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 2),
-                              Text(adminActionNames[e['action']] ?? '',
-                                  style: const TextStyle(fontSize: 13)),
-                              Text('ID: ${e['no'] ?? '—'}',
-                                  style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.shield_outlined, size: 72, color: AppColors.primary),
+                  SizedBox(height: 16),
+                  Text(
+                    'Поиск по ID',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Введите ID объявления, чтобы открыть его\nи управлять им',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.muted),
+                  ),
+                ],
               ),
             ),
           ),
