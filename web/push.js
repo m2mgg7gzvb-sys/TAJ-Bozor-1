@@ -35,4 +35,10 @@
       return JSON.stringify({ error: String(e) });
     }
   };
+
+  // Текущее разрешение: 'default' (ещё не выбрано), 'granted', 'denied' или 'unsupported'.
+  window.tajPushPermission = function () {
+    if (!('Notification' in window) || !('PushManager' in window)) return 'unsupported';
+    return Notification.permission;
+  };
 })();

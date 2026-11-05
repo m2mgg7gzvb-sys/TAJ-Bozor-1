@@ -13,6 +13,7 @@ import 'messages_tab.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'notify_store.dart';
+import 'push.dart';
 import 'theme.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок.
@@ -26,6 +27,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   late int _index;
   late final StreamSubscription<AuthState> _authSub;
+  bool _pushAsked = false;
 
   @override
   void initState() {
@@ -34,9 +36,45 @@ class _HomeShellState extends State<HomeShell> {
     tabIndex.addListener(_onTabChanged);
     FavoritesStore.load();
     // Подпись последней вкладки меняется после входа и выхода: «Войти» → «Профиль».
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
       if (mounted) setState(() {});
+      if (state.event == AuthChangeEvent.signedIn) _askPush();
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _askPush());
+  }
+
+  /// Спрашивает про уведомления, если разрешение ещё не выбрано. За один запуск — один раз.
+  Future<void> _askPush() async {
+    if (_pushAsked || !mounted) return;
+    if (Supabase.instance.client.auth.currentUser == null) return;
+    _pushAsked = true;
+    if (pushPermission() != 'default') return;
+
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Уведомления'),
+        content: const Text(
+          'Присылать уведомления о новых сообщениях и ответах на ваши объявления на телефон?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Не сейчас'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Включить'),
+          ),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final err = await enablePush();
+    messenger.showSnackBar(SnackBar(
+      content: Text(err ?? 'Уведомления включены'),
+    ));
   }
 
   @override

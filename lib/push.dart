@@ -11,6 +11,18 @@ const vapidPublicKey =
 @JS('tajPushSubscribe')
 external JSPromise<JSString> _tajPushSubscribe(JSString publicKey);
 
+@JS('tajPushPermission')
+external JSString _tajPushPermission();
+
+/// Текущее разрешение: 'default', 'granted', 'denied' или 'unsupported'.
+String pushPermission() {
+  try {
+    return _tajPushPermission().toDart;
+  } catch (_) {
+    return 'unsupported';
+  }
+}
+
 /// Включает уведомления на этом устройстве. Возвращает null при успехе или текст причины.
 /// Вызывать только по нажатию кнопки пользователя.
 Future<String?> enablePush() async {
