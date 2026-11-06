@@ -1,6 +1,19 @@
 // Web Push: регистрация service worker и подписка пользователя на уведомления.
 (function () {
+  // Старый service worker Flutter кэширует сайт и отдаёт устаревшую версию.
+  // Снимаем его и чистим кэши, оставляем только push-sw.js.
   if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      regs.forEach(function (r) {
+        var url = (r.active || r.waiting || r.installing || {}).scriptURL || '';
+        if (url.indexOf('push-sw.js') === -1) r.unregister();
+      });
+    }).catch(function () {});
+    if (window.caches) {
+      caches.keys().then(function (keys) {
+        keys.forEach(function (k) { caches.delete(k); });
+      }).catch(function () {});
+    }
     navigator.serviceWorker.register('push-sw.js').catch(function () {});
   }
 
