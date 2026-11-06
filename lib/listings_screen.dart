@@ -240,27 +240,29 @@ class _ListingsScreenState extends State<ListingsScreen> {
   /// Верхний баннер категории: логотип и название TAJ Bozor.
   Widget _topBanner() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.deep, AppColors.primary],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: Column(
         children: [
-          SvgPicture.asset('assets/logo.svg', width: 30, height: 30),
-          const SizedBox(width: 10),
+          SvgPicture.asset('assets/logo.svg', width: 56, height: 56),
+          const SizedBox(height: 10),
           const Text(
             'TAJ Bozor',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 19,
+              fontSize: 30,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.3,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -421,6 +423,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         children: [
           if (widget.carFilter) _carFilterBlock(),
           if (widget.categoryId != null) _topBanner(),
+          if (widget.categoryId == null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
