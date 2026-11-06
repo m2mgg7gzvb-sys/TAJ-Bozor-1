@@ -70,9 +70,20 @@ class _ListingsScreenState extends State<ListingsScreen> {
       query = query.eq('city', city);
     }
     final variants = searchVariants(_searchCtrl.text);
+    final rank = <String, int>{};
     if (variants.isNotEmpty) {
-      // Совпадение с любым вариантом написания: «бмв» найдёт и «BMW».
-      query = query.or(variants.map((v) => 'title.ilike.%$v%').join(','));
+      // Поиск в базе с учётом опечаток и вариантов написания («бмв» → BMW, «toyta» → Toyota).
+      final hits = await Supabase.instance.client
+          .rpc('search_listing_ids', params: {'terms': variants}) as List;
+      final ids = hits.map((h) => h['id'] as String).toList();
+      if (ids.isEmpty) {
+        if (mounted) setState(() => _count = 0);
+        return [];
+      }
+      for (var i = 0; i < ids.length; i++) {
+        rank[ids[i]] = i;
+      }
+      query = query.inFilter('id', ids);
     }
     if (widget.carFilter) {
       if (_brand != null) query = query.eq('details->>brand', _brand!);
@@ -87,6 +98,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
     }
     final rows = await query.order('created_at', ascending: false).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
+    if (rank.isNotEmpty) {
+      // При поиске сначала самые похожие на запрос.
+      items.sort((a, b) => (rank[a['id']] ?? 1 << 30).compareTo(rank[b['id']] ?? 1 << 30));
+    }
     if (mounted) setState(() => _count = items.length);
     return items;
   }
