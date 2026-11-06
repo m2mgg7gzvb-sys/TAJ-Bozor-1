@@ -6,6 +6,7 @@ import 'city_store.dart';
 import 'lang_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'search_terms.dart';
 import 'theme.dart';
 
 /// Лента объявлений. Может быть отфильтрована по категории и по поисковой строке.
@@ -68,9 +69,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
     if (city != null) {
       query = query.eq('city', city);
     }
-    final search = _searchCtrl.text.trim();
-    if (search.isNotEmpty) {
-      query = query.ilike('title', '%$search%');
+    final variants = searchVariants(_searchCtrl.text);
+    if (variants.isNotEmpty) {
+      // Совпадение с любым вариантом написания: «бмв» найдёт и «BMW».
+      query = query.or(variants.map((v) => 'title.ilike.%$v%').join(','));
     }
     if (widget.carFilter) {
       if (_brand != null) query = query.eq('details->>brand', _brand!);
