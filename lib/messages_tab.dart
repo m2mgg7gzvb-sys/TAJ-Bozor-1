@@ -26,6 +26,38 @@ class _MessagesTabState extends State<MessagesTab> {
   late Future<List<Map<String, dynamic>>> _chats = _loadChats();
   bool _staff = false;
 
+  /// Живое обновление списка: новые сообщения и изменения переписок приходят сразу.
+  RealtimeChannel? _liveChannel;
+
+  @override
+  void initState() {
+    super.initState();
+    _liveChannel = Supabase.instance.client.channel('chats-live')
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'messages',
+        callback: (_) {
+          if (mounted) _reload();
+        },
+      )
+      ..onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'conversations',
+        callback: (_) {
+          if (mounted) _reload();
+        },
+      )
+      ..subscribe();
+  }
+
+  @override
+  void dispose() {
+    _liveChannel?.unsubscribe();
+    super.dispose();
+  }
+
   /// Счётчики для админа: 'mod' — объявления на проверке, 'rep' — открытые жалобы, 'sup' — новые обращения.
   Map<String, int> _badges = {};
 
