@@ -241,26 +241,27 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Widget _topBanner() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      height: 240,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [AppColors.deep, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset('assets/logo.svg', width: 56, height: 56),
-          const SizedBox(height: 10),
+          SvgPicture.asset('assets/logo.svg', width: 84, height: 84),
+          const SizedBox(height: 14),
           const Text(
             'TAJ Bozor',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 30,
+              fontSize: 40,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),
