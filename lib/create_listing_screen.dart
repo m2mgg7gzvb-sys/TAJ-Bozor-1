@@ -63,6 +63,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
   int? _categoryId;
+  List<Map<String, dynamic>> _subcategories = [];
+  int? _subcategoryId;
   bool _saving = false;
   int _days = 14;
   String? _error;
@@ -131,7 +133,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _lat = (l['lat'] as num?)?.toDouble();
     _lng = (l['lng'] as num?)?.toDouble();
     _categoryId = l['category_id'] as int?;
-    final d = Map<String, dynamic>.from((l['details'] as Map?) ?? {});
+    _subcategoryId = l['subcategory_id'] as int?;
+    _loadSubcategories(_categoryId);
+    final d =Map<String, dynamic>.from((l['details'] as Map?) ?? {});
     String s(String k) => '${d[k] ?? ''}';
     _brandCtrl.text = s('brand');
     _modelCtrl.text = s('model');
@@ -148,6 +152,24 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _drive = d['drive'] as String?;
     _wheel = d['steering'] as String?;
     _condition = d['condition'] as String?;
+  }
+
+  /// Подкатегории выбранной категории (их может не быть).
+  Future<void> _loadSubcategories(int? categoryId) async {
+    if (categoryId == null) {
+      if (mounted) setState(() => _subcategories = []);
+      return;
+    }
+    try {
+      final rows = await Supabase.instance.client
+          .from('subcategories')
+          .select('id, name_ru')
+          .eq('category_id', categoryId)
+          .order('sort');
+      if (mounted) setState(() => _subcategories = List<Map<String, dynamic>>.from(rows));
+    } catch (_) {
+      if (mounted) setState(() => _subcategories = []);
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -262,6 +284,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return _fail('Войдите, чтобы подать объявление');
     if (_categoryId == null) return _fail('Выберите категорию');
+    if (_subcategories.isNotEmpty && _subcategoryId == null) return _fail('Выберите подкатегорию');
     if (title.length < 3) return _fail('Название — от 3 символов');
     if (price == null || price < 0) return _fail('Укажите цену числом');
     if (_cityCtrl.text.trim().isEmpty) return _fail('Выберите город');
@@ -293,6 +316,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         await db.from('listings').update({
           'status': 'moderation',
           'category_id': _categoryId,
+          'subcategory_id': _subcategoryId,
           'title': title,
           'description': _descCtrl.text.trim(),
           'price': price,
@@ -311,6 +335,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           .insert({
             'user_id': user.id,
             'category_id': _categoryId,
+            'subcategory_id': _subcategoryId,
             'title': title,
             'description': _descCtrl.text.trim(),
             'price': price,
@@ -467,9 +492,32 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     child: Text(c['name_ru'] as String),
                   ),
               ],
-              onChanged: (v) => setState(() => _categoryId = v),
+              onChanged: (v) {
+                setState(() {
+                  _categoryId = v;
+                  _subcategoryId = null;
+                });
+                _loadSubcategories(v);
+              },
             ),
           const SizedBox(height: 16),
+          if (_subcategories.isNotEmpty) ...[
+            const Text('Подкатегория', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              initialValue: _subcategoryId,
+              hint: const Text('Выберите подкатегорию'),
+              items: [
+                for (final s in _subcategories)
+                  DropdownMenuItem<int>(
+                    value: s['id'] as int,
+                    child: Text(s['name_ru'] as String),
+                  ),
+              ],
+              onChanged: (v) => setState(() => _subcategoryId = v),
+            ),
+            const SizedBox(height: 16),
+          ],
           if (!_isAuto) ...[
             TextField(
               controller: _titleCtrl,

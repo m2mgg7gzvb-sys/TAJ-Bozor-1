@@ -283,43 +283,22 @@ class _HomeTabState extends State<HomeTab> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                InkWell(
-                  onTap: () => tabIndex.value = 2,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          tr('Поднимите объявление в топ', 'Эълонро дар боло баланд кунед'),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                          ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Row(
+                    children: [
+                      SvgPicture.asset('assets/logo.svg', width: 30, height: 30),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'TAJ Bozor',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 22),
-                        const SizedBox(width: 4),
-                        Transform.rotate(
-                          angle: -0.06,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.saffron,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: const Text(
-                              'ТОП',
-                              style: TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],

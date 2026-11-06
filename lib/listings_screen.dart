@@ -40,6 +40,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
   late Future<List<Map<String, dynamic>>> _future;
   int? _count;
 
+  /// Подкатегории выбранной категории и выбранная плитка.
+  late Future<List<Map<String, dynamic>>> _subcats = _loadSubcats();
+  int? _subcatId;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +68,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
         .eq('status', 'active');
     if (widget.categoryId != null) {
       query = query.eq('category_id', widget.categoryId!);
+    }
+    if (_subcatId != null) {
+      query = query.eq('subcategory_id', _subcatId!);
     }
     final city = selectedCity.value;
     if (city != null) {
@@ -107,6 +114,118 @@ class _ListingsScreenState extends State<ListingsScreen> {
   }
 
   void _reload() => setState(() => _future = _load());
+
+  Future<List<Map<String, dynamic>>> _loadSubcats() async {
+    if (widget.categoryId == null) return [];
+    try {
+      final rows = await Supabase.instance.client
+          .from('subcategories')
+          .select('id, name_ru')
+          .eq('category_id', widget.categoryId!)
+          .order('sort');
+      return List<Map<String, dynamic>>.from(rows);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  IconData _subcatIcon(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('телефон')) return Icons.smartphone_rounded;
+    if (n.contains('аудио')) return Icons.headphones_rounded;
+    if (n.contains('игр')) return Icons.sports_esports_rounded;
+    if (n.contains('ноутбук')) return Icons.laptop_rounded;
+    if (n.contains('настольн')) return Icons.desktop_windows_rounded;
+    if (n.contains('компьютер')) return Icons.memory_rounded;
+    if (n.contains('фото')) return Icons.photo_camera_rounded;
+    if (n.contains('планшет')) return Icons.tablet_mac_rounded;
+    if (n.contains('оргтехник')) return Icons.print_rounded;
+    return Icons.category_rounded;
+  }
+
+  Widget _subcatRow() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _subcats,
+      builder: (context, snap) {
+        final subs = snap.data ?? const <Map<String, dynamic>>[];
+        if (subs.isEmpty) return const SizedBox.shrink();
+        return SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            itemCount: subs.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              final s = subs[i];
+              final id = s['id'] as int;
+              final name = s['name_ru'] as String;
+              final selected = _subcatId == id;
+              return InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  setState(() => _subcatId = selected ? null : id);
+                  _reload();
+                },
+                child: Container(
+                  width: 92,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_subcatIcon(name),
+                          color: selected ? Colors.white : AppColors.primary, size: 26),
+                      const SizedBox(height: 6),
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: selected ? Colors.white : AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _newCarousel(List<Map<String, dynamic>> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+          child: Text(
+            tr('Новые объявления', 'Эълонҳои нав'),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          ),
+        ),
+        SizedBox(
+          height: 250,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) => SizedBox(width: 165, child: ListingCard(item: items[i])),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _carFilterBlock() {
     InputDecoration dec(String hint) => InputDecoration(
@@ -253,6 +372,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
               ),
             ),
           ),
+          _subcatRow(),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
@@ -278,13 +398,21 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 }
                 return RefreshIndicator(
                   onRefresh: () async => _reload(),
-                  child: GridView.count(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.66,
-                    children: [for (final item in items) ListingCard(item: item)],
+                  child: CustomScrollView(
+                    slivers: [
+                      if (items.length > 2)
+                        SliverToBoxAdapter(child: _newCarousel(items.take(10).toList())),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        sliver: SliverGrid.count(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 0.66,
+                          children: [for (final item in items) ListingCard(item: item)],
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
