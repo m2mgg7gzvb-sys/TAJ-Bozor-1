@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'car_catalog.dart';
@@ -149,56 +150,121 @@ class _ListingsScreenState extends State<ListingsScreen> {
       builder: (context, snap) {
         final subs = snap.data ?? const <Map<String, dynamic>>[];
         if (subs.isEmpty) return const SizedBox.shrink();
-        return SizedBox(
-          height: 96,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            itemCount: subs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) {
-              final s = subs[i];
-              final id = s['id'] as int;
-              final name = s['name_ru'] as String;
-              final selected = _subcatId == id;
-              return InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  setState(() => _subcatId = selected ? null : id);
-                  _reload();
-                },
-                child: Container(
-                  width: 92,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+        final rows = _tileRows(subs);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Column(
+            children: [
+              for (final row in rows)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
                     children: [
-                      Icon(_subcatIcon(name),
-                          color: selected ? Colors.white : AppColors.primary, size: 26),
-                      const SizedBox(height: 6),
-                      Text(
-                        name,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: selected ? Colors.white : AppColors.ink,
-                        ),
-                      ),
+                      for (var i = 0; i < row.length; i++) ...[
+                        Expanded(child: _subcatTile(row[i], wide: row.length == 2)),
+                        if (i < row.length - 1) const SizedBox(width: 8),
+                      ],
                     ],
                   ),
                 ),
-              );
-            },
+            ],
           ),
         );
       },
+    );
+  }
+
+  /// Ряды плиток: сначала 2 широкие, потом 3 узкие, и так по кругу (как на Авито).
+  List<List<Map<String, dynamic>>> _tileRows(List<Map<String, dynamic>> subs) {
+    final rows = <List<Map<String, dynamic>>>[];
+    var i = 0;
+    var wide = true;
+    while (i < subs.length) {
+      final n = wide ? 2 : 3;
+      final end = (i + n) > subs.length ? subs.length : i + n;
+      rows.add(subs.sublist(i, end));
+      i = end;
+      wide = !wide;
+    }
+    return rows;
+  }
+
+  Widget _subcatTile(Map<String, dynamic> s, {required bool wide}) {
+    final id = s['id'] as int;
+    final name = s['name_ru'] as String;
+    final selected = _subcatId == id;
+    return Material(
+      color: selected ? AppColors.primary : const Color(0xFFF2F4F3),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          setState(() => _subcatId = selected ? null : id);
+          _reload();
+        },
+        child: SizedBox(
+          height: 120,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: wide ? 16 : 14,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : AppColors.ink,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: Icon(
+                  _subcatIcon(name),
+                  size: wide ? 52 : 44,
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : AppColors.primary.withValues(alpha: 0.35),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Верхний баннер категории: логотип и название TAJ Bozor.
+  Widget _topBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.deep, AppColors.primary],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          SvgPicture.asset('assets/logo.svg', width: 30, height: 30),
+          const SizedBox(width: 10),
+          const Text(
+            'TAJ Bozor',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -354,6 +420,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       body: Column(
         children: [
           if (widget.carFilter) _carFilterBlock(),
+          if (widget.categoryId != null) _topBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
