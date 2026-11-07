@@ -226,6 +226,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   void _reload() => setState(() => _future = _load());
 
+  /// Выполнить выбор в чипе и сразу обновить ленту.
+  Future<void> _thenReload(Future<void> Function() action) async {
+    await action();
+    if (mounted) _reload();
+  }
+
   Future<List<Map<String, dynamic>>> _loadSubcats() async {
     if (widget.categoryId == null) return [];
     try {
@@ -606,18 +612,18 @@ class _ListingsScreenState extends State<ListingsScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _chip(_brand ?? 'Марка', active: _brand != null, onTap: _pickBrandAndModel),
+          _chip(_brand ?? 'Марка', active: _brand != null, onTap: () => _thenReload(_pickBrandAndModel)),
           if (_brand != null)
-            _chip(_model ?? 'Модель', active: _model != null, onTap: _pickModel),
+            _chip(_model ?? 'Модель', active: _model != null, onTap: () => _thenReload(_pickModel)),
           _chip(
             priceText == null ? 'Цена' : 'Цена: $priceText',
             active: priceText != null,
-            onTap: () => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl),
+            onTap: () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
           ),
           _chip(
             yearText == null ? 'Год' : 'Год: $yearText',
             active: yearText != null,
-            onTap: () => _rangeSheet(title: 'Год выпуска', from: _yearMinCtrl, to: _yearMaxCtrl),
+            onTap: () => _thenReload(() => _rangeSheet(title: 'Год выпуска', from: _yearMinCtrl, to: _yearMaxCtrl)),
           ),
           _chip(
             'Фильтры',
