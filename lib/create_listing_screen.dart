@@ -59,6 +59,18 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String? _drive;
   String? _wheel;
   String? _condition;
+  String? _country;
+  String? _gai;
+  String? _owners;
+  String? _turbo;
+  String? _seller;
+  final _seatsCtrl = TextEditingController();
+  final _powerCtrl = TextEditingController();
+  final _consumptionCtrl = TextEditingController();
+  final _accelCtrl = TextEditingController();
+  final _trunkCtrl = TextEditingController();
+  final _clearanceCtrl = TextEditingController();
+  final _optionsSel = <String>{};
 
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
@@ -108,6 +120,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _phoneCtrl,
       _brandCtrl,
       _modelCtrl,
+      _seatsCtrl,
+      _powerCtrl,
+      _consumptionCtrl,
+      _accelCtrl,
+      _trunkCtrl,
+      _clearanceCtrl,
       _yearCtrl,
       _mileageCtrl,
       _engineCtrl,
@@ -152,6 +170,18 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _drive = d['drive'] as String?;
     _wheel = d['steering'] as String?;
     _condition = d['condition'] as String?;
+    _country = d['country'] as String?;
+    _gai = d['gai_registered'] as String?;
+    _owners = d['owners'] as String?;
+    _turbo = d['turbo'] as String?;
+    _seller = d['seller_type'] as String?;
+    _seatsCtrl.text = s('seats');
+    _powerCtrl.text = s('power_hp');
+    _consumptionCtrl.text = s('fuel_consumption');
+    _accelCtrl.text = s('acceleration');
+    _trunkCtrl.text = s('trunk_l');
+    _clearanceCtrl.text = s('clearance_mm');
+    _optionsSel.addAll(s('options').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
   }
 
   /// Подкатегории выбранной категории (их может не быть).
@@ -261,6 +291,18 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     put('trim', _trimCtrl.text);
     put('color', _colorCtrl.text);
     put('vin', _vinCtrl.text.toUpperCase());
+    put('country', _country);
+    put('gai_registered', _gai);
+    put('owners', _owners);
+    put('turbo', _turbo);
+    put('seller_type', _seller);
+    put('seats', _seatsCtrl.text);
+    put('power_hp', _powerCtrl.text);
+    put('fuel_consumption', _consumptionCtrl.text);
+    put('acceleration', _accelCtrl.text);
+    put('trunk_l', _trunkCtrl.text);
+    put('clearance_mm', _clearanceCtrl.text);
+    put('options', (_optionsSel.toList()..sort()).join(', '));
     return m;
   }
 
@@ -459,6 +501,57 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _drop('Привод', _drive, _drives, (v) => _drive = v),
       const SizedBox(height: 12),
       _drop('Руль', _wheel, _wheels, (v) => _wheel = v),
+      const SizedBox(height: 12),
+      _drop('Страна бренда', _country, carCountries, (v) => _country = v),
+      const SizedBox(height: 12),
+      _drop('Регистрация в ГАИ', _gai, carGaiOptions, (v) => _gai = v),
+      const SizedBox(height: 12),
+      _drop('Владельцев по ПТС', _owners, carOwners, (v) => _owners = v),
+      const SizedBox(height: 12),
+      _drop('Турбина', _turbo, carYesNo, (v) => _turbo = v),
+      const SizedBox(height: 12),
+      _drop('Продавец', _seller, carSellerTypes, (v) => _seller = v),
+      const SizedBox(height: 12),
+      _field(_powerCtrl, 'Мощность, л.с.', type: TextInputType.number),
+      const SizedBox(height: 12),
+      _field(
+        _consumptionCtrl,
+        'Расход на 100 км, л',
+        type: const TextInputType.numberWithOptions(decimal: true),
+      ),
+      const SizedBox(height: 12),
+      _field(
+        _accelCtrl,
+        'Разгон до 100 км/ч, сек',
+        type: const TextInputType.numberWithOptions(decimal: true),
+      ),
+      const SizedBox(height: 12),
+      _field(_seatsCtrl, 'Количество мест', type: TextInputType.number),
+      const SizedBox(height: 12),
+      _field(_trunkCtrl, 'Объём багажника, л', type: TextInputType.number),
+      const SizedBox(height: 12),
+      _field(_clearanceCtrl, 'Клиренс, мм', type: TextInputType.number),
+      const SizedBox(height: 12),
+      const Text('Опции', style: TextStyle(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 6),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final o in carOptions)
+            FilterChip(
+              label: Text(o),
+              selected: _optionsSel.contains(o),
+              onSelected: (v) => setState(() {
+                if (v) {
+                  _optionsSel.add(o);
+                } else {
+                  _optionsSel.remove(o);
+                }
+              }),
+            ),
+        ],
+      ),
       const SizedBox(height: 12),
       _field(_colorCtrl, 'Цвет'),
       const SizedBox(height: 12),

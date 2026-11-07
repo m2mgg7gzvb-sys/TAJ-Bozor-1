@@ -10,6 +10,14 @@ import 'listing_utils.dart';
 import 'search_terms.dart';
 import 'theme.dart';
 
+/// Проверка числа из details (хранится текстом) по диапазону «от / до».
+bool _inNumRange(Map d, String key, num? lo, num? hi) {
+  if (lo == null && hi == null) return true;
+  final v = num.tryParse('${d[key] ?? ''}'.replaceAll(',', '.').replaceAll(' ', ''));
+  if (v == null) return false;
+  return (lo == null || v >= lo) && (hi == null || v <= hi);
+}
+
 /// Лента объявлений. Может быть отфильтрована по категории и по поисковой строке.
 /// Для категории «Авто» (carFilter) сверху показывается блок «Найти автомобиль».
 class ListingsScreen extends StatefulWidget {
@@ -52,6 +60,16 @@ class _ListingsScreenState extends State<ListingsScreen> {
   final _mileageMaxCtrl = TextEditingController();
   final _engineMinCtrl = TextEditingController();
   final _engineMaxCtrl = TextEditingController();
+  String? _country;
+  String? _gai;
+  String? _owners;
+  String? _turbo;
+  String? _seller;
+  String? _option;
+  final _rangeCtrls = <String, (TextEditingController, TextEditingController)>{
+    for (final k in const ['power_hp', 'fuel_consumption', 'acceleration', 'seats', 'trunk_l', 'clearance_mm'])
+      k: (TextEditingController(), TextEditingController()),
+  };
   late Future<List<Map<String, dynamic>>> _future;
   int? _count;
 
@@ -81,6 +99,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _mileageMaxCtrl.dispose();
     _engineMinCtrl.dispose();
     _engineMaxCtrl.dispose();
+    for (final r in _rangeCtrls.values) {
+      r.$1.dispose();
+      r.$2.dispose();
+    }
     super.dispose();
   }
 
@@ -135,6 +157,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (_wheel != null) query = query.eq('details->>steering', _wheel!);
       final color = _colorCtrl.text.trim();
       if (color.isNotEmpty) query = query.ilike('details->>color', '%$color%');
+      if (_country != null) query = query.eq('details->>country', _country!);
+      if (_gai != null) query = query.eq('details->>gai_registered', _gai!);
+      if (_owners != null) query = query.eq('details->>owners', _owners!);
+      if (_turbo != null) query = query.eq('details->>turbo', _turbo!);
+      if (_seller != null) query = query.eq('details->>seller_type', _seller!);
+      if (_option != null) query = query.ilike('details->>options', '%$_option%');
     }
     final rows = await query.order('created_at', ascending: false).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
@@ -155,6 +183,20 @@ class _ListingsScreenState extends State<ListingsScreen> {
         items.retainWhere((row) {
           final d = (row['details'] as Map?) ?? const {};
           return inRange(d, 'mileage_km', mMin, mMax) && inRange(d, 'engine_volume', eMin, eMax);
+        });
+      }
+    }
+    if (widget.carFilter) {
+      final checks = <(String, num?, num?)>[];
+      for (final e in _rangeCtrls.entries) {
+        final lo = num.tryParse(e.value.$1.text.trim().replaceAll(',', '.'));
+        final hi = num.tryParse(e.value.$2.text.trim().replaceAll(',', '.'));
+        if (lo != null || hi != null) checks.add((e.key, lo, hi));
+      }
+      if (checks.isNotEmpty) {
+        items.retainWhere((row) {
+          final d = (row['details'] as Map?) ?? const {};
+          return checks.every((c) => _inNumRange(d, c.$1, c.$2, c.$3));
         });
       }
     }
@@ -766,6 +808,55 @@ class _ListingsScreenState extends State<ListingsScreen> {
                         _colorCtrl.text.trim().isEmpty ? null : _colorCtrl.text.trim(),
                         () => refresh(() => _textSheet(title: 'Цвет', ctrl: _colorCtrl)),
                       ),
+                      _sheetTile(
+                        'Страна бренда',
+                        _country,
+                        () => refresh(() => _pickValue('Страна бренда', carCountries, (v) => _country = v)),
+                      ),
+                      _sheetTile(
+                        'Регистрация в ГАИ',
+                        _gai,
+                        () => refresh(() => _pickValue('Регистрация в ГАИ', carGaiOptions, (v) => _gai = v)),
+                      ),
+                      _sheetTile(
+                        'Владельцев по ПТС',
+                        _owners,
+                        () => refresh(() => _pickValue('Владельцев по ПТС', carOwners, (v) => _owners = v)),
+                      ),
+                      _sheetTile(
+                        'Турбина',
+                        _turbo,
+                        () => refresh(() => _pickValue('Турбина', carYesNo, (v) => _turbo = v)),
+                      ),
+                      _sheetTile(
+                        'Продавец',
+                        _seller,
+                        () => refresh(() => _pickValue('Продавец', carSellerTypes, (v) => _seller = v)),
+                      ),
+                      _sheetTile(
+                        'Опция',
+                        _option,
+                        () => refresh(() => _pickValue('Опция', carOptions, (v) => _option = v)),
+                      ),
+                      for (final r in const [
+                        ('power_hp', 'Мощность, л.с.'),
+                        ('fuel_consumption', 'Расход на 100 км, л'),
+                        ('acceleration', 'Разгон до 100 км/ч, сек'),
+                        ('seats', 'Количество мест'),
+                        ('trunk_l', 'Объём багажника, л'),
+                        ('clearance_mm', 'Клиренс, мм'),
+                      ])
+                        _sheetTile(
+                          r.$2,
+                          _rangeText(_rangeCtrls[r.$1]!.$1, _rangeCtrls[r.$1]!.$2),
+                          () => refresh(
+                            () => _rangeSheet(
+                              title: r.$2,
+                              from: _rangeCtrls[r.$1]!.$1,
+                              to: _rangeCtrls[r.$1]!.$2,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
