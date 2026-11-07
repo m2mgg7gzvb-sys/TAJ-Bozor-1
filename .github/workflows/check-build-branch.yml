@@ -3,7 +3,7 @@ name: Check build (feature branch)
 # Только проверяет сборку ветки, ничего не публикует на сайт.
 on:
   push:
-    branches: [chat-voice-files, fix/category-header-scroll, feature/car-filter-two-rows, feature/auto-subcategory-tiles, fix/auto-tiles-size, fix/auto-tiles-layout, fix/auto-tiles-compact, feature/auto-filter-chips, fix/subcat-order, feature/subcat-open-screen, feature/car-filters-full, feature/car-form-fields, feature/car-pick-engine-color]
+    branches: [chat-voice-files, fix/category-header-scroll, feature/car-filter-two-rows, feature/auto-subcategory-tiles, fix/auto-tiles-size, fix/auto-tiles-layout, fix/auto-tiles-compact, feature/auto-filter-chips, fix/subcat-order, feature/subcat-open-screen, feature/car-filters-full, feature/car-form-fields, feature/car-pick-engine-color, feature/car-filter-page]
 
 permissions:
   contents: read

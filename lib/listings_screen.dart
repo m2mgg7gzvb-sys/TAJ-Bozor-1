@@ -699,179 +699,205 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
-  /// Экран «Фильтры»: все параметры и закреплённая кнопка внизу.
+  /// Фильтры Авто на весь экран, в стиле Авито.
   void _openCarFilters() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheet) {
-          final generations = (_brand != null && _model != null)
-              ? (carCatalog[_brand]?[_model] ?? <String>[])
-              : <String>[];
-          Future<void> refresh(Future<void> Function() action) async {
-            await action();
-            setSheet(() {});
-          }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setPage) {
+            void rebuild() => setPage(() {});
 
-          return SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.9,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                  child: Row(
+            Future<void> pick(Future<void> Function() action) async {
+              await action();
+              rebuild();
+            }
+
+            final generations = (_brand != null && _model != null)
+                ? (carCatalog[_brand]?[_model] ?? <String>[])
+                : <String>[];
+
+            return Scaffold(
+              backgroundColor: Colors.white,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+                title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
+                centerTitle: true,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      _resetCarFilters();
+                      rebuild();
+                    },
+                    child: const Text('Сбросить'),
+                  ),
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                children: [
+                  const Text(
+                    'Автомобили',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24),
+                  ),
+                  _fLabel('Состояние'),
+                  _fChips(
+                    const ['Все', 'Новые', 'С пробегом'],
+                    _condition == null ? 'Все' : (_condition == 'Новый' ? 'Новые' : 'С пробегом'),
+                    (v) {
+                      _condition = v == 'Все' ? null : (v == 'Новые' ? 'Новый' : 'С пробегом');
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Цена'),
+                  _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
+                  _fLabel('Страна бренда'),
+                  _fBox(
+                    _country ?? 'Все',
+                    _country != null,
+                    () => pick(() => _pickValue('Страна бренда', carCountries, (v) => _country = v)),
+                  ),
+                  _fLabel('Марка'),
+                  _fBox(_brand ?? 'Любая', _brand != null, () => pick(_pickBrandAndModel)),
+                  if (_brand != null) ...[
+                    _fLabel('Модель'),
+                    _fBox(_model ?? 'Любая', _model != null, () => pick(_pickModel)),
+                  ],
+                  if (generations.isNotEmpty) ...[
+                    _fLabel('Поколение'),
+                    _fBox(
+                      _generation ?? 'Любое',
+                      _generation != null,
+                      () => pick(() => _pickGeneration(generations)),
+                    ),
+                  ],
+                  _fLabel('Кузов'),
+                  _fBox(
+                    _bodyType ?? 'Любой',
+                    _bodyType != null,
+                    () => pick(() => _pickValue('Кузов', carBodyTypes, (v) => _bodyType = v)),
+                  ),
+                  _fLabel('Год выпуска'),
+                  _fRange(_yearMinCtrl, _yearMaxCtrl, 'От', 'до'),
+                  _fLabel('Пробег, км'),
+                  _fRange(_mileageMinCtrl, _mileageMaxCtrl, 'От', 'до'),
+                  _fLabel('Регистрация в ГАИ'),
+                  _fChips(
+                    const ['Не важно', 'Есть', 'Нет'],
+                    _gai ?? 'Не важно',
+                    (v) {
+                      _gai = v == 'Не важно' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Владельцев по ПТС'),
+                  _fChips(
+                    ['Не важно', ...carOwners],
+                    _owners ?? 'Не важно',
+                    (v) {
+                      _owners = v == 'Не важно' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Продавец'),
+                  _fChips(
+                    const ['Все', 'Дилеры', 'Частные'],
+                    _seller == null ? 'Все' : (_seller == 'Дилер' ? 'Дилеры' : 'Частные'),
+                    (v) {
+                      _seller = v == 'Все' ? null : (v == 'Дилеры' ? 'Дилер' : 'Частный');
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Двигатель'),
+                  _fBox(
+                    _fuel ?? 'Любой',
+                    _fuel != null,
+                    () => pick(() => _pickValue('Топливо', carFuels, (v) => _fuel = v)),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Фильтры',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                      Expanded(
+                        child: _fBox(
+                          _engineMinCtrl.text.isEmpty ? 'Объём от' : _engineMinCtrl.text,
+                          _engineMinCtrl.text.isNotEmpty,
+                          () => pick(() => _pickToCtrl('Объём от, л', carEngineVolumes, _engineMinCtrl)),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () => Navigator.pop(ctx),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _fBox(
+                          _engineMaxCtrl.text.isEmpty ? 'Объём до' : _engineMaxCtrl.text,
+                          _engineMaxCtrl.text.isNotEmpty,
+                          () => pick(() => _pickToCtrl('Объём до, л', carEngineVolumes, _engineMaxCtrl)),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _sheetTile('Марка', _brand, () => refresh(_pickBrandAndModel)),
-                      if (_brand != null)
-                        _sheetTile('Модель', _model, () => refresh(_pickModel)),
-                      if (generations.isNotEmpty)
-                        _sheetTile(
-                          'Поколение',
-                          _generation,
-                          () => refresh(() => _pickGeneration(generations)),
-                        ),
-                      if (_brand != null && _model != null && _generation != null)
-                        carGenerationPhoto(_brand!, _model!, _generation!),
-                      _sheetTile(
-                        'Цена',
-                        _rangeText(_priceMinCtrl, _priceMaxCtrl),
-                        () => refresh(
-                          () => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl),
-                        ),
-                      ),
-                      _sheetTile(
-                        'Год выпуска',
-                        _rangeText(_yearMinCtrl, _yearMaxCtrl),
-                        () => refresh(
-                          () => _rangeSheet(
-                            title: 'Год выпуска',
-                            from: _yearMinCtrl,
-                            to: _yearMaxCtrl,
-                          ),
-                        ),
-                      ),
-                      _sheetTile(
-                        'Тип кузова',
-                        _bodyType,
-                        () => refresh(() => _pickValue('Тип кузова', carBodyTypes, (v) => _bodyType = v)),
-                      ),
-                      _sheetTile(
-                        'Топливо',
-                        _fuel,
-                        () => refresh(() => _pickValue('Топливо', carFuels, (v) => _fuel = v)),
-                      ),
-                      _sheetTile(
-                        'Состояние',
-                        _condition,
-                        () => refresh(() => _pickValue('Состояние', carConditions, (v) => _condition = v)),
-                      ),
-                      _sheetTile(
-                        'Пробег, км',
-                        _rangeText(_mileageMinCtrl, _mileageMaxCtrl),
-                        () => refresh(
-                          () => _rangeSheet(title: 'Пробег, км', from: _mileageMinCtrl, to: _mileageMaxCtrl),
-                        ),
-                      ),
-                      _sheetTile(
-                        'Коробка передач',
-                        _gearbox,
-                        () => refresh(() => _pickValue('Коробка передач', carGearboxes, (v) => _gearbox = v)),
-                      ),
-                      _sheetTile(
-                        'Привод',
-                        _drive,
-                        () => refresh(() => _pickValue('Привод', carDrives, (v) => _drive = v)),
-                      ),
-                      _sheetTile(
-                        'Руль',
-                        _wheel,
-                        () => refresh(() => _pickValue('Руль', carWheels, (v) => _wheel = v)),
-                      ),
-                      _sheetTile(
-                        'Объём двигателя, л',
-                        _rangeText(_engineMinCtrl, _engineMaxCtrl),
-                        () => refresh(_pickEngineRange),
-                      ),
-                      _sheetTile(
-                        'Цвет',
-                        _colorCtrl.text.trim().isEmpty ? null : _colorCtrl.text.trim(),
-                        () => refresh(() => _pickToCtrl('Цвет', carColors, _colorCtrl)),
-                      ),
-                      _sheetTile(
-                        'Страна бренда',
-                        _country,
-                        () => refresh(() => _pickValue('Страна бренда', carCountries, (v) => _country = v)),
-                      ),
-                      _sheetTile(
-                        'Регистрация в ГАИ',
-                        _gai,
-                        () => refresh(() => _pickValue('Регистрация в ГАИ', carGaiOptions, (v) => _gai = v)),
-                      ),
-                      _sheetTile(
-                        'Владельцев по ПТС',
-                        _owners,
-                        () => refresh(() => _pickValue('Владельцев по ПТС', carOwners, (v) => _owners = v)),
-                      ),
-                      _sheetTile(
-                        'Турбина',
-                        _turbo,
-                        () => refresh(() => _pickValue('Турбина', carYesNo, (v) => _turbo = v)),
-                      ),
-                      _sheetTile(
-                        'Продавец',
-                        _seller,
-                        () => refresh(() => _pickValue('Продавец', carSellerTypes, (v) => _seller = v)),
-                      ),
-                      _sheetTile(
-                        'Опция',
-                        _option,
-                        () => refresh(() => _pickValue('Опция', carOptions, (v) => _option = v)),
-                      ),
-                      for (final r in const [
-                        ('power_hp', 'Мощность, л.с.'),
-                        ('fuel_consumption', 'Расход на 100 км, л'),
-                        ('acceleration', 'Разгон до 100 км/ч, сек'),
-                        ('seats', 'Количество мест'),
-                        ('trunk_l', 'Объём багажника, л'),
-                        ('clearance_mm', 'Клиренс, мм'),
-                      ])
-                        _sheetTile(
-                          r.$2,
-                          _rangeText(_rangeCtrls[r.$1]!.$1, _rangeCtrls[r.$1]!.$2),
-                          () => refresh(
-                            () => _rangeSheet(
-                              title: r.$2,
-                              from: _rangeCtrls[r.$1]!.$1,
-                              to: _rangeCtrls[r.$1]!.$2,
-                            ),
-                          ),
-                        ),
-                    ],
+                  _fLabel('Коробка передач'),
+                  _fBox(
+                    _gearbox ?? 'Любая',
+                    _gearbox != null,
+                    () => pick(() => _pickValue('Коробка передач', carGearboxes, (v) => _gearbox = v)),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
+                  _fLabel('Привод'),
+                  _fBox(
+                    _drive ?? 'Любой',
+                    _drive != null,
+                    () => pick(() => _pickValue('Привод', carDrives, (v) => _drive = v)),
+                  ),
+                  _fLabel('Руль'),
+                  _fBox(
+                    _wheel ?? 'Любой',
+                    _wheel != null,
+                    () => pick(() => _pickValue('Руль', carWheels, (v) => _wheel = v)),
+                  ),
+                  _fLabel('Мощность, л.с.'),
+                  _fRange(_rangeCtrls['power_hp']!.$1, _rangeCtrls['power_hp']!.$2, 'От', 'до'),
+                  _fLabel('Расход на 100 км, л'),
+                  _fRange(_rangeCtrls['fuel_consumption']!.$1, _rangeCtrls['fuel_consumption']!.$2, 'От', 'до', decimal: true),
+                  _fLabel('Разгон до 100 км/ч, сек'),
+                  _fRange(_rangeCtrls['acceleration']!.$1, _rangeCtrls['acceleration']!.$2, 'От', 'до', decimal: true),
+                  _fLabel('Количество мест'),
+                  _fRange(_rangeCtrls['seats']!.$1, _rangeCtrls['seats']!.$2, 'От', 'до'),
+                  _fLabel('Объём багажника, л'),
+                  _fRange(_rangeCtrls['trunk_l']!.$1, _rangeCtrls['trunk_l']!.$2, 'От', 'до'),
+                  _fLabel('Клиренс, мм'),
+                  _fRange(_rangeCtrls['clearance_mm']!.$1, _rangeCtrls['clearance_mm']!.$2, 'От', 'до'),
+                  _fLabel('Цвет'),
+                  _fBox(
+                    _colorCtrl.text.isEmpty ? 'Любой' : _colorCtrl.text,
+                    _colorCtrl.text.isNotEmpty,
+                    () => pick(() => _pickToCtrl('Цвет', carColors, _colorCtrl)),
+                  ),
+                  _fLabel('Опции'),
+                  _fBox(
+                    _option ?? 'Любые',
+                    _option != null,
+                    () => pick(() => _pickValue('Опция', carOptions, (v) => _option = v)),
+                  ),
+                  _fLabel('Турбина'),
+                  _fChips(
+                    const ['Не важно', 'Есть', 'Нет'],
+                    _turbo == null ? 'Не важно' : (_turbo == 'Да' ? 'Есть' : 'Нет'),
+                    (v) {
+                      _turbo = v == 'Не важно' ? null : (v == 'Есть' ? 'Да' : 'Нет');
+                      rebuild();
+                    },
+                  ),
+                ],
+              ),
+              bottomNavigationBar: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                   child: FilledButton(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                     onPressed: () {
                       Navigator.pop(ctx);
                       _reload();
@@ -879,11 +905,138 @@ class _ListingsScreenState extends State<ListingsScreen> {
                     child: const Text('Показать объявления'),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  /// Сбрасывает все параметры Авто.
+  void _resetCarFilters() {
+    setState(() {
+      _brand = null;
+      _model = null;
+      _generation = null;
+      _condition = null;
+      _country = null;
+      _bodyType = null;
+      _fuel = null;
+      _gearbox = null;
+      _drive = null;
+      _wheel = null;
+      _gai = null;
+      _owners = null;
+      _turbo = null;
+      _seller = null;
+      _option = null;
+    });
+    for (final c in [
+      _priceMinCtrl,
+      _priceMaxCtrl,
+      _yearMinCtrl,
+      _yearMaxCtrl,
+      _mileageMinCtrl,
+      _mileageMaxCtrl,
+      _engineMinCtrl,
+      _engineMaxCtrl,
+      _colorCtrl,
+      for (final r in _rangeCtrls.values) ...[r.$1, r.$2],
+    ]) {
+      c.clear();
+    }
+  }
+
+  Widget _fLabel(String text) => Padding(
+        padding: const EdgeInsets.only(top: 20, bottom: 8),
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+      );
+
+  /// Серое поле-выбор со стрелкой.
+  Widget _fBox(String text, bool filled, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F1F1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 16, color: filled ? Colors.black : Colors.black45),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black54),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Два поля «от» и «до» в ряд.
+  Widget _fRange(
+    TextEditingController a,
+    TextEditingController b,
+    String hintA,
+    String hintB, {
+    bool decimal = false,
+  }) {
+    final kb = decimal ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.number;
+    Widget box(TextEditingController c, String hint) => TextField(
+          controller: c,
+          keyboardType: kb,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: const Color(0xFFF1F1F1),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        );
+    return Row(
+      children: [
+        Expanded(child: box(a, hintA)),
+        const SizedBox(width: 8),
+        Expanded(child: box(b, hintB)),
+      ],
+    );
+  }
+
+  /// Чипы: выбранный обведён чёрной рамкой.
+  Widget _fChips(List<String> items, String selected, ValueChanged<String> onSelect) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final i in items)
+          InkWell(
+            onTap: () => onSelect(i),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: i == selected ? Colors.white : const Color(0xFFF1F1F1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: i == selected ? Colors.black : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Text(i, style: const TextStyle(fontSize: 15)),
+            ),
+          ),
+      ],
     );
   }
 
