@@ -156,7 +156,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (_drive != null) query = query.eq('details->>drive', _drive!);
       if (_wheel != null) query = query.eq('details->>steering', _wheel!);
       final color = _colorCtrl.text.trim();
-      if (color.isNotEmpty) query = query.ilike('details->>color', '%$color%');
+      if (color.isNotEmpty) query = query.eq('details->>color', color);
       if (_country != null) query = query.eq('details->>country', _country!);
       if (_gai != null) query = query.eq('details->>gai_registered', _gai!);
       if (_owners != null) query = query.eq('details->>owners', _owners!);
@@ -647,6 +647,20 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
+  /// Выбор значения из списка в текстовый контроллер; «Любой» очищает.
+  Future<void> _pickToCtrl(String title, List<String> items, TextEditingController ctrl) async {
+    final v = await _pickFromList(title: title, items: items, anyLabel: 'Любой');
+    if (v == null) return;
+    setState(() => ctrl.text = v);
+  }
+
+  /// Объём двигателя «от» и «до» — два выбора из списка.
+  Future<void> _pickEngineRange() async {
+    await _pickToCtrl('Объём от, л', carEngineVolumes, _engineMinCtrl);
+    if (!mounted) return;
+    await _pickToCtrl('Объём до, л', carEngineVolumes, _engineMaxCtrl);
+  }
+
   /// Выбор одного значения из списка; пункт «Не важно» сбрасывает фильтр.
   Future<void> _pickValue(String title, List<String> values, void Function(String?) assign) async {
     final v = await _pickFromList(title: title, items: values, anyLabel: 'Не важно');
@@ -795,18 +809,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
                       _sheetTile(
                         'Объём двигателя, л',
                         _rangeText(_engineMinCtrl, _engineMaxCtrl),
-                        () => refresh(
-                          () => _rangeSheet(
-                            title: 'Объём двигателя, л',
-                            from: _engineMinCtrl,
-                            to: _engineMaxCtrl,
-                          ),
-                        ),
+                        () => refresh(_pickEngineRange),
                       ),
                       _sheetTile(
                         'Цвет',
                         _colorCtrl.text.trim().isEmpty ? null : _colorCtrl.text.trim(),
-                        () => refresh(() => _textSheet(title: 'Цвет', ctrl: _colorCtrl)),
+                        () => refresh(() => _pickToCtrl('Цвет', carColors, _colorCtrl)),
                       ),
                       _sheetTile(
                         'Страна бренда',
