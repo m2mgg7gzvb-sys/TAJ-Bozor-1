@@ -78,6 +78,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   List<Map<String, dynamic>> _subcategories = [];
   int? _subcategoryId;
   bool _saving = false;
+  bool _showErrors = false;
   int _days = 14;
   String? _error;
 
@@ -230,6 +231,44 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
   }
 
+  /// Пустое обязательное поле (проверяется при публикации и подсвечивается красным).
+  bool _emptyFor(String key) {
+    switch (key) {
+      case 'category':
+        return _categoryId == null;
+      case 'subcategory':
+        return _subcategories.isNotEmpty && _subcategoryId == null;
+      case 'title':
+        return _isAuto ? false : _titleCtrl.text.trim().length < 3;
+      case 'price':
+        final p = num.tryParse(_priceCtrl.text.trim().replaceAll(',', '.'));
+        return p == null || p < 0;
+      case 'city':
+        return _cityCtrl.text.trim().isEmpty;
+      case 'phone':
+        return _phoneCtrl.text.length != 9;
+      case 'photos':
+        return widget.listing == null && _photos.isEmpty;
+      case 'brand':
+        return _isAuto && _brandCtrl.text.isEmpty;
+      case 'model':
+        return _isAuto && _modelCtrl.text.isEmpty;
+    }
+    return false;
+  }
+
+  /// Красная рамка вокруг поля, если после попытки публикации оно не заполнено.
+  Widget _hl(String key, Widget child) {
+    if (!_showErrors || !_emptyFor(key)) return child;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade600, width: 1.5),
+      ),
+      child: child,
+    );
+  }
+
   String _daysWord(int n) {
     final m10 = n % 10;
     final m100 = n % 100;
@@ -325,16 +364,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     final price = num.tryParse(_priceCtrl.text.trim().replaceAll(',', '.'));
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return _fail('Войдите, чтобы подать объявление');
-    if (_categoryId == null) return _fail('Выберите категорию');
-    if (_subcategories.isNotEmpty && _subcategoryId == null) return _fail('Выберите подкатегорию');
+    const requiredKeys = ['category', 'subcategory', 'title', 'price', 'city', 'phone', 'photos', 'brand', 'model'];
+    if (requiredKeys.any(_emptyFor)) {
+      setState(() => _showErrors = true);
+      return _fail('Заполните поля, выделенные красным');
+    }
     if (title.length < 3) return _fail('Название — от 3 символов');
-    if (price == null || price < 0) return _fail('Укажите цену числом');
-    if (_cityCtrl.text.trim().isEmpty) return _fail('Выберите город');
     if (_phoneCtrl.text.length != 9) return _fail('Номер телефона: +992 и 9 цифр');
-    if (widget.listing == null && _photos.isEmpty) return _fail('Добавьте хотя бы одно фото');
     if (_isAuto) {
-      if (_brandCtrl.text.isEmpty) return _fail('Выберите марку автомобиля');
-      if (_modelCtrl.text.isEmpty) return _fail('Выберите модель');
       final yearText = _yearCtrl.text.trim();
       final year = int.tryParse(yearText);
       if (yearText.isNotEmpty && (year == null || year < 1950 || year > 2030)) {
@@ -427,13 +464,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Widget _drop(String hint, String? value, List<String> items, ValueChanged<String?> onChanged) {
-    return DropdownButtonFormField<String>(
+    final dd = DropdownButtonFormField<String>(
       key: ValueKey('$hint-$value'),
       initialValue: value,
       hint: Text(hint),
       items: [for (final i in items) DropdownMenuItem<String>(value: i, child: Text(i))],
       onChanged: (v) => setState(() => onChanged(v)),
     );
+    final key = const {'Марка': 'brand', 'Модель': 'model', 'Город': 'city'}[hint];
+    return key == null ? dd : _hl(key, dd);
   }
 
   /// Блок «Про автомобиль»: показывается, когда выбрана категория «Авто».
@@ -570,7 +609,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           if (_loadingCategories)
             const LinearProgressIndicator()
           else
-            DropdownButtonFormField<int>(
+            _hl(
+              'category',
+              DropdownButtonFormField<int>(
               initialValue: _categoryId,
               hint: const Text('Выберите категорию'),
               items: [
@@ -588,11 +629,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 _loadSubcategories(v);
               },
             ),
+            ),
           const SizedBox(height: 16),
           if (_subcategories.isNotEmpty) ...[
             const Text('Подкатегория', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
+            _hl(
+              'subcategory',
+              DropdownButtonFormField<int>(
               initialValue: _subcategoryId,
               hint: const Text('Выберите подкатегорию'),
               items: [
@@ -604,32 +648,42 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ],
               onChanged: (v) => setState(() => _subcategoryId = v),
             ),
+            ),
             const SizedBox(height: 16),
           ],
           if (!_isAuto) ...[
-            TextField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(hintText: 'Название объявления'),
+            _hl(
+              'title',
+              TextField(
+                controller: _titleCtrl,
+                decoration: const InputDecoration(hintText: 'Название объявления'),
+              ),
             ),
             const SizedBox(height: 12),
           ],
-          TextField(
-            controller: _phoneCtrl,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(9),
-            ],
-            decoration: const InputDecoration(
-              hintText: '9 цифр, например 901234567',
-              prefixText: '+992 ',
+          _hl(
+            'phone',
+            TextField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(9),
+              ],
+              decoration: const InputDecoration(
+                hintText: '9 цифр, например 901234567',
+                prefixText: '+992 ',
+              ),
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _priceCtrl,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(hintText: 'Цена, TJS'),
+          _hl(
+            'price',
+            TextField(
+              controller: _priceCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(hintText: 'Цена, TJS'),
+            ),
           ),
           const SizedBox(height: 12),
           _drop(
@@ -681,7 +735,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           const SizedBox(height: 16),
           const Text('Фото (до 5)', style: TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          Wrap(
+          _hl('photos', Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
@@ -698,7 +752,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   onPressed: _pickPhotos,
                 ),
             ],
-          ),
+          )),
           ],
           if (_error != null) ...[
             const SizedBox(height: 16),
