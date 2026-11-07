@@ -1314,3 +1314,25 @@ const carOptions = ['Кондиционер', 'Антиблокировка то
 
 const carEngineVolumes = ['1.0', '1.2', '1.3', '1.4', '1.5', '1.6', '1.8', '2.0', '2.2', '2.4', '2.5', '3.0', '3.5', '4.0', '4.5', '5.0', '5.5', '6.0'];
 const carColors = ['Белый', 'Чёрный', 'Серебристый', 'Серый', 'Синий', 'Красный', 'Зелёный', 'Коричневый', 'Бежевый', 'Золотистый', 'Жёлтый', 'Оранжевый', 'Фиолетовый', 'Другой'];
+
+/// Подкатегория «Мотоциклы и мототехника» (auto-moto): для неё берём справочник мотоциклов.
+const motoSubcategoryId = 15;
+
+/// Марки и модели мотоциклов и мототехники (список можно дополнять).
+final motoCatalog = <String, Map<String, List<String>>>{
+  for (final e in const {
+    'Honda': ['CBR600RR', 'CBR1000RR', 'CB500F', 'CB650R', 'Africa Twin', 'Rebel 500', 'Gold Wing', 'Monkey', 'Dio', 'Vision'],
+    'Yamaha': ['YZF-R1', 'YZF-R6', 'MT-07', 'MT-09', 'MT-10', 'XSR700', 'TMAX', 'NMAX', 'Tenere 700', 'Jog'],
+    'Kawasaki': ['Ninja 400', 'Ninja ZX-6R', 'Ninja ZX-10R', 'Z650', 'Z900', 'Versys 650', 'Vulcan S', 'KLR650'],
+    'Suzuki': ['GSX-R600', 'GSX-R1000', 'GSX-S750', 'V-Strom 650', 'Burgman 400', 'Intruder'],
+    'BMW': ['R 1250 GS', 'S 1000 RR', 'F 850 GS', 'R nineT', 'C 400 X', 'K 1600'],
+    'Ducati': ['Panigale V4', 'Monster', 'Multistrada V4', 'Scrambler', 'Streetfighter V4', 'Diavel'],
+    'Harley-Davidson': ['Sportster', 'Street Glide', 'Road King', 'Fat Boy', 'Softail Standard', 'Pan America'],
+    'KTM': ['390 Duke', '890 Duke', '1290 Super Duke R', '250 Adventure', '790 Adventure', 'RC 390'],
+    'Triumph': ['Street Triple', 'Speed Triple', 'Bonneville T100', 'Tiger 900', 'Trident 660'],
+    'Royal Enfield': ['Classic 350', 'Meteor 350', 'Himalayan', 'Interceptor 650', 'Continental GT 650'],
+    'Jawa': ['Perak', '42', 'Jawa 350'],
+    'Ural': ['Gear Up', 'Patrol', 'Wolf'],
+  }.entries)
+    e.key: {for (final m in e.value) m: const <String>[]},
+};

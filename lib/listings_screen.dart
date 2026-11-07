@@ -107,6 +107,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
     super.dispose();
   }
 
+  /// Справочник марок: для мотоциклов свой список.
+  Map<String, Map<String, List<String>>> get _catalog =>
+      widget.subcategoryId == motoSubcategoryId ? motoCatalog : carCatalog;
+
   Future<List<Map<String, dynamic>>> _load() async {
     var query = Supabase.instance.client
         .from('listings')
@@ -538,7 +542,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Future<void> _pickBrandAndModel() async {
     final brand = await _pickFromList(
       title: 'Марка',
-      items: carCatalog.keys.toList(),
+      items: _catalog.keys.toList(),
       anyLabel: 'Все марки',
       current: _brand,
     );
@@ -556,7 +560,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Future<void> _pickModel() async {
     final model = await _pickFromList(
       title: 'Модель',
-      items: carCatalog[_brand]?.keys.toList() ?? <String>[],
+      items: _catalog[_brand]?.keys.toList() ?? <String>[],
       anyLabel: 'Все модели',
       current: _model,
     );
@@ -764,7 +768,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             final generations = (_brand != null && _model != null)
-                ? (carCatalog[_brand]?[_model] ?? <String>[])
+                ? (_catalog[_brand]?[_model] ?? <String>[])
                 : <String>[];
 
             return Scaffold(

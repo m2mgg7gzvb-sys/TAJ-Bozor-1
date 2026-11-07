@@ -18,7 +18,6 @@ const _wheels = ['Левый', 'Правый'];
 const _conditions = ['Новый', 'С пробегом'];
 
 /// Справочник авто — см. car_catalog.dart.
-const _carCatalog = carCatalog;
 final _carYears = carYears;
 
 /// Подача объявления: категория, описание, цена, город, фото и для авто — характеристики.
@@ -81,6 +80,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool _showErrors = false;
   int _days = 14;
   String? _error;
+
+  /// Справочник марок: для мотоциклов свой список.
+  Map<String, Map<String, List<String>>> get _catalog =>
+      _subcategoryId == motoSubcategoryId ? motoCatalog : carCatalog;
 
   bool get _isAuto => _categories.any((c) => c['id'] == _categoryId && c['slug'] == 'auto');
 
@@ -486,7 +489,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
       const SizedBox(height: 12),
-      _pick('Марка', _brandCtrl.text, _carCatalog.keys.toList(), (v) {
+      _pick('Марка', _brandCtrl.text, _catalog.keys.toList(), (v) {
         _brandCtrl.text = v;
         _modelCtrl.text = '';
         _generationCtrl.text = '';
@@ -495,18 +498,18 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _pick(
         'Модель',
         _modelCtrl.text,
-        _carCatalog[_brandCtrl.text]?.keys.toList() ?? const [],
+        _catalog[_brandCtrl.text]?.keys.toList() ?? const [],
         (v) {
           _modelCtrl.text = v;
           _generationCtrl.text = '';
         },
       ),
-      if ((_carCatalog[_brandCtrl.text]?[_modelCtrl.text] ?? const <String>[]).isNotEmpty) ...[
+      if ((_catalog[_brandCtrl.text]?[_modelCtrl.text] ?? const <String>[]).isNotEmpty) ...[
         const SizedBox(height: 12),
         _pick(
           'Поколение',
           _generationCtrl.text,
-          _carCatalog[_brandCtrl.text]![_modelCtrl.text]!,
+          _catalog[_brandCtrl.text]![_modelCtrl.text]!,
           (v) => _generationCtrl.text = v,
         ),
         if (_generationCtrl.text.isNotEmpty)
