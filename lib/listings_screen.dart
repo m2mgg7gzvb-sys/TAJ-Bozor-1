@@ -420,8 +420,11 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
-      body: Column(
-        children: [
+      body: RefreshIndicator(
+        onRefresh: () async => _reload(),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
           if (widget.carFilter) _carFilterBlock(),
           if (widget.categoryId != null) _topBanner(),
           if (widget.categoryId == null)
@@ -444,8 +447,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             ),
           ),
           _subcatRow(),
-          Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
+          FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
@@ -467,29 +469,27 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 if (items.isEmpty) {
                   return Center(child: Text(tr('Ничего не найдено', 'Ҳеҷ чиз ёфт нашуд')));
                 }
-                return RefreshIndicator(
-                  onRefresh: () async => _reload(),
-                  child: CustomScrollView(
-                    slivers: [
-                      if (items.length > 2)
-                        SliverToBoxAdapter(child: _newCarousel(items.take(10).toList())),
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        sliver: SliverGrid.count(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 0.66,
-                          children: [for (final item in items) ListingCard(item: item)],
-                        ),
+                return Column(
+                  children: [
+                    if (items.length > 2) _newCarousel(items.take(10).toList()),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      child: GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        childAspectRatio: 0.66,
+                        children: [for (final item in items) ListingCard(item: item)],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
