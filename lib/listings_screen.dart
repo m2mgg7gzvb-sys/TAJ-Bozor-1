@@ -41,6 +41,17 @@ class _ListingsScreenState extends State<ListingsScreen> {
   final _priceMaxCtrl = TextEditingController();
   final _yearMinCtrl = TextEditingController();
   final _yearMaxCtrl = TextEditingController();
+  String? _bodyType;
+  String? _fuel;
+  String? _condition;
+  String? _gearbox;
+  String? _drive;
+  String? _wheel;
+  final _colorCtrl = TextEditingController();
+  final _mileageMinCtrl = TextEditingController();
+  final _mileageMaxCtrl = TextEditingController();
+  final _engineMinCtrl = TextEditingController();
+  final _engineMaxCtrl = TextEditingController();
   late Future<List<Map<String, dynamic>>> _future;
   int? _count;
 
@@ -65,6 +76,11 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _priceMaxCtrl.dispose();
     _yearMinCtrl.dispose();
     _yearMaxCtrl.dispose();
+    _colorCtrl.dispose();
+    _mileageMinCtrl.dispose();
+    _mileageMaxCtrl.dispose();
+    _engineMinCtrl.dispose();
+    _engineMaxCtrl.dispose();
     super.dispose();
   }
 
@@ -111,9 +127,37 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (yearMin != null) query = query.gte('details->>year', '$yearMin');
       final yearMax = int.tryParse(_yearMaxCtrl.text.trim());
       if (yearMax != null) query = query.lte('details->>year', '$yearMax');
+      if (_bodyType != null) query = query.eq('details->>body_type', _bodyType!);
+      if (_fuel != null) query = query.eq('details->>fuel', _fuel!);
+      if (_condition != null) query = query.eq('details->>condition', _condition!);
+      if (_gearbox != null) query = query.eq('details->>gearbox', _gearbox!);
+      if (_drive != null) query = query.eq('details->>drive', _drive!);
+      if (_wheel != null) query = query.eq('details->>steering', _wheel!);
+      final color = _colorCtrl.text.trim();
+      if (color.isNotEmpty) query = query.ilike('details->>color', '%$color%');
     }
     final rows = await query.order('created_at', ascending: false).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
+    if (widget.carFilter) {
+      // Пробег и объём хранятся как текст, поэтому диапазон проверяем здесь.
+      final mMin = num.tryParse(_mileageMinCtrl.text.trim());
+      final mMax = num.tryParse(_mileageMaxCtrl.text.trim());
+      final eMin = num.tryParse(_engineMinCtrl.text.trim().replaceAll(',', '.'));
+      final eMax = num.tryParse(_engineMaxCtrl.text.trim().replaceAll(',', '.'));
+      if (mMin != null || mMax != null || eMin != null || eMax != null) {
+        bool inRange(Map d, String key, num? lo, num? hi) {
+          if (lo == null && hi == null) return true;
+          final v = num.tryParse('${d[key] ?? ''}'.replaceAll(',', '.').replaceAll(' ', ''));
+          if (v == null) return false;
+          return (lo == null || v >= lo) && (hi == null || v <= hi);
+        }
+
+        items.retainWhere((row) {
+          final d = (row['details'] as Map?) ?? const {};
+          return inRange(d, 'mileage_km', mMin, mMax) && inRange(d, 'engine_volume', eMin, eMax);
+        });
+      }
+    }
     if (rank.isNotEmpty) {
       // При поиске сначала самые похожие на запрос.
       items.sort((a, b) => (rank[a['id']] ?? 1 << 30).compareTo(rank[b['id']] ?? 1 << 30));
@@ -561,6 +605,44 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
+  /// Выбор одного значения из списка; пункт «Не важно» сбрасывает фильтр.
+  Future<void> _pickValue(String title, List<String> values, void Function(String?) assign) async {
+    final v = await _pickFromList(title: title, items: values, anyLabel: 'Не важно');
+    if (v == null) return;
+    setState(() => assign(v.isEmpty ? null : v));
+  }
+
+  /// Одно текстовое поле в нижнем окне (например, цвет).
+  Future<void> _textSheet({required String title, required TextEditingController ctrl}) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              decoration: const InputDecoration(hintText: 'Например, белый'),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              onPressed: () {
+                setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Готово'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Экран «Фильтры»: все параметры и закреплённая кнопка внизу.
   void _openCarFilters() {
     showModalBottomSheet<void>(
@@ -630,6 +712,59 @@ class _ListingsScreenState extends State<ListingsScreen> {
                             to: _yearMaxCtrl,
                           ),
                         ),
+                      ),
+                      _sheetTile(
+                        'Тип кузова',
+                        _bodyType,
+                        () => refresh(() => _pickValue('Тип кузова', carBodyTypes, (v) => _bodyType = v)),
+                      ),
+                      _sheetTile(
+                        'Топливо',
+                        _fuel,
+                        () => refresh(() => _pickValue('Топливо', carFuels, (v) => _fuel = v)),
+                      ),
+                      _sheetTile(
+                        'Состояние',
+                        _condition,
+                        () => refresh(() => _pickValue('Состояние', carConditions, (v) => _condition = v)),
+                      ),
+                      _sheetTile(
+                        'Пробег, км',
+                        _rangeText(_mileageMinCtrl, _mileageMaxCtrl),
+                        () => refresh(
+                          () => _rangeSheet(title: 'Пробег, км', from: _mileageMinCtrl, to: _mileageMaxCtrl),
+                        ),
+                      ),
+                      _sheetTile(
+                        'Коробка передач',
+                        _gearbox,
+                        () => refresh(() => _pickValue('Коробка передач', carGearboxes, (v) => _gearbox = v)),
+                      ),
+                      _sheetTile(
+                        'Привод',
+                        _drive,
+                        () => refresh(() => _pickValue('Привод', carDrives, (v) => _drive = v)),
+                      ),
+                      _sheetTile(
+                        'Руль',
+                        _wheel,
+                        () => refresh(() => _pickValue('Руль', carWheels, (v) => _wheel = v)),
+                      ),
+                      _sheetTile(
+                        'Объём двигателя, л',
+                        _rangeText(_engineMinCtrl, _engineMaxCtrl),
+                        () => refresh(
+                          () => _rangeSheet(
+                            title: 'Объём двигателя, л',
+                            from: _engineMinCtrl,
+                            to: _engineMaxCtrl,
+                          ),
+                        ),
+                      ),
+                      _sheetTile(
+                        'Цвет',
+                        _colorCtrl.text.trim().isEmpty ? null : _colorCtrl.text.trim(),
+                        () => refresh(() => _textSheet(title: 'Цвет', ctrl: _colorCtrl)),
                       ),
                     ],
                   ),
