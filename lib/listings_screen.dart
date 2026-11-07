@@ -216,28 +216,29 @@ class _ListingsScreenState extends State<ListingsScreen> {
           _reload();
         },
         child: SizedBox(
-          height: 120,
+          height: 84,
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: Text(
                   name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: wide ? 16 : 14,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
                     color: selected ? Colors.white : AppColors.ink,
                   ),
                 ),
               ),
               Positioned(
-                right: 8,
-                bottom: 8,
+                right: 6,
+                bottom: 4,
                 child: Icon(
                   _subcatIcon(name),
-                  size: wide ? 52 : 44,
+                  size: wide ? 34 : 30,
                   color: selected
                       ? Colors.white.withValues(alpha: 0.7)
                       : AppColors.primary.withValues(alpha: 0.35),
