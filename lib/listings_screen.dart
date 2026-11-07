@@ -66,6 +66,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   String? _turbo;
   String? _seller;
   String? _option;
+  String _sort = 'default';
   final _rangeCtrls = <String, (TextEditingController, TextEditingController)>{
     for (final k in const ['power_hp', 'fuel_consumption', 'acceleration', 'seats', 'trunk_l', 'clearance_mm'])
       k: (TextEditingController(), TextEditingController()),
@@ -164,7 +165,13 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (_seller != null) query = query.eq('details->>seller_type', _seller!);
       if (_option != null) query = query.ilike('details->>options', '%$_option%');
     }
-    final rows = await query.order('created_at', ascending: false).limit(100);
+    final order = switch (_sort) {
+      'price_asc' => ('price', true),
+      'price_desc' => ('price', false),
+      'year' => ('details->>year', false),
+      _ => ('created_at', false),
+    };
+    final rows = await query.order(order.$1, ascending: order.$2).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
     if (widget.carFilter) {
       // Пробег и объём хранятся как текст, поэтому диапазон проверяем здесь.
@@ -199,6 +206,15 @@ class _ListingsScreenState extends State<ListingsScreen> {
           return checks.every((c) => _inNumRange(d, c.$1, c.$2, c.$3));
         });
       }
+    }
+    if (_sort == 'mileage') {
+      // Пробег хранится текстом, поэтому сортируем здесь: без пробега в конце.
+      double km(Map<String, dynamic> row) {
+        final d = (row['details'] as Map?) ?? const {};
+        return num.tryParse('${d['mileage_km'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? double.infinity;
+      }
+
+      items.sort((a, b) => km(a).compareTo(km(b)));
     }
     if (rank.isNotEmpty) {
       // При поиске сначала самые похожие на запрос.
@@ -891,6 +907,33 @@ class _ListingsScreenState extends State<ListingsScreen> {
                       rebuild();
                     },
                   ),
+                  _fLabel('Сортировка'),
+                  for (final o in const [
+                    ('default', 'По умолчанию'),
+                    ('price_asc', 'Дешевле'),
+                    ('price_desc', 'Дороже'),
+                    ('year', 'По году выпуска'),
+                    ('mileage', 'По пробегу'),
+                  ])
+                    InkWell(
+                      onTap: () {
+                        _sort = o.$1;
+                        rebuild();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _sort == o.$1 ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                              color: Colors.black,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(o.$2, style: const TextStyle(fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
               bottomNavigationBar: SafeArea(
@@ -931,6 +974,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       _turbo = null;
       _seller = null;
       _option = null;
+      _sort = 'default';
     });
     for (final c in [
       _priceMinCtrl,
