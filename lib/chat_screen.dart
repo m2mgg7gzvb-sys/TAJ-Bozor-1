@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'chat_image.dart';
 import 'notify_store.dart';
 import 'review_dialog.dart';
 import 'theme.dart';
@@ -373,6 +375,69 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Отправка фото из галереи или с камеры. Хранится в закрытом хранилище, доступ только участникам.
+  Future<void> _attachImage() async {
+    if (_sending) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Галерея'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Камера'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    final file = await ImagePicker().pickImage(source: source, maxWidth: 1600, imageQuality: 85);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (bytes.length > 10 * 1024 * 1024) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Фото больше 10 МБ')));
+      }
+      return;
+    }
+
+    setState(() => _sending = true);
+    try {
+      final db = Supabase.instance.client;
+      final path = '${widget.conversationId}/${DateTime.now().microsecondsSinceEpoch}.jpg';
+      await db.storage.from('chat-attachments').uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+      await db.from('messages').insert({
+        'conversation_id': widget.conversationId,
+        'sender_id': _me,
+        'body': '📷 Фото',
+        'attachment_url': path,
+        'attachment_kind': 'image',
+        'attachment_name': file.name,
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось отправить фото')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
   static final _uuidRe = RegExp(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
 
   /// Кнопка для сотрудника под сообщением в поддержке, где есть ID чата.
@@ -541,9 +606,21 @@ class _ChatScreenState extends State<ChatScreen> {
                         color: mine ? AppColors.primary : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: _bodyText(
-                        m['body'] as String,
-                        TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (m['attachment_kind'] == 'image' && m['attachment_url'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: ChatImage(path: m['attachment_url'] as String),
+                            ),
+                          if (m['attachment_kind'] != 'image' || m['body'] != '📷 Фото')
+                            _bodyText(
+                              m['body'] as String,
+                              TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
+                            ),
+                        ],
                       ),
                     );
                     return Padding(
@@ -587,6 +664,10 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: Row(
                 children: [
+                  IconButton(
+                    onPressed: _sending ? null : _attachImage,
+                    icon: const Icon(Icons.attach_file_rounded),
+                  ),
                   Expanded(
                     child: TextField(
                       controller: _ctrl,
