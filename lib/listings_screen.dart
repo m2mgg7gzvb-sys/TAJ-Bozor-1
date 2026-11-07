@@ -430,41 +430,79 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
-  /// Выбор из списка в нижнем окне. Пустая строка значит «любой» (все).
+  /// Выбор из списка в нижнем окне с поиском. Пустая строка значит «любой».
   Future<String?> _pickFromList({
     required String title,
     required List<String> items,
     required String anyLabel,
+    String? current,
   }) {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    ListTile(title: Text(anyLabel), onTap: () => Navigator.pop(ctx, '')),
-                    for (final i in items)
-                      ListTile(title: Text(i), onTap: () => Navigator.pop(ctx, i)),
-                  ],
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _PickerSheet(title: title, items: items, anyLabel: anyLabel, current: current),
+    );
+  }
+
+  /// Карточка нижнего окна: скругления, индикатор, заголовок.
+  Widget _sheetCard(BuildContext ctx, {required String title, required List<Widget> children}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD9DEDC),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 16),
+                ...children,
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  Widget _sheetField(TextEditingController c, String hint) => TextField(
+        controller: c,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          fillColor: const Color(0xFFF1F1F1),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      );
+
+  Widget _sheetButton(String text, VoidCallback onTap) => FilledButton(
+        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+        onPressed: onTap,
+        child: Text(text),
+      );
 
   /// Диапазон «от» и «до» (цена или год) в нижнем окне.
   Future<void> _rangeSheet({
@@ -475,43 +513,24 @@ class _ListingsScreenState extends State<ListingsScreen> {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: from,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'от'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: to,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'до'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () {
-                setState(() {});
-                Navigator.pop(ctx);
-              },
-              child: const Text('Готово'),
-            ),
-          ],
-        ),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _sheetCard(
+        ctx,
+        title: title,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _sheetField(from, 'от')),
+              const SizedBox(width: 10),
+              Expanded(child: _sheetField(to, 'до')),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sheetButton('Готово', () {
+            setState(() {});
+            Navigator.pop(ctx);
+          }),
+        ],
       ),
     );
   }
@@ -521,6 +540,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       title: 'Марка',
       items: carCatalog.keys.toList(),
       anyLabel: 'Все марки',
+      current: _brand,
     );
     if (brand == null) return;
     setState(() {
@@ -538,6 +558,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       title: 'Модель',
       items: carCatalog[_brand]?.keys.toList() ?? <String>[],
       anyLabel: 'Все модели',
+      current: _model,
     );
     if (model == null) return;
     setState(() {
@@ -551,6 +572,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       title: 'Поколение',
       items: generations,
       anyLabel: 'Все поколения',
+      current: _generation,
     );
     if (gen == null) return;
     setState(() => _generation = gen.isEmpty ? null : gen);
@@ -671,7 +693,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Выбор значения из списка в текстовый контроллер; «Любой» очищает.
   Future<void> _pickToCtrl(String title, List<String> items, TextEditingController ctrl) async {
-    final v = await _pickFromList(title: title, items: items, anyLabel: 'Любой');
+    final v = await _pickFromList(title: title, items: items, anyLabel: 'Любой', current: ctrl.text);
     if (v == null) return;
     setState(() => ctrl.text = v);
   }
@@ -684,8 +706,13 @@ class _ListingsScreenState extends State<ListingsScreen> {
   }
 
   /// Выбор одного значения из списка; пункт «Не важно» сбрасывает фильтр.
-  Future<void> _pickValue(String title, List<String> values, void Function(String?) assign) async {
-    final v = await _pickFromList(title: title, items: values, anyLabel: 'Не важно');
+  Future<void> _pickValue(
+    String title,
+    List<String> values,
+    void Function(String?) assign, {
+    String? current,
+  }) async {
+    final v = await _pickFromList(title: title, items: values, anyLabel: 'Не важно', current: current);
     if (v == null) return;
     setState(() => assign(v.isEmpty ? null : v));
   }
@@ -695,28 +722,29 @@ class _ListingsScreenState extends State<ListingsScreen> {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              decoration: const InputDecoration(hintText: 'Например, белый'),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _sheetCard(
+        ctx,
+        title: title,
+        children: [
+          TextField(
+            controller: ctrl,
+            decoration: InputDecoration(
+              hintText: 'Например, белый',
+              filled: true,
+              fillColor: const Color(0xFFF1F1F1),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
             ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () {
-                setState(() {});
-                Navigator.pop(ctx);
-              },
-              child: const Text('Готово'),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          _sheetButton('Готово', () {
+            setState(() {});
+            Navigator.pop(ctx);
+          }),
+        ],
       ),
     );
   }
@@ -783,7 +811,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fBox(
                     _country ?? 'Все',
                     _country != null,
-                    () => pick(() => _pickValue('Страна бренда', carCountries, (v) => _country = v)),
+                    () => pick(() => _pickValue('Страна бренда', carCountries, (v) => _country = v, current: _country)),
                   ),
                   _fLabel('Марка'),
                   _fBox(_brand ?? 'Любая', _brand != null, () => pick(_pickBrandAndModel)),
@@ -803,7 +831,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fBox(
                     _bodyType ?? 'Любой',
                     _bodyType != null,
-                    () => pick(() => _pickValue('Кузов', carBodyTypes, (v) => _bodyType = v)),
+                    () => pick(() => _pickValue('Кузов', carBodyTypes, (v) => _bodyType = v, current: _bodyType)),
                   ),
                   _fLabel('Год выпуска'),
                   _fRange(_yearMinCtrl, _yearMaxCtrl, 'От', 'до'),
@@ -840,7 +868,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fBox(
                     _fuel ?? 'Любой',
                     _fuel != null,
-                    () => pick(() => _pickValue('Топливо', carFuels, (v) => _fuel = v)),
+                    () => pick(() => _pickValue('Топливо', carFuels, (v) => _fuel = v, current: _fuel)),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -866,19 +894,19 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fBox(
                     _gearbox ?? 'Любая',
                     _gearbox != null,
-                    () => pick(() => _pickValue('Коробка передач', carGearboxes, (v) => _gearbox = v)),
+                    () => pick(() => _pickValue('Коробка передач', carGearboxes, (v) => _gearbox = v, current: _gearbox)),
                   ),
                   _fLabel('Привод'),
                   _fBox(
                     _drive ?? 'Любой',
                     _drive != null,
-                    () => pick(() => _pickValue('Привод', carDrives, (v) => _drive = v)),
+                    () => pick(() => _pickValue('Привод', carDrives, (v) => _drive = v, current: _drive)),
                   ),
                   _fLabel('Руль'),
                   _fBox(
                     _wheel ?? 'Любой',
                     _wheel != null,
-                    () => pick(() => _pickValue('Руль', carWheels, (v) => _wheel = v)),
+                    () => pick(() => _pickValue('Руль', carWheels, (v) => _wheel = v, current: _wheel)),
                   ),
                   _fLabel('Мощность, л.с.'),
                   _fRange(_rangeCtrls['power_hp']!.$1, _rangeCtrls['power_hp']!.$2, 'От', 'до'),
@@ -902,7 +930,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fBox(
                     _option ?? 'Любые',
                     _option != null,
-                    () => pick(() => _pickValue('Опция', carOptions, (v) => _option = v)),
+                    () => pick(() => _pickValue('Опция', carOptions, (v) => _option = v, current: _option)),
                   ),
                   _fLabel('Турбина'),
                   _fChips(
@@ -1159,6 +1187,143 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   ],
                 );
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Список выбора с поиском: марки, модели, поколения и любые значения.
+class _PickerSheet extends StatefulWidget {
+  const _PickerSheet({required this.title, required this.items, required this.anyLabel, this.current});
+
+  final String title;
+  final List<String> items;
+  final String anyLabel;
+  final String? current;
+
+  @override
+  State<_PickerSheet> createState() => _PickerSheetState();
+}
+
+class _PickerSheetState extends State<_PickerSheet> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  Widget _row(String text, {required bool selected, required VoidCallback onTap}) {
+    return Material(
+      color: selected ? const Color(0xFFE8F3EF) : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? AppColors.primary : Colors.black87,
+                  ),
+                ),
+              ),
+              if (selected) Icon(Icons.check_rounded, color: AppColors.primary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _query.text.trim().toLowerCase();
+    final shown = q.isEmpty
+        ? widget.items
+        : widget.items.where((i) => i.toLowerCase().contains(q)).toList();
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD9DEDC),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  Text(
+                    '${widget.items.length}',
+                    style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            if (widget.items.length > 8)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(
+                  controller: _query,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Поиск',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    filled: true,
+                    fillColor: const Color(0xFFF1F1F1),
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                children: [
+                  _row(
+                    widget.anyLabel,
+                    selected: widget.current == null,
+                    onTap: () => Navigator.pop(context, ''),
+                  ),
+                  for (final i in shown)
+                    _row(
+                      i,
+                      selected: i == widget.current,
+                      onTap: () => Navigator.pop(context, i),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
