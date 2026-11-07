@@ -554,10 +554,6 @@ class _ListingsScreenState extends State<ListingsScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-          _subcatRow(),
-          if (widget.carFilter) _carFilterBlock(),
-          if (widget.categoryId != null) _topBanner(),
-          if (widget.categoryId == null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
@@ -576,6 +572,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
               ),
             ),
           ),
+          _subcatRow(),
+          if (widget.carFilter) _carFilterBlock(),
+          if (widget.categoryId != null) _topBanner(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
