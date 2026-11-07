@@ -19,9 +19,11 @@ class ListingsScreen extends StatefulWidget {
     this.title = 'Объявления',
     this.initialQuery,
     this.carFilter = false,
+    this.subcategoryId,
   });
 
   final int? categoryId;
+  final int? subcategoryId;
   final String? initialQuery;
   final String title;
   final bool carFilter;
@@ -50,6 +52,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   void initState() {
     super.initState();
     _searchCtrl.text = widget.initialQuery ?? '';
+    _subcatId = widget.subcategoryId;
     _future = _load();
     selectedCity.addListener(_reload);
   }
@@ -158,6 +161,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
   }
 
   Widget _subcatRow() {
+    // На странице подкатегории плитки уже не нужны.
+    if (widget.subcategoryId != null) return const SizedBox.shrink();
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _subcats,
       builder: (context, snap) {
@@ -211,10 +216,17 @@ class _ListingsScreenState extends State<ListingsScreen> {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          setState(() => _subcatId = selected ? null : id);
-          _reload();
-        },
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ListingsScreen(
+              categoryId: widget.categoryId,
+              subcategoryId: id,
+              title: name,
+              carFilter: widget.carFilter,
+            ),
+          ),
+        ),
         child: SizedBox(
           height: 64,
           child: Stack(
