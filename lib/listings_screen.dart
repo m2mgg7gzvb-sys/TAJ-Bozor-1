@@ -216,11 +216,11 @@ class _ListingsScreenState extends State<ListingsScreen> {
           _reload();
         },
         child: SizedBox(
-          height: 84,
+          height: 64,
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Text(
                   name,
                   maxLines: 2,
@@ -238,7 +238,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 bottom: 4,
                 child: Icon(
                   _subcatIcon(name),
-                  size: wide ? 60 : 52,
+                  size: wide ? 40 : 36,
                   color: selected
                       ? Colors.white.withValues(alpha: 0.7)
                       : AppColors.primary.withValues(alpha: 0.35),
@@ -574,7 +574,6 @@ class _ListingsScreenState extends State<ListingsScreen> {
           ),
           _subcatRow(),
           if (widget.carFilter) _carFilterBlock(),
-          if (widget.categoryId != null) _topBanner(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
