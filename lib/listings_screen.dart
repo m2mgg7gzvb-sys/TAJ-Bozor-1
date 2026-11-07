@@ -128,7 +128,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
           .from('subcategories')
           .select('id, name_ru')
           .eq('category_id', widget.categoryId!)
-          .order('sort');
+          .order('sort', ascending: true);
       return List<Map<String, dynamic>>.from(rows);
     } catch (_) {
       return [];
