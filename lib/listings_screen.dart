@@ -146,6 +146,14 @@ class _ListingsScreenState extends State<ListingsScreen> {
     if (n.contains('фото')) return Icons.photo_camera_rounded;
     if (n.contains('планшет')) return Icons.tablet_mac_rounded;
     if (n.contains('оргтехник')) return Icons.print_rounded;
+    if (n.contains('новые авто')) return Icons.new_releases_rounded;
+    if (n.contains('селект')) return Icons.star_rounded;
+    if (n.contains('легков')) return Icons.directions_car_rounded;
+    if (n.contains('грузов')) return Icons.local_shipping_rounded;
+    if (n.contains('мото')) return Icons.two_wheeler_rounded;
+    if (n.contains('аренда авто')) return Icons.car_rental_rounded;
+    if (n.contains('аренда техники')) return Icons.construction_rounded;
+    if (n.contains('запчаст')) return Icons.build_rounded;
     return Icons.category_rounded;
   }
 
@@ -545,6 +553,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+          _subcatRow(),
           if (widget.carFilter) _carFilterBlock(),
           if (widget.categoryId != null) _topBanner(),
           if (widget.categoryId == null)
@@ -566,7 +575,6 @@ class _ListingsScreenState extends State<ListingsScreen> {
               ),
             ),
           ),
-          _subcatRow(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
