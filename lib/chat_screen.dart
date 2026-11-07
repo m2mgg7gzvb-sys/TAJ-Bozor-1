@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'chat_attachments.dart';
 import 'chat_image.dart';
 import 'notify_store.dart';
 import 'review_dialog.dart';
@@ -350,6 +355,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     markChatRead(widget.conversationId);
     _ctrl.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 
@@ -433,6 +439,102 @@ class _ChatScreenState extends State<ChatScreen> {
           const SnackBar(content: Text('Не удалось отправить фото')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  final _recorder = AudioRecorder();
+  bool _recording = false;
+
+  void _snack(String text) {
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Загружает вложение в закрытое хранилище и отправляет сообщение с ним.
+  Future<void> _sendAttachment({
+    required Uint8List bytes,
+    required String kind,
+    required String body,
+    required String name,
+    required String ext,
+    required String contentType,
+  }) async {
+    final db = Supabase.instance.client;
+    final path = '${widget.conversationId}/${DateTime.now().microsecondsSinceEpoch}.$ext';
+    await db.storage.from('chat-attachments').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: contentType),
+        );
+    await db.from('messages').insert({
+      'conversation_id': widget.conversationId,
+      'sender_id': _me,
+      'body': body,
+      'attachment_url': path,
+      'attachment_kind': kind,
+      'attachment_name': name,
+    });
+  }
+
+  /// Выбор файла с телефона или компьютера (до 20 МБ).
+  Future<void> _attachFile() async {
+    if (_sending) return;
+    final result = await FilePicker.platform.pickFiles(withData: true);
+    final picked = result?.files.single;
+    final bytes = picked?.bytes;
+    if (picked == null || bytes == null) return;
+    if (bytes.length > 20 * 1024 * 1024) {
+      _snack('Файл больше 20 МБ');
+      return;
+    }
+    final raw = (picked.extension ?? '').toLowerCase();
+    final ext = RegExp(r'^[a-z0-9]{1,8}$').hasMatch(raw) ? raw : 'bin';
+    setState(() => _sending = true);
+    try {
+      await _sendAttachment(
+        bytes: bytes,
+        kind: 'file',
+        body: '📎 ${picked.name}',
+        name: picked.name,
+        ext: ext,
+        contentType: 'application/octet-stream',
+      );
+    } catch (_) {
+      _snack('Не удалось отправить файл');
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  /// Нажал — начинается запись, нажал ещё раз — запись уходит в чат.
+  Future<void> _toggleRecord() async {
+    if (_sending) return;
+    if (!_recording) {
+      if (!await _recorder.hasPermission()) {
+        _snack('Разрешите доступ к микрофону');
+        return;
+      }
+      await _recorder.start(const RecordConfig(encoder: AudioEncoder.opus), path: 'voice');
+      setState(() => _recording = true);
+      return;
+    }
+    final recordedUrl = await _recorder.stop();
+    setState(() => _recording = false);
+    if (recordedUrl == null) return;
+    setState(() => _sending = true);
+    try {
+      final bytes = await XFile(recordedUrl).readAsBytes();
+      await _sendAttachment(
+        bytes: bytes,
+        kind: 'audio',
+        body: '🎤 Голосовое',
+        name: 'voice.webm',
+        ext: 'webm',
+        contentType: 'audio/webm',
+      );
+    } catch (_) {
+      _snack('Не удалось отправить голосовое');
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -615,7 +717,15 @@ class _ChatScreenState extends State<ChatScreen> {
                               padding: const EdgeInsets.only(bottom: 6),
                               child: ChatImage(path: m['attachment_url'] as String),
                             ),
-                          if (m['attachment_kind'] != 'image' || m['body'] != '📷 Фото')
+                          if (m['attachment_kind'] == 'audio' && m['attachment_url'] != null)
+                            ChatAudioTile(path: m['attachment_url'] as String, mine: mine),
+                          if (m['attachment_kind'] == 'file' && m['attachment_url'] != null)
+                            ChatFileTile(
+                              path: m['attachment_url'] as String,
+                              name: (m['attachment_name'] ?? 'Файл') as String,
+                              mine: mine,
+                            ),
+                          if (m['attachment_kind'] == null)
                             _bodyText(
                               m['body'] as String,
                               TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
@@ -666,6 +776,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   IconButton(
                     onPressed: _sending ? null : _attachImage,
+                    icon: const Icon(Icons.image_outlined),
+                  ),
+                  IconButton(
+                    onPressed: _sending ? null : _attachFile,
                     icon: const Icon(Icons.attach_file_rounded),
                   ),
                   Expanded(
@@ -686,9 +800,23 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _sending ? null : _send,
-                    icon: const Icon(Icons.send_rounded),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _ctrl,
+                    builder: (_, value, __) {
+                      if (value.text.trim().isNotEmpty) {
+                        return IconButton.filled(
+                          onPressed: _sending ? null : _send,
+                          icon: const Icon(Icons.send_rounded),
+                        );
+                      }
+                      return IconButton.filled(
+                        style: _recording
+                            ? IconButton.styleFrom(backgroundColor: Colors.red)
+                            : null,
+                        onPressed: _sending ? null : _toggleRecord,
+                        icon: Icon(_recording ? Icons.stop_rounded : Icons.mic_rounded),
+                      );
+                    },
                   ),
                 ],
               ),

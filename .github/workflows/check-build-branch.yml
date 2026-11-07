@@ -1,0 +1,27 @@
+name: Check build (feature branch)
+
+# Только проверяет сборку ветки, ничего не публикует на сайт.
+on:
+  push:
+    branches: [chat-voice-files]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create web platform files
+        run: flutter create --platforms=web --project-name tajbozor .
+
+      - run: flutter pub get
+
+      - name: Build web (check only)
+        run: flutter build web --release --pwa-strategy=none
