@@ -396,9 +396,131 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
-  Widget _carFilterBlock() {
-    Widget tile(String label, String? value, VoidCallback onTap) {
-      return InkWell(
+  Future<void> _pickBrandAndModel() async {
+    final brand = await _pickFromList(
+      title: 'Марка',
+      items: carCatalog.keys.toList(),
+      anyLabel: 'Все марки',
+    );
+    if (brand == null) return;
+    setState(() {
+      _brand = brand.isEmpty ? null : brand;
+      _model = null;
+      _generation = null;
+    });
+    if (brand.isEmpty) return;
+    // Сразу после выбора марки открываем список моделей.
+    await _pickModel();
+  }
+
+  Future<void> _pickModel() async {
+    final model = await _pickFromList(
+      title: 'Модель',
+      items: carCatalog[_brand]?.keys.toList() ?? <String>[],
+      anyLabel: 'Все модели',
+    );
+    if (model == null) return;
+    setState(() {
+      _model = model.isEmpty ? null : model;
+      _generation = null;
+    });
+  }
+
+  Future<void> _pickGeneration(List<String> generations) async {
+    final gen = await _pickFromList(
+      title: 'Поколение',
+      items: generations,
+      anyLabel: 'Все поколения',
+    );
+    if (gen == null) return;
+    setState(() => _generation = gen.isEmpty ? null : gen);
+  }
+
+  /// Текст диапазона «от / до» или null, если диапазон не задан.
+  String? _rangeText(TextEditingController a, TextEditingController b) {
+    final from = a.text.trim();
+    final to = b.text.trim();
+    if (from.isEmpty && to.isEmpty) return null;
+    if (from.isNotEmpty && to.isNotEmpty) return 'от $from до $to';
+    return from.isNotEmpty ? 'от $from' : 'до $to';
+  }
+
+  Widget _chip(
+    String label, {
+    required bool active,
+    required VoidCallback onTap,
+    IconData? icon,
+    bool arrow = true,
+  }) {
+    final fg = active ? Colors.white : AppColors.ink;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: active ? AppColors.primary : Colors.white,
+        shape: StadiumBorder(
+          side: BorderSide(color: active ? AppColors.primary : const Color(0xFFD9DEDC)),
+        ),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 18, color: fg),
+                  const SizedBox(width: 6),
+                ],
+                Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: fg)),
+                if (arrow) Icon(Icons.arrow_drop_down, size: 20, color: fg),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Ряд быстрых фильтров под поиском (как на Авито).
+  Widget _carChipsRow() {
+    final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
+    final yearText = _rangeText(_yearMinCtrl, _yearMaxCtrl);
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _chip(_brand ?? 'Марка', active: _brand != null, onTap: _pickBrandAndModel),
+          if (_brand != null)
+            _chip(_model ?? 'Модель', active: _model != null, onTap: _pickModel),
+          _chip(
+            priceText == null ? 'Цена' : 'Цена: $priceText',
+            active: priceText != null,
+            onTap: () => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl),
+          ),
+          _chip(
+            yearText == null ? 'Год' : 'Год: $yearText',
+            active: yearText != null,
+            onTap: () => _rangeSheet(title: 'Год выпуска', from: _yearMinCtrl, to: _yearMaxCtrl),
+          ),
+          _chip(
+            'Фильтры',
+            active: false,
+            arrow: false,
+            icon: Icons.tune_rounded,
+            onTap: _openCarFilters,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sheetTile(String label, String? value, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -411,136 +533,110 @@ class _ListingsScreenState extends State<ListingsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  value ?? label,
+                  value == null ? label : '$label: $value',
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: value == null ? Colors.black54 : Colors.black87),
+                  style: TextStyle(
+                    color: value == null ? Colors.black54 : Colors.black87,
+                    fontWeight: value == null ? FontWeight.w400 : FontWeight.w600,
+                  ),
                 ),
               ),
-              const Icon(Icons.arrow_drop_down, color: Colors.black54),
+              const Icon(Icons.chevron_right_rounded, color: Colors.black54),
             ],
           ),
         ),
-      );
-    }
-
-    String? rangeText(TextEditingController a, TextEditingController b) {
-      final from = a.text.trim();
-      final to = b.text.trim();
-      if (from.isEmpty && to.isEmpty) return null;
-      if (from.isNotEmpty && to.isNotEmpty) return 'от $from до $to';
-      return from.isNotEmpty ? 'от $from' : 'до $to';
-    }
-
-    Future<void> pickBrandAndModel() async {
-      final brand = await _pickFromList(
-        title: 'Марка',
-        items: carCatalog.keys.toList(),
-        anyLabel: 'Все марки',
-      );
-      if (brand == null) return;
-      setState(() {
-        _brand = brand.isEmpty ? null : brand;
-        _model = null;
-        _generation = null;
-      });
-      if (brand.isEmpty) return;
-      // Сразу после выбора марки открываем список моделей.
-      final model = await _pickFromList(
-        title: 'Модель',
-        items: carCatalog[brand]?.keys.toList() ?? <String>[],
-        anyLabel: 'Все модели',
-      );
-      if (model == null) return;
-      setState(() {
-        _model = model.isEmpty ? null : model;
-        _generation = null;
-      });
-    }
-
-    final generations = (_brand != null && _model != null)
-        ? (carCatalog[_brand]?[_model] ?? <String>[])
-        : <String>[];
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            tr('Найти автомобиль', 'Ёфтани мошин'),
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-          ),
-          const SizedBox(height: 10),
-          // Ряд 1: марка и модель (модель появляется после выбора марки)
-          Row(
-            children: [
-              Expanded(
-                child: tile('Все марки', _brand, pickBrandAndModel),
-              ),
-              if (_brand != null) ...[
-                const SizedBox(width: 8),
+    );
+  }
+
+  /// Экран «Фильтры»: все параметры и закреплённая кнопка внизу.
+  void _openCarFilters() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) {
+          final generations = (_brand != null && _model != null)
+              ? (carCatalog[_brand]?[_model] ?? <String>[])
+              : <String>[];
+          Future<void> refresh(Future<void> Function() action) async {
+            await action();
+            setSheet(() {});
+          }
+
+          return SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.9,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Фильтры',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
-                  child: tile('Все модели', _model, () async {
-                    final model = await _pickFromList(
-                      title: 'Модель',
-                      items: carCatalog[_brand]?.keys.toList() ?? <String>[],
-                      anyLabel: 'Все модели',
-                    );
-                    if (model == null) return;
-                    setState(() {
-                      _model = model.isEmpty ? null : model;
-                      _generation = null;
-                    });
-                  }),
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      _sheetTile('Марка', _brand, () => refresh(_pickBrandAndModel)),
+                      if (_brand != null)
+                        _sheetTile('Модель', _model, () => refresh(_pickModel)),
+                      if (generations.isNotEmpty)
+                        _sheetTile(
+                          'Поколение',
+                          _generation,
+                          () => refresh(() => _pickGeneration(generations)),
+                        ),
+                      if (_brand != null && _model != null && _generation != null)
+                        carGenerationPhoto(_brand!, _model!, _generation!),
+                      _sheetTile(
+                        'Цена',
+                        _rangeText(_priceMinCtrl, _priceMaxCtrl),
+                        () => refresh(
+                          () => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl),
+                        ),
+                      ),
+                      _sheetTile(
+                        'Год выпуска',
+                        _rangeText(_yearMinCtrl, _yearMaxCtrl),
+                        () => refresh(
+                          () => _rangeSheet(
+                            title: 'Год выпуска',
+                            from: _yearMinCtrl,
+                            to: _yearMaxCtrl,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _reload();
+                    },
+                    child: const Text('Показать объявления'),
+                  ),
                 ),
               ],
-            ],
-          ),
-          if (generations.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            tile('Все поколения', _generation, () async {
-              final gen = await _pickFromList(
-                title: 'Поколение',
-                items: generations,
-                anyLabel: 'Все поколения',
-              );
-              if (gen == null) return;
-              setState(() => _generation = gen.isEmpty ? null : gen);
-            }),
-            if (_generation != null) carGenerationPhoto(_brand!, _model!, _generation!),
-          ],
-          const SizedBox(height: 8),
-          // Ряд 2: цена и год, каждое открывается нижним окном «от / до»
-          Row(
-            children: [
-              Expanded(
-                child: tile(
-                  'Цена',
-                  rangeText(_priceMinCtrl, _priceMaxCtrl),
-                  () => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: tile(
-                  'Год',
-                  rangeText(_yearMinCtrl, _yearMaxCtrl),
-                  () => _rangeSheet(title: 'Год выпуска', from: _yearMinCtrl, to: _yearMaxCtrl),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: _reload,
-            child: Text(_count == null ? 'Показать объявления' : 'Показать $_count объявлений'),
-          ),
-        ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -573,7 +669,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             ),
           ),
           _subcatRow(),
-          if (widget.carFilter) _carFilterBlock(),
+          if (widget.carFilter) _carChipsRow(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
