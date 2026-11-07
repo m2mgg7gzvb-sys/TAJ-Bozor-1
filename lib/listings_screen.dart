@@ -187,11 +187,11 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
-  /// Ряды плиток: сначала 2 широкие, потом 3 узкие, и так по кругу (как на Авито).
+  /// Ряды плиток: 3, 2, 3, 2 и так по кругу (как на Авито).
   List<List<Map<String, dynamic>>> _tileRows(List<Map<String, dynamic>> subs) {
     final rows = <List<Map<String, dynamic>>>[];
     var i = 0;
-    var wide = true;
+    var wide = false;
     while (i < subs.length) {
       final n = wide ? 2 : 3;
       final end = (i + n) > subs.length ? subs.length : i + n;
@@ -238,7 +238,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 bottom: 4,
                 child: Icon(
                   _subcatIcon(name),
-                  size: wide ? 34 : 30,
+                  size: wide ? 60 : 52,
                   color: selected
                       ? Colors.white.withValues(alpha: 0.7)
                       : AppColors.primary.withValues(alpha: 0.35),
