@@ -68,7 +68,8 @@ class _MapPickerPageState extends State<_MapPickerPage> {
   }
 
   /// Если человек в этом городе, карта сразу встаёт на его место. Иначе остаётся центр города.
-  Future<void> _moveToMe() async {
+  /// [auto] — переход при открытии карты: только если человек в выбранном городе.
+  Future<void> _moveToMe({bool auto = false}) async {
     if (_locating) return;
     final useFallback = _yandexFailed;
     if (!useFallback && _yandex == null) return;
@@ -84,6 +85,18 @@ class _MapPickerPageState extends State<_MapPickerPage> {
       );
       if (!mounted) return;
       final me = LatLng(pos.latitude, pos.longitude);
+      if (auto) {
+        final cityCenter = _cityCenters[widget.city?.trim()];
+        if (cityCenter == null) return;
+        final meters = Geolocator.distanceBetween(
+          cityCenter.latitude,
+          cityCenter.longitude,
+          pos.latitude,
+          pos.longitude,
+        );
+        // Далеко от выбранного города: остаёмся в центре города.
+        if (meters > 30000) return;
+      }
       _center = me;
       if (useFallback) {
         _fallbackController.move(me, 16);
@@ -111,7 +124,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
         picker: true,
         onReady: (map) {
           _yandex = map;
-          if (widget.initial == null) _moveToMe();
+          if (widget.initial == null) _moveToMe(auto: true);
         },
         onCenter: (point) => _center = point,
         onAddress: (text) {
@@ -128,7 +141,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
         initialZoom: 13,
         onPositionChanged: (camera, _) => _center = camera.center,
         onMapReady: () {
-          if (widget.initial == null) _moveToMe();
+          if (widget.initial == null) _moveToMe(auto: true);
         },
       ),
       children: [
