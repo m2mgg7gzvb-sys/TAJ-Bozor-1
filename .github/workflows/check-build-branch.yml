@@ -3,7 +3,7 @@ name: Check build (feature branch)
 # Только проверяет сборку ветки, ничего не публикует на сайт.
 on:
   push:
-    branches: [chat-voice-files, fix/category-header-scroll]
+    branches: [chat-voice-files, fix/category-header-scroll, feature/car-filter-two-rows]
 
 permissions:
   contents: read
