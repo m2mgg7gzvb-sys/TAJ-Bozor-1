@@ -1,16 +1,15 @@
 # Все Android-библиотеки (плагины) собираются против SDK 36.
-# withPlugin работает и тогда, когда модуль уже вычислен (Flutter так делает).
+# Плагин сам задаёт compileSdk в своём build.gradle, поэтому ставим значение после его вычисления.
 p = 'android/build.gradle.kts'
 block = '''
 subprojects {
-    pluginManager.withPlugin("com.android.library") {
-        extensions.configure<com.android.build.gradle.LibraryExtension> {
-            compileSdk = 36
-        }
+    fun setSdk() {
+        (extensions.findByName("android") as? com.android.build.gradle.BaseExtension)?.compileSdkVersion(36)
     }
+    if (state.executed) setSdk() else afterEvaluate { setSdk() }
 }
 '''
 s = open(p, encoding='utf-8').read()
-if 'withPlugin("com.android.library")' not in s:
+if 'fun setSdk()' not in s:
     open(p, 'w', encoding='utf-8').write(s + block)
 print('compileSdk 36 ok')
