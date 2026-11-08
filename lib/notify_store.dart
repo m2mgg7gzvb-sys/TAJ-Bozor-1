@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'call_screen.dart';
 import 'incoming_call_screen.dart';
 import 'theme.dart';
 
@@ -124,6 +125,8 @@ void _showIncomingCall(Map<String, dynamic> row) {
   final channel = data['channel'] as String?;
   final callerName = (data['caller_name'] as String?) ?? 'Звонит пользователь';
   if (channel == null || channel.isEmpty) return;
+  // Уже в другом звонке: второй входящий не открываем, иначе звонки перемешаются.
+  if (activeCallChannel != null && activeCallChannel != channel) return;
   final nav = appNavigatorKey.currentState;
   if (nav == null) return;
   nav.push(
