@@ -59,7 +59,17 @@
     return client;
   }
 
+  // SDK грузится модулем в index.html: ждём его появления (до 10 сек).
+  function agoraReady() {
+    if (window.AgoraRTC) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('Agora SDK не загрузился')), 10000);
+      window.addEventListener('agora-ready', () => { clearTimeout(t); resolve(); }, { once: true });
+    });
+  }
+
   window.agoraJoin = async function (appId, channel, token, uid) {
+    await agoraReady();
     const c = ensureClient();
     await c.join(appId, channel, token, uid);
     micTrack = await AgoraRTC.createMicrophoneAudioTrack();
