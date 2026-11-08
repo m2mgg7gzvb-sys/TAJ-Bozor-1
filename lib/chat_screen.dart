@@ -41,6 +41,15 @@ Future<String> findOrCreateConversation({required String kind, String? listingId
 }
 
 /// Экран переписки: сообщения в реальном времени и поле ввода.
+/// Время сообщения по Таджикистану (Душанбе, UTC+5, без летнего времени).
+String _tajikTime(String? iso) {
+  if (iso == null) return '';
+  final utc = DateTime.tryParse(iso)?.toUtc();
+  if (utc == null) return '';
+  final t = utc.add(const Duration(hours: 5));
+  return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+}
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
@@ -756,6 +765,13 @@ class _ChatScreenState extends State<ChatScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 bubble,
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2, left: 4, right: 4),
+                                  child: Text(
+                                    _tajikTime(m['created_at'] as String?),
+                                    style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                                  ),
+                                ),
                                 ..._openChatButtons(m['body'] as String),
                               ],
                             ),
