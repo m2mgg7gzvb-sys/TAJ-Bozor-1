@@ -1,23 +1,11 @@
 import 'dart:async';
-import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'lang_store.dart';
 
-// Мост к web/agora.js (Agora Web SDK).
-@JS('agoraJoin')
-external JSPromise<JSBoolean> _jsJoin(JSString appId, JSString channel, JSString token, JSNumber uid);
-
-@JS('agoraSetMic')
-external JSPromise<JSBoolean> _jsSetMic(JSBoolean on);
-
-@JS('agoraLeave')
-external JSPromise<JSBoolean> _jsLeave();
-
-@JS('agoraIsConnected')
-external JSBoolean _jsIsConnected();
+import 'call_bridge.dart';
 
 /// Канал одинаков для двух собеседников: собирается из их id (отсортированных),
 /// поэтому оба попадают в одну комнату, если открыли звонок.
@@ -79,12 +67,12 @@ class _CallScreenState extends State<CallScreen> {
       final res = await Supabase.instance.client.functions
           .invoke('agora-token', body: {'channel': widget.channel});
       final data = Map<String, dynamic>.from(res.data as Map);
-      await _jsJoin(
-        (data['appId'] as String).toJS,
-        widget.channel.toJS,
-        (data['token'] as String).toJS,
-        (data['uid'] as num).toDouble().toJS,
-      ).toDart;
+      await callJoin(
+        data['appId'] as String,
+        widget.channel,
+        data['token'] as String,
+        (data['uid'] as num).toInt(),
+      );
       if (!mounted) return;
       setState(() => _joined = true);
       _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
@@ -99,7 +87,7 @@ class _CallScreenState extends State<CallScreen> {
   /// Раз в секунду проверяем, ответил ли собеседник, и обновляем таймер.
   void _tick(Timer _) {
     if (!mounted || !_joined) return;
-    if (_connectedAt == null && _jsIsConnected().toDart) {
+    if (_connectedAt == null && callIsConnected()) {
       _connectedAt = DateTime.now();
     }
     if (_connectedAt != null) {
@@ -110,7 +98,7 @@ class _CallScreenState extends State<CallScreen> {
   Future<void> _toggleMic() async {
     if (!_joined) return;
     final next = !_muted;
-    await _jsSetMic(next.toJS).toDart;
+    await callSetMic(next);
     if (mounted) setState(() => _muted = next);
   }
 
@@ -118,7 +106,7 @@ class _CallScreenState extends State<CallScreen> {
     _ticker?.cancel();
     if (_joined) {
       try {
-        await _jsLeave().toDart;
+        await callLeave();
       } catch (_) {}
     }
     if (mounted) Navigator.of(context).pop();
@@ -129,7 +117,7 @@ class _CallScreenState extends State<CallScreen> {
     _ticker?.cancel();
     if (activeCallChannel == widget.channel) activeCallChannel = null;
     if (_joined) {
-      _jsLeave().toDart.ignore();
+      callLeave().ignore();
     }
     super.dispose();
   }

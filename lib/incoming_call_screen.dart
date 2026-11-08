@@ -1,15 +1,7 @@
-import 'dart:js_interop';
-
 import 'package:flutter/material.dart';
 
+import 'call_bridge.dart';
 import 'call_screen.dart';
-
-// Гудок входящего звонка (web/agora.js).
-@JS('agoraRingStart')
-external void _ringStart();
-
-@JS('agoraRingStop')
-external void _ringStop();
 
 /// Экран входящего звонка: гудит, пока его не примут или не отклонят.
 class IncomingCallScreen extends StatefulWidget {
@@ -29,7 +21,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   void initState() {
     super.initState();
     try {
-      _ringStart();
+      ringStart();
     } catch (_) {
       // Если звук не доступен, экран всё равно работает.
     }
@@ -39,7 +31,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
     if (_done) return;
     _done = true;
     try {
-      _ringStop();
+      ringStop();
     } catch (_) {}
   }
 
