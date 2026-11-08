@@ -6,19 +6,20 @@ import 'listing_utils.dart';
 import 'listings_screen.dart';
 import 'theme.dart';
 
-/// Разделы для страницы «Все категории». Категории из базы раскладываются по разделам по slug.
-/// Категории, которых нет в списке, попадают в раздел «Другое».
-const _sections = <String, List<String>>{
-  'Транспорт': ['auto', 'parts'],
-  'Недвижимость': ['real-estate'],
-  'Работа и подработка': ['jobs', 'business'],
-  'Электроника': ['electronics'],
-  'Услуги': ['services'],
-  'Дом и сад': ['home'],
-  'Мода и красота': ['fashion'],
-  'Путешествия': ['travel'],
-  'Хобби и отдых': ['hobby'],
-};
+/// Порядок категорий на экране «Все категории». Категории из базы, которых нет в списке, идут в конец.
+const _order = [
+  'auto',
+  'parts',
+  'real-estate',
+  'jobs',
+  'business',
+  'electronics',
+  'services',
+  'home',
+  'fashion',
+  'travel',
+  'hobby',
+];
 
 /// 3D-иконки категорий (те же, что на главной).
 String? _imageForSlug(String slug) {
@@ -79,7 +80,7 @@ IconData _iconForSlug(String slug) {
   }
 }
 
-/// Экран «Все категории»: разделы с плитками, как на макете.
+/// Экран «Все категории»: плитки категорий без заголовков и лента объявлений внизу.
 class AllCategoriesScreen extends StatefulWidget {
   const AllCategoriesScreen({super.key});
 
@@ -130,45 +131,43 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     );
   }
 
-  List<Widget> _buildSections(List<Map<String, dynamic>> items) {
+  /// Плитки идут подряд по две в ряд. Если плиток нечётное число, последняя занимает всю ширину.
+  List<Widget> _buildTiles(List<Map<String, dynamic>> items) {
     final bySlug = {for (final c in items) c['slug'] as String: c};
+    final ordered = <Map<String, dynamic>>[];
     final used = <String>{};
-    final widgets = <Widget>[];
+    for (final s in _order) {
+      final c = bySlug[s];
+      if (c != null) {
+        ordered.add(c);
+        used.add(s);
+      }
+    }
+    for (final c in items) {
+      if (!used.contains(c['slug'] as String)) ordered.add(c);
+    }
 
-    void addSection(String title, List<Map<String, dynamic>> cats) {
-      if (cats.isEmpty) return;
+    Widget tile(Map<String, dynamic> c) => SizedBox(
+          height: 60,
+          child: _Tile(cat: c, onTap: () => _open(c)),
+        );
+
+    final widgets = <Widget>[];
+    for (var i = 0; i < ordered.length; i += 2) {
+      final hasSecond = i + 1 < ordered.length;
       widgets.add(Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-        child: Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        child: Row(
+          children: [
+            Expanded(child: tile(ordered[i])),
+            if (hasSecond) ...[
+              const SizedBox(width: 8),
+              Expanded(child: tile(ordered[i + 1])),
+            ],
+          ],
         ),
       ));
-      widgets.add(GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        crossAxisCount: 2,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 2.9,
-        children: [for (final c in cats) _Tile(cat: c, onTap: () => _open(c))],
-      ));
     }
-
-    for (final entry in _sections.entries) {
-      final cats = <Map<String, dynamic>>[];
-      for (final s in entry.value) {
-        final c = bySlug[s];
-        if (c != null) {
-          cats.add(c);
-          used.add(s);
-        }
-      }
-      addSection(entry.key, cats);
-    }
-    final rest = [for (final c in items) if (!used.contains(c['slug'] as String)) c];
-    addSection('Другое', rest);
     return widgets;
   }
 
@@ -192,10 +191,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
           }
           final items = snapshot.data ?? [];
           return ListView(
-            padding: const EdgeInsets.only(bottom: 24),
+            padding: const EdgeInsets.only(top: 12, bottom: 24),
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: FilledButton.tonal(
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ListingsScreen()),
@@ -203,14 +202,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   child: const Text('Все объявления'),
                 ),
               ),
-              ..._buildSections(items),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 20, 16, 10),
-                child: Text(
-                  'Объявления',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-              ),
+              ..._buildTiles(items),
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: _listingsFuture,
                 builder: (context, snap) {
@@ -230,7 +222,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   return GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     crossAxisCount: 2,
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
@@ -259,14 +251,14 @@ class _Tile extends StatelessWidget {
     final name = cat['name_ru'] as String;
     return Material(
       color: const Color(0xFFEEF1F0),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+              padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
               child: Text(
                 name,
                 maxLines: 2,
@@ -274,14 +266,14 @@ class _Tile extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  height: 1.25,
+                  height: 1.2,
                   color: AppColors.ink,
                 ),
               ),
             ),
             Positioned(
               right: 8,
-              bottom: 6,
+              bottom: 4,
               child: _imageForSlug(slug) != null
                   ? Image.asset(_imageForSlug(slug)!, width: 32, height: 32, fit: BoxFit.contain)
                   : Icon(_iconForSlug(slug), color: AppColors.primary, size: 26),
