@@ -26,66 +26,20 @@ jobs:
       - name: Set application id and app name
         run: |
           for f in android/app/build.gradle.kts android/app/build.gradle; do
-            [ -f "$f" ] || continue
-            sed -i -E 's/applicationId[ =]+"[^"]*"/applicationId = "tj.tajbozor.app"/; s/namespace[ =]+"[^"]*"/namespace = "tj.tajbozor.app"/' "$f"
+            [ -f "$f" ] && sed -i -E 's/applicationId[ =]+"[^"]*"/applicationId = "tj.tajbozor.app"/; s/namespace[ =]+"[^"]*"/namespace = "tj.tajbozor.app"/' "$f"
           done
           sed -i -E 's/android:label="[^"]*"/android:label="TAJ Bozor"/' android/app/src/main/AndroidManifest.xml
 
-      - name: Add internet and media permissions
-        run: |
-          python3 - <<'PY'
-          p = 'android/app/src/main/AndroidManifest.xml'
-          s = open(p, encoding='utf-8').read()
-          perms = ''.join(
-              f'    <uses-permission android:name="android.permission.{n}"/>\n'
-              for n in ['INTERNET', 'RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS',
-                        'ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION']
-          )
-          if 'android.permission.INTERNET' not in s:
-              s = s.replace('<application', perms + '    <application', 1)
-          open(p, 'w', encoding='utf-8').write(s)
-          PY
+      - name: Add permissions
+        run: python3 .github/scripts/add_permissions.py
 
-      - name: Configure release signing
+      - name: Prepare keystore and signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           mkdir -p "$RUNNER_TEMP/keys"
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/keys/upload.jks"
-          python3 - <<'PY'
-          import os, re
-          kts = 'android/app/build.gradle.kts'
-          groovy = 'android/app/build.gradle'
-          if os.path.exists(kts):
-              p = kts
-              block = '''    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("ANDROID_KEYSTORE_PATH"))
-            storePassword = System.getenv("ANDROID_STORE_PASSWORD")
-            keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-        }
-    }
-'''
-              s = open(p, encoding='utf-8').read()
-              s = s.replace('    buildTypes {', block + '    buildTypes {', 1)
-              s = re.sub(r'signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)', 'signingConfig = signingConfigs.getByName("release")', s)
-          else:
-              p = groovy
-              block = '''    signingConfigs {
-        release {
-            storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
-            storePassword System.getenv("ANDROID_STORE_PASSWORD")
-            keyAlias System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword System.getenv("ANDROID_KEY_PASSWORD")
-        }
-    }
-'''
-              s = open(p, encoding='utf-8').read()
-              s = s.replace('    buildTypes {', block + '    buildTypes {', 1)
-              s = s.replace('signingConfig signingConfigs.debug', 'signingConfig signingConfigs.release')
-          open(p, 'w', encoding='utf-8').write(s)
-          PY
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          python3 .github/scripts/configure_signing.py
 
       - run: flutter pub get
 
