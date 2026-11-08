@@ -45,6 +45,11 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
 
   void _accept() {
     _stopRing();
+    // Уже звоним этому человеку (оба позвонили друг другу): просто закрываем экран входящего.
+    if (activeCallChannel == widget.channel) {
+      Navigator.of(context).pop();
+      return;
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => CallScreen(channel: widget.channel, title: widget.callerName),

@@ -45,6 +45,9 @@ String _formatDuration(Duration d) {
   return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
 }
 
+/// Канал звонка, в котором мы сейчас находимся (чтобы не входить в него дважды).
+String? activeCallChannel;
+
 /// Экран голосового звонка через Интернет.
 class CallScreen extends StatefulWidget {
   const CallScreen({super.key, required this.channel, required this.title});
@@ -67,6 +70,7 @@ class _CallScreenState extends State<CallScreen> {
   @override
   void initState() {
     super.initState();
+    activeCallChannel = widget.channel;
     _start();
   }
 
@@ -123,6 +127,7 @@ class _CallScreenState extends State<CallScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
+    if (activeCallChannel == widget.channel) activeCallChannel = null;
     if (_joined) {
       _jsLeave().toDart.ignore();
     }
