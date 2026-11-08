@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'call_options_sheet.dart';
+import 'call_screen.dart';
 import 'callback_sheet.dart';
 import 'chat_screen.dart';
 import 'create_listing_screen.dart';
@@ -269,9 +270,27 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     );
   }
 
-  /// Звонок через Интернет (Agora). Пока экран звонка не готов, показываем заглушку.
+  /// Звонок через Интернет (Agora) продавцу объявления.
   void _callInternet() {
-    _toast(tr('Звонок через Интернет скоро будет доступен', 'Занги тавассути Интернет дар оянда дастрас мешавад'));
+    final me = Supabase.instance.client.auth.currentUser?.id;
+    final seller = _userId;
+    if (me == null) {
+      _toast(tr('Войдите, чтобы звонить через Интернет', 'Барои занги Интернет ворид шавед'));
+      return;
+    }
+    if (seller == null || seller == me) {
+      _toast(tr('Это ваше объявление', 'Ин эълони шумост'));
+      return;
+    }
+    unawaited(_logEvent('call_internet'));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CallScreen(
+          channel: pairChannel(me, seller),
+          title: (_seller?['name'] as String?) ?? tr('Продавец', 'Фурӯшанда'),
+        ),
+      ),
+    );
   }
 
   void _share() {
