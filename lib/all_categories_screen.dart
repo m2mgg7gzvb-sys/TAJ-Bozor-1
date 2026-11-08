@@ -193,15 +193,6 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
           return ListView(
             padding: const EdgeInsets.only(top: 12, bottom: 24),
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: FilledButton.tonal(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ListingsScreen()),
-                  ),
-                  child: const Text('Все объявления'),
-                ),
-              ),
               ..._buildTiles(items),
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: _listingsFuture,
