@@ -21,6 +21,7 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   geolocator: ^13.0.2
+  agora_rtc_engine: ^6.5.0
   web: ^1.1.0
 
 dev_dependencies:

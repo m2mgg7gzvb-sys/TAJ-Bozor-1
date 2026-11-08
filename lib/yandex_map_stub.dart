@@ -1,8 +1,9 @@
-import 'package:flutter/widgets.dart';
+// Карта на Android: OpenStreetMap через flutter_map (Яндекс-карта только в браузере).
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Заглушка карты для Android (там карта пока не подключена).
-class YandexMap extends StatelessWidget {
+class YandexMap extends StatefulWidget {
   const YandexMap({
     super.key,
     required this.center,
@@ -23,16 +24,55 @@ class YandexMap extends StatelessWidget {
   final VoidCallback? onError;
 
   @override
+  State<YandexMap> createState() => _YandexMapState();
+}
+
+class _YandexMapState extends State<YandexMap> {
+  final MapController _controller = MapController();
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Карта пока доступна только в браузере',
-          style: TextStyle(color: Color(0xFF6B7280))),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        FlutterMap(
+          mapController: _controller,
+          options: MapOptions(
+            initialCenter: widget.center,
+            initialZoom: widget.zoom,
+            onMapReady: () => widget.onReady?.call(YandexMapHandle._(_controller)),
+            onMapEvent: (event) {
+              if (widget.picker && event is MapEventMoveEnd) {
+                widget.onCenter?.call(_controller.camera.center);
+              }
+            },
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'tj.tajbozor.app',
+            ),
+          ],
+        ),
+        if (widget.picker)
+          const IgnorePointer(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 36),
+              child: Icon(Icons.location_on, size: 40, color: Color(0xFFE53935)),
+            ),
+          ),
+      ],
     );
   }
 }
 
+/// Команды карте из Flutter.
 class YandexMapHandle {
-  YandexMapHandle._();
+  YandexMapHandle._(this._controller);
 
-  void move(LatLng point, {double zoom = 16}) {}
+  final MapController _controller;
+
+  void move(LatLng point, {double zoom = 16}) {
+    _controller.move(point, zoom);
+  }
 }
