@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'call_options_sheet.dart';
 import 'callback_sheet.dart';
 import 'chat_screen.dart';
 import 'create_listing_screen.dart';
@@ -259,6 +260,20 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     if (!ok && mounted) _toast('Не удалось открыть звонок');
   }
 
+  /// Окно выбора: звонок через Интернет или обычный телефонный звонок.
+  void _showCallOptions() {
+    showCallOptionsSheet(
+      context,
+      onInternet: _callInternet,
+      onDirect: _call,
+    );
+  }
+
+  /// Звонок через Интернет (Agora). Пока экран звонка не готов, показываем заглушку.
+  void _callInternet() {
+    _toast(tr('Звонок через Интернет скоро будет доступен', 'Занги тавассути Интернет дар оянда дастрас мешавад'));
+  }
+
   void _share() {
     unawaited(_logEvent('share'));
     final text = '${_item['title']} — ${priceText(_item)}\nTAJ Bozor';
@@ -486,7 +501,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     Expanded(
                       child: FilledButton(
                         style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
-                        onPressed: _call,
+                        onPressed: _showCallOptions,
                         child: Text(tr('Позвонить', 'Занг задан')),
                       ),
                     ),
