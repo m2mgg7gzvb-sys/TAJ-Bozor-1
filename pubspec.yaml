@@ -13,7 +13,7 @@ dependencies:
   flutter_svg: ^2.0.10
   image_picker: ^1.1.2
   file_picker: ^8.1.2
-  record: ^5.1.2
+  record: ^6.0.0
   audioplayers: ^6.1.0
   shared_preferences: ^2.3.2
   share_plus: ^10.0.0
@@ -37,5 +37,3 @@ flutter:
     - assets/generations/
     - assets/icons/
 
-dependency_overrides:
-  record_platform_interface: 1.3.0
