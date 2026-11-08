@@ -26,10 +26,15 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
+  const isCall = event.notification.tag === 'incoming-call';
+  // Для звонка открываем приложение заново: при запуске оно покажет входящий звонок.
+  const url = isCall ? '/?incoming=1' : (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (list) => {
       for (const client of list) {
+        if (isCall && 'navigate' in client) {
+          await client.navigate(url);
+        }
         if ('focus' in client) return client.focus();
       }
       return self.clients.openWindow(url);
