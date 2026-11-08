@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'call_options_sheet.dart';
+import 'call_screen.dart';
 import 'chat_attachments.dart';
 import 'chat_image.dart';
 import 'notify_store.dart';
@@ -577,8 +578,21 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _callInternet() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Звонок через Интернет скоро будет доступен')),
+    final c = _conv;
+    final me = _me;
+    if (c == null || me == null) return;
+    final otherId = me == c['buyer_id'] ? c['seller_id'] : c['buyer_id'];
+    if (otherId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Собеседник не найден')));
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CallScreen(
+          channel: pairChannel(me, otherId as String),
+          title: widget.title,
+        ),
+      ),
     );
   }
 
