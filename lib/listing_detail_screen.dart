@@ -283,6 +283,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       return;
     }
     unawaited(_logEvent('call_internet'));
+    final channel = pairChannel(me, seller);
+    unawaited(inviteToCall(calleeId: seller, channel: channel));
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CallScreen(

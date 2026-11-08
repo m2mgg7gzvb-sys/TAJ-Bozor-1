@@ -41,6 +41,10 @@
     }
   }
 
+  // Гудок для входящего звонка (вызывается из Dart).
+  window.agoraRingStart = ringStart;
+  window.agoraRingStop = ringStop;
+
   function ensureClient() {
     if (!client) {
       client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
