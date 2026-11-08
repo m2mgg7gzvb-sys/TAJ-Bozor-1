@@ -586,10 +586,12 @@ class _ChatScreenState extends State<ChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Собеседник не найден')));
       return;
     }
+    final channel = pairChannel(me, otherId as String);
+    inviteToCall(calleeId: otherId, channel: channel);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CallScreen(
-          channel: pairChannel(me, otherId as String),
+          channel: channel,
           title: widget.title,
         ),
       ),

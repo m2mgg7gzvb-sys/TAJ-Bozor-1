@@ -27,6 +27,16 @@ String pairChannel(String a, String b) {
   return 'tb_${parts.join('_')}';
 }
 
+/// Отправляет собеседнику входящий звонок (push и экран у него в приложении).
+Future<void> inviteToCall({required String calleeId, required String channel}) async {
+  try {
+    await Supabase.instance.client.functions
+        .invoke('call-invite', body: {'callee_id': calleeId, 'channel': channel});
+  } catch (_) {
+    // Даже если приглашение не ушло, звонящий сам попадает в канал.
+  }
+}
+
 String _formatDuration(Duration d) {
   String two(int n) => n.toString().padLeft(2, '0');
   final h = d.inHours;

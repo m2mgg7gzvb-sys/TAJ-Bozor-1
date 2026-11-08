@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'incoming_call_screen.dart';
 import 'theme.dart';
 
 /// Навигатор приложения: нужен, чтобы показывать баннер поверх любого экрана.
@@ -48,10 +49,14 @@ void _onSession(Session? session) {
       ),
       callback: (payload) {
         final row = payload.newRecord;
-        showTopBanner(
-          (row['title'] as String?) ?? 'Уведомление',
-          (row['body'] as String?) ?? '',
-        );
+        if (row['kind'] == 'incoming_call') {
+          _showIncomingCall(row);
+        } else {
+          showTopBanner(
+            (row['title'] as String?) ?? 'Уведомление',
+            (row['body'] as String?) ?? '',
+          );
+        }
         refreshUnread();
       },
     )
@@ -82,6 +87,23 @@ void _onSession(Session? session) {
     )
     ..subscribe();
   refreshUnread();
+}
+
+/// Входящий звонок: открываем экран с гудком поверх любого экрана.
+void _showIncomingCall(Map<String, dynamic> row) {
+  final data = row['data'];
+  if (data is! Map) return;
+  final channel = data['channel'] as String?;
+  final callerName = (data['caller_name'] as String?) ?? 'Звонит пользователь';
+  if (channel == null || channel.isEmpty) return;
+  final nav = appNavigatorKey.currentState;
+  if (nav == null) return;
+  nav.push(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => IncomingCallScreen(channel: channel, callerName: callerName),
+    ),
+  );
 }
 
 /// Пересчитываем непрочитанное: уведомления и переписки.
