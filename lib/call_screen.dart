@@ -63,7 +63,8 @@ class _CallScreenState extends State<CallScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _status = tr('Не удалось подключиться', 'Пайваст нашуд'));
+      final reason = e.toString();
+      setState(() => _status = '${tr('Не удалось подключиться', 'Пайваст нашуд')}\n${reason.length > 160 ? reason.substring(0, 160) : reason}');
     }
   }
 
