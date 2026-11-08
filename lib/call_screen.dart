@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
@@ -15,12 +16,23 @@ external JSPromise<JSBoolean> _jsSetMic(JSBoolean on);
 @JS('agoraLeave')
 external JSPromise<JSBoolean> _jsLeave();
 
+@JS('agoraIsConnected')
+external JSBoolean _jsIsConnected();
+
 /// Канал одинаков для двух собеседников: собирается из их id (отсортированных),
 /// поэтому оба попадают в одну комнату, если открыли звонок.
 String pairChannel(String a, String b) {
   String short(String id) => id.replaceAll('-', '').substring(0, 16);
   final parts = [short(a), short(b)]..sort();
   return 'tb_${parts.join('_')}';
+}
+
+String _formatDuration(Duration d) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final h = d.inHours;
+  final m = d.inMinutes.remainder(60);
+  final s = d.inSeconds.remainder(60);
+  return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
 }
 
 /// Экран голосового звонка через Интернет.
@@ -38,6 +50,9 @@ class _CallScreenState extends State<CallScreen> {
   String _status = 'Подключение…';
   bool _joined = false;
   bool _muted = false;
+  Timer? _ticker;
+  DateTime? _connectedAt; // момент, когда собеседник ответил
+  Duration _elapsed = Duration.zero;
 
   @override
   void initState() {
@@ -57,14 +72,24 @@ class _CallScreenState extends State<CallScreen> {
         (data['uid'] as num).toDouble().toJS,
       ).toDart;
       if (!mounted) return;
-      setState(() {
-        _joined = true;
-        _status = tr('Вы в разговоре', 'Шумо дар сӯҳбат');
-      });
+      setState(() => _joined = true);
+      _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
     } catch (e) {
       if (!mounted) return;
       final reason = e.toString();
-      setState(() => _status = '${tr('Не удалось подключиться', 'Пайваст нашуд')}\n${reason.length > 160 ? reason.substring(0, 160) : reason}');
+      setState(() => _status =
+          '${tr('Не удалось подключиться', 'Пайваст нашуд')}\n${reason.length > 160 ? reason.substring(0, 160) : reason}');
+    }
+  }
+
+  /// Раз в секунду проверяем, ответил ли собеседник, и обновляем таймер.
+  void _tick(Timer _) {
+    if (!mounted || !_joined) return;
+    if (_connectedAt == null && _jsIsConnected().toDart) {
+      _connectedAt = DateTime.now();
+    }
+    if (_connectedAt != null) {
+      setState(() => _elapsed = DateTime.now().difference(_connectedAt!));
     }
   }
 
@@ -76,6 +101,7 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _hangUp() async {
+    _ticker?.cancel();
     if (_joined) {
       try {
         await _jsLeave().toDart;
@@ -86,10 +112,17 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
+    _ticker?.cancel();
     if (_joined) {
       _jsLeave().toDart.ignore();
     }
     super.dispose();
+  }
+
+  String get _statusText {
+    if (!_joined) return _status;
+    if (_connectedAt == null) return tr('Гудки…', 'Занги…');
+    return _formatDuration(_elapsed);
   }
 
   @override
@@ -106,7 +139,9 @@ class _CallScreenState extends State<CallScreen> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
-              Text(_status, style: const TextStyle(color: Colors.white70, fontSize: 15)),
+              Text(_statusText,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 15)),
               const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
