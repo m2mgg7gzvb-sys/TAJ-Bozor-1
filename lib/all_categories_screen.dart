@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'listing_card.dart';
+import 'listing_utils.dart';
 import 'listings_screen.dart';
 import 'theme.dart';
 
@@ -87,11 +89,13 @@ class AllCategoriesScreen extends StatefulWidget {
 
 class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   late Future<List<Map<String, dynamic>>> _future;
+  late Future<List<Map<String, dynamic>>> _listingsFuture;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+    _listingsFuture = _loadListings();
   }
 
   Future<List<Map<String, dynamic>>> _load() async {
@@ -99,6 +103,17 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
         .from('categories')
         .select('id, slug, name_ru')
         .order('id');
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  /// Последние активные объявления из всех категорий: выводятся внизу экрана.
+  Future<List<Map<String, dynamic>>> _loadListings() async {
+    final rows = await Supabase.instance.client
+        .from('listings')
+        .select(listingSelect)
+        .eq('status', 'active')
+        .order('created_at', ascending: false)
+        .limit(20);
     return List<Map<String, dynamic>>.from(rows);
   }
 
@@ -189,6 +204,41 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 ),
               ),
               ..._buildSections(items),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 20, 16, 10),
+                child: Text(
+                  'Объявления',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: _listingsFuture,
+                builder: (context, snap) {
+                  if (snap.connectionState != ConnectionState.done) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final list = snap.data ?? [];
+                  if (list.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('Объявлений пока нет', style: TextStyle(color: AppColors.muted)),
+                    );
+                  }
+                  return GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.66,
+                    children: [for (final item in list) ListingCard(item: item)],
+                  );
+                },
+              ),
             ],
           );
         },
