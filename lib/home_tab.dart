@@ -153,6 +153,16 @@ class _HomeTabState extends State<HomeTab> {
     'jobs': 'Кор ва\nмузднон',
   };
 
+  /// 3D-иконки категорий. Пока есть не для всех: остальные показываем Material-иконкой.
+  String? _imageFor(String slug) {
+    switch (slug) {
+      case 'electronics':
+        return 'assets/icons/phone.png';
+      default:
+        return null;
+    }
+  }
+
   Color _accentFor(String slug) {
     switch (slug) {
       case 'jobs':
@@ -173,6 +183,7 @@ class _HomeTabState extends State<HomeTab> {
       height: 78,
       child: _CategoryChip(
         icon: cat.icon,
+        image: cat.image,
         accent: _accentFor(slug),
         name: (tajikLang.value ? _tgTileLabels : _tileLabels)[slug] ?? cat.name,
         onTap: isAll
@@ -187,7 +198,7 @@ class _HomeTabState extends State<HomeTab> {
     final bySlug = {for (final c in items) c['slug'] as String: c};
     _Cat? catFor(String slug) {
       final c = bySlug[slug];
-      return c == null ? null : _Cat(_catName(c), _iconFor(slug), c);
+      return c == null ? null : _Cat(_catName(c), _iconFor(slug), c, image: _imageFor(slug));
     }
 
     const first = ['real-estate', 'jobs'];
@@ -206,7 +217,7 @@ class _HomeTabState extends State<HomeTab> {
     for (final c in items) {
       final slug = c['slug'] as String;
       if (first.contains(slug) || second.contains(slug)) continue;
-      (toRow2 ? row2 : row1).add(_Cat(_catName(c), _iconFor(slug), c));
+      (toRow2 ? row2 : row1).add(_Cat(_catName(c), _iconFor(slug), c, image: _imageFor(slug)));
       toRow2 = !toRow2;
     }
 
@@ -520,11 +531,12 @@ class _CityButton extends StatelessWidget {
 }
 
 class _Cat {
-  const _Cat(this.name, this.icon, this.data);
+  const _Cat(this.name, this.icon, this.data, {this.image});
 
   final String name;
   final IconData icon;
   final Map<String, dynamic>? data;
+  final String? image;
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -547,9 +559,11 @@ class _CategoryChip extends StatelessWidget {
     required this.accent,
     required this.name,
     required this.onTap,
+    this.image,
   });
 
   final IconData icon;
+  final String? image;
   final Color accent;
   final String name;
   final VoidCallback onTap;
@@ -581,7 +595,9 @@ class _CategoryChip extends StatelessWidget {
             Positioned(
               right: 8,
               bottom: 6,
-              child: Icon(icon, color: accent, size: 36),
+              child: image == null
+                  ? Icon(icon, color: accent, size: 36)
+                  : Image.asset(image!, width: 44, height: 44, fit: BoxFit.contain),
             ),
           ],
         ),
