@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'call_options_sheet.dart';
 import 'chat_attachments.dart';
 import 'chat_image.dart';
 import 'notify_store.dart';
@@ -574,6 +576,43 @@ class _ChatScreenState extends State<ChatScreen> {
     ];
   }
 
+  void _callInternet() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Звонок через Интернет скоро будет доступен')),
+    );
+  }
+
+  /// Обычный звонок собеседнику (покупатель звонит продавцу и наоборот).
+  Future<void> _callDirect() async {
+    final c = _conv;
+    final me = _me;
+    if (c == null || me == null) return;
+    final otherId = me == c['buyer_id'] ? c['seller_id'] : c['buyer_id'];
+    if (otherId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Собеседник не найден')));
+      return;
+    }
+    final p = await Supabase.instance.client
+        .from('profiles')
+        .select('phone')
+        .eq('id', otherId)
+        .maybeSingle();
+    final phone = p?['phone'] as String?;
+    if (!mounted) return;
+    if (phone == null || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Номер собеседника пока не указан')),
+      );
+      return;
+    }
+    final ok = await launchUrl(Uri(scheme: 'tel', path: phone));
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть звонок')),
+      );
+    }
+  }
+
   Future<void> _setTicket(String status) async {
     try {
       await Supabase.instance.client.rpc('set_ticket_status', params: {
@@ -613,6 +652,16 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
+          if (_conv != null && _conv!['kind'] != 'support')
+            IconButton(
+              tooltip: 'Позвонить',
+              icon: const Icon(Icons.call_rounded),
+              onPressed: () => showCallOptionsSheet(
+                context,
+                onInternet: _callInternet,
+                onDirect: _callDirect,
+              ),
+            ),
           if (!widget.joinMode && !widget.staffTicket && _conv?['kind'] != 'support')
             PopupMenuButton<String>(
               onSelected: (_) => _contactSupport(),
