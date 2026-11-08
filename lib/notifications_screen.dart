@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'incoming_call_screen.dart';
 import 'theme.dart';
 
 /// Уведомления пользователя: например, «заказан звонок» с номером покупателя.
@@ -26,7 +27,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (me == null) return [];
     final rows = await db
         .from('notifications')
-        .select('id, title, body, is_read, created_at')
+        .select('id, title, body, is_read, created_at, kind, data')
         .eq('user_id', me)
         .order('created_at', ascending: false)
         .limit(100);
@@ -112,6 +113,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     if ((n['body'] as String?)?.isNotEmpty ?? false) ...[
                       const SizedBox(height: 4),
                       Text((n['body'] as String?)!, style: const TextStyle(fontSize: 15)),
+                    ],
+                    if (n['kind'] == 'incoming_call' && n['data'] is Map && (n['data']['channel'] as String?) != null) ...[
+                      const SizedBox(height: 10),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
+                        icon: const Icon(Icons.call_rounded),
+                        label: const Text('Открыть звонок'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (_) => IncomingCallScreen(
+                              channel: n['data']['channel'] as String,
+                              callerName: (n['data']['caller_name'] as String?) ?? 'Звонит пользователь',
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 6),
                     Text(
