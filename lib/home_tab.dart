@@ -223,7 +223,7 @@ class _HomeTabState extends State<HomeTab> {
 
     const first = ['real-estate', 'jobs'];
     const second = ['auto', 'electronics', 'services', 'home'];
-    final row1 = <_Cat>[_Cat(tr('Все', 'Ҳама'), Icons.grid_view_rounded, null)];
+    final row1 = <_Cat>[_Cat(tr('Все', 'Ҳама'), Icons.grid_view_rounded, null, image: 'assets/icons/all.png')];
     final row2 = <_Cat>[];
     for (final s in first) {
       final c = catFor(s);

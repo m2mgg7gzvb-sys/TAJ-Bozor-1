@@ -18,6 +18,36 @@ const _sections = <String, List<String>>{
   'Хобби и отдых': ['hobby'],
 };
 
+/// 3D-иконки категорий (те же, что на главной).
+String? _imageForSlug(String slug) {
+  switch (slug) {
+    case 'auto':
+      return 'assets/icons/auto.png';
+    case 'real-estate':
+      return 'assets/icons/realestate.png';
+    case 'electronics':
+      return 'assets/icons/phone.png';
+    case 'home':
+      return 'assets/icons/home.png';
+    case 'services':
+      return 'assets/icons/services.png';
+    case 'jobs':
+      return 'assets/icons/jobs.png';
+    case 'parts':
+      return 'assets/icons/parts.png';
+    case 'fashion':
+      return 'assets/icons/fashion.png';
+    case 'business':
+      return 'assets/icons/business.png';
+    case 'travel':
+      return 'assets/icons/travel.png';
+    case 'hobby':
+      return 'assets/icons/hobby.png';
+    default:
+      return null;
+  }
+}
+
 IconData _iconForSlug(String slug) {
   switch (slug) {
     case 'auto':
@@ -106,7 +136,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        childAspectRatio: 2.1,
+        childAspectRatio: 2.9,
         children: [for (final c in cats) _Tile(cat: c, onTap: () => _open(c))],
       ));
     }
@@ -202,7 +232,9 @@ class _Tile extends StatelessWidget {
             Positioned(
               right: 8,
               bottom: 6,
-              child: Icon(_iconForSlug(slug), color: AppColors.primary, size: 30),
+              child: _imageForSlug(slug) != null
+                  ? Image.asset(_imageForSlug(slug)!, width: 32, height: 32, fit: BoxFit.contain)
+                  : Icon(_iconForSlug(slug), color: AppColors.primary, size: 26),
             ),
           ],
         ),
