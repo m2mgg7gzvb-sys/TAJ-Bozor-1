@@ -50,6 +50,7 @@ void _onSession(Session? session) {
       callback: (payload) {
         final row = payload.newRecord;
         if (row['kind'] == 'incoming_call') {
+          _shownCalls.add(row['id'] as String);
           _showIncomingCall(row);
         } else {
           showTopBanner(
@@ -87,6 +88,33 @@ void _onSession(Session? session) {
     )
     ..subscribe();
   refreshUnread();
+  _checkRecentCall(me);
+}
+
+final Set<String> _shownCalls = <String>{};
+
+/// Если звонок пришёл, пока приложение было закрыто (нажали на push), показываем его при открытии.
+Future<void> _checkRecentCall(String me) async {
+  try {
+    final since = DateTime.now().toUtc().subtract(const Duration(seconds: 60)).toIso8601String();
+    final rows = await Supabase.instance.client
+        .from('notifications')
+        .select('id, kind, data')
+        .eq('user_id', me)
+        .eq('kind', 'incoming_call')
+        .gte('created_at', since)
+        .order('created_at', ascending: false)
+        .limit(1);
+    if (rows.isEmpty) return;
+    final row = Map<String, dynamic>.from(rows.first);
+    final id = row['id'] as String;
+    if (_shownCalls.contains(id)) return;
+    _shownCalls.add(id);
+    // Небольшая пауза: навигатор приложения может быть ещё не готов сразу после запуска.
+    Future.delayed(const Duration(seconds: 1), () => _showIncomingCall(row));
+  } catch (_) {
+    // Без этой проверки звонок всё равно придёт через realtime.
+  }
 }
 
 /// Входящий звонок: открываем экран с гудком поверх любого экрана.

@@ -7,12 +7,20 @@ self.addEventListener('push', (event) => {
     data = { body: event.data ? event.data.text() : '' };
   }
   const title = data.title || 'TAJ Bozor';
+  const isCall = title === 'Входящий звонок' || /звонит вам/.test(data.body || '');
   const options = {
     body: data.body || '',
     icon: 'icons/Icon-192.png',
     badge: 'icons/Icon-192.png',
     data: { url: data.url || '/' },
   };
+  if (isCall) {
+    // Звонок: не исчезает, пока его не нажмут, и вибрирует (Android).
+    options.requireInteraction = true;
+    options.vibrate = [400, 200, 400, 200, 400, 200, 400];
+    options.tag = 'incoming-call';
+    options.renotify = true;
+  }
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
