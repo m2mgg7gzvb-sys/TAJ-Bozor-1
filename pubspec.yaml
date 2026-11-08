@@ -36,3 +36,6 @@ flutter:
     - assets/photos/
     - assets/generations/
     - assets/icons/
+
+dependency_overrides:
+  record_platform_interface: 1.3.0
