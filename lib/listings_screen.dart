@@ -272,6 +272,21 @@ class _ListingsScreenState extends State<ListingsScreen> {
     return Icons.category_rounded;
   }
 
+  /// 3D-иконки подкатегорий. Если картинки нет, показываем Material-иконку из _subcatIcon.
+  String? _subcatImage(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('телефон')) return 'assets/icons/phone.png';
+    if (n.contains('новые авто')) return 'assets/icons/new-cars.png';
+    if (n.contains('селект')) return 'assets/icons/select.png';
+    if (n.contains('легков')) return 'assets/icons/auto.png';
+    if (n.contains('грузов')) return 'assets/icons/trucks.png';
+    if (n.contains('мото')) return 'assets/icons/moto.png';
+    if (n.contains('аренда авто')) return 'assets/icons/rent-car.png';
+    if (n.contains('аренда техники')) return 'assets/icons/rent-tech.png';
+    if (n.contains('запчаст')) return 'assets/icons/parts.png';
+    return null;
+  }
+
   Widget _subcatRow() {
     // На странице подкатегории плитки уже не нужны.
     if (widget.subcategoryId != null) return const SizedBox.shrink();
@@ -360,13 +375,15 @@ class _ListingsScreenState extends State<ListingsScreen> {
               Positioned(
                 right: 6,
                 bottom: 4,
-                child: Icon(
-                  _subcatIcon(name),
-                  size: wide ? 40 : 36,
-                  color: selected
-                      ? Colors.white.withValues(alpha: 0.7)
-                      : AppColors.primary.withValues(alpha: 0.35),
-                ),
+                child: _subcatImage(name) != null
+                    ? Image.asset(_subcatImage(name)!, width: wide ? 44 : 40, height: wide ? 44 : 40, fit: BoxFit.contain)
+                    : Icon(
+                        _subcatIcon(name),
+                        size: wide ? 40 : 36,
+                        color: selected
+                            ? Colors.white.withValues(alpha: 0.7)
+                            : AppColors.primary.withValues(alpha: 0.35),
+                      ),
               ),
             ],
           ),

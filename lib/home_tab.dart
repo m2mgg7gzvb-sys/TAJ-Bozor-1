@@ -156,8 +156,28 @@ class _HomeTabState extends State<HomeTab> {
   /// 3D-иконки категорий. Пока есть не для всех: остальные показываем Material-иконкой.
   String? _imageFor(String slug) {
     switch (slug) {
+      case 'auto':
+        return 'assets/icons/auto.png';
+      case 'real-estate':
+        return 'assets/icons/realestate.png';
       case 'electronics':
         return 'assets/icons/phone.png';
+      case 'home':
+        return 'assets/icons/home.png';
+      case 'services':
+        return 'assets/icons/services.png';
+      case 'jobs':
+        return 'assets/icons/jobs.png';
+      case 'parts':
+        return 'assets/icons/parts.png';
+      case 'fashion':
+        return 'assets/icons/fashion.png';
+      case 'business':
+        return 'assets/icons/business.png';
+      case 'travel':
+        return 'assets/icons/travel.png';
+      case 'hobby':
+        return 'assets/icons/hobby.png';
       default:
         return null;
     }
