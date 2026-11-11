@@ -8,6 +8,7 @@ import 'lang_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'laptop_catalog.dart';
+import 'tech_catalog.dart';
 import 'phone_catalog.dart';
 import 'search_terms.dart';
 import 'theme.dart';
@@ -105,6 +106,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Открыт ли раздел «Электроника → Ноутбуки».
   bool get _isLaptops => widget.categoryId == 3 && _subcatId == laptopSubcategoryId;
+
+  /// Фильтры остальных подкатегорий «Электроники» (ключ поля → выбранное значение).
+  final _techFilters = <String, String?>{};
+
+  /// Открыта ли одна из подкатегорий с общим набором характеристик.
+  bool get _isTech => widget.categoryId == 3 && isTechSubcategory(_subcatId);
 
   @override
   void initState() {
@@ -228,6 +235,16 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (lMin != null) query = query.gte('price', lMin);
       final lMax = num.tryParse(_priceMaxCtrl.text.trim());
       if (lMax != null) query = query.lte('price', lMax);
+    }
+    if (_isTech) {
+      for (final f in techFieldsFor(_subcatId!)) {
+        final v = _techFilters[f.key];
+        if (v != null) query = query.eq('details->>${f.key}', v);
+      }
+      final tMin = num.tryParse(_priceMinCtrl.text.trim());
+      if (tMin != null) query = query.gte('price', tMin);
+      final tMax = num.tryParse(_priceMaxCtrl.text.trim());
+      if (tMax != null) query = query.lte('price', tMax);
     }
     final order = switch (_sort) {
       'price_asc' => ('price', true),
@@ -1103,6 +1120,132 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _colorCtrl.clear();
   }
 
+  /// Ряд быстрых фильтров для подкатегорий с общим набором характеристик.
+  Widget _techChipsRow() {
+    final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
+    final fields = techFieldsFor(_subcatId ?? -1);
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          for (final f in fields.take(2))
+            _chip(
+              _techFilters[f.key] ?? f.label,
+              active: _techFilters[f.key] != null,
+              onTap: () => _thenReload(() => _pickValue(f.label, f.options, (v) => _techFilters[f.key] = v, current: _techFilters[f.key])),
+            ),
+          _chip(
+            priceText == null ? 'Цена' : 'Цена: $priceText',
+            active: priceText != null,
+            onTap: () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
+          ),
+          _chip(
+            'Фильтры',
+            active: false,
+            arrow: false,
+            icon: Icons.tune_rounded,
+            onTap: _openTechFilters,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Фильтры подкатегории на весь экран.
+  void _openTechFilters() {
+    final fields = techFieldsFor(_subcatId ?? -1);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setPage) {
+            void rebuild() => setPage(() {});
+
+            Future<void> pick(Future<void> Function() action) async {
+              await action();
+              rebuild();
+            }
+
+            return Scaffold(
+              backgroundColor: Colors.white,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+                title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
+                centerTitle: true,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      _resetTechFilters();
+                      rebuild();
+                    },
+                    child: const Text('Сбросить'),
+                  ),
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 24),
+                  ),
+                  _fLabel('Цена'),
+                  _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
+                  for (final f in fields) ...[
+                    _fLabel(f.label),
+                    if (f.key == 'condition' || f.key == 'seller_type')
+                      _fChips(
+                        ['Все', ...f.options],
+                        _techFilters[f.key] ?? 'Все',
+                        (v) {
+                          _techFilters[f.key] = v == 'Все' ? null : v;
+                          rebuild();
+                        },
+                      )
+                    else
+                      _fBox(
+                        _techFilters[f.key] ?? 'Любой',
+                        _techFilters[f.key] != null,
+                        () => pick(() => _pickValue(f.label, f.options, (v) => _techFilters[f.key] = v, current: _techFilters[f.key])),
+                      ),
+                  ],
+                ],
+              ),
+              bottomNavigationBar: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _reload();
+                    },
+                    child: const Text('Показать объявления'),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Сбрасывает фильтры подкатегории с общим набором характеристик.
+  void _resetTechFilters() {
+    setState(() => _techFilters.clear());
+    _priceMinCtrl.clear();
+    _priceMaxCtrl.clear();
+  }
+
   Widget _sheetTile(String label, String? value, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1593,6 +1736,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
           if (widget.carFilter) _carChipsRow(),
           if (_isPhones) _phoneChipsRow(),
           if (_isLaptops) _laptopChipsRow(),
+          if (_isTech) _techChipsRow(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {

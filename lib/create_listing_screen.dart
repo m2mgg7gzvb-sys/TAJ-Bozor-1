@@ -9,6 +9,7 @@ import 'city_store.dart';
 import 'confirm_delete.dart';
 import 'map_picker.dart';
 import 'laptop_catalog.dart';
+import 'tech_catalog.dart';
 import 'phone_catalog.dart';
 import 'theme.dart';
 
@@ -81,6 +82,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String? _phoneCondition;
   String? _phoneSeller;
   String? _lapBrand, _lapDiagonal, _lapType, _lapCpu, _lapRam, _lapStorage, _lapGpu, _lapOs, _lapCondition, _lapSeller;
+  final _techVals = <String, String?>{};
 
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
@@ -102,6 +104,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool get _isPhone =>
       _categories.any((c) => c['id'] == _categoryId && c['slug'] == phoneCategorySlug) &&
       _subcategoryId == phoneSubcategoryId;
+
+  /// Остальные подкатегории «Электроники» с общим набором характеристик.
+  bool get _isTech =>
+      _categories.any((c) => c['id'] == _categoryId && c['slug'] == phoneCategorySlug) &&
+      isTechSubcategory(_subcategoryId);
 
   /// Ноутбук: категория «Электроника», подкатегория «Ноутбуки».
   bool get _isLaptop =>
@@ -223,6 +230,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _lapOs = d['os'] as String?;
     _lapCondition = d['condition'] as String?;
     _lapSeller = d['seller_type'] as String?;
+    for (final k in techKeys) {
+      _techVals[k] = d[k] as String?;
+    }
   }
 
   /// Подкатегории выбранной категории (их может не быть).
@@ -402,6 +412,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return m;
   }
 
+  Map<String, dynamic> _techDetails() {
+    final m = <String, dynamic>{};
+    for (final f in techFieldsFor(_subcategoryId ?? -1)) {
+      final v = _techVals[f.key];
+      if (v != null && v.trim().isNotEmpty) m[f.key] = v.trim();
+    }
+    return m;
+  }
+
   Map<String, dynamic> _laptopDetails() {
     final m = <String, dynamic>{};
     void put(String key, String? value) {
@@ -480,7 +499,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'address': _addressCtrl.text.trim(),
           'lat': _lat,
           'lng': _lng,
-          'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : null)),
+          'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : (_isTech ? _techDetails() : null))),
         }).eq('id', editing['id'] as String);
         if (!mounted) return;
         Navigator.of(context).pop(true);
@@ -500,7 +519,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'address': _addressCtrl.text.trim(),
             'lat': _lat,
             'lng': _lng,
-            'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : null)),
+            'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : (_isTech ? _techDetails() : null))),
             'status': 'moderation',
             'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
           })
@@ -588,6 +607,25 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _pick('Продавец', _phoneSeller ?? '', phoneSellers, (v) {
         _phoneSeller = v.isEmpty ? null : v;
       }),
+    ];
+  }
+
+  /// Блок «Характеристики» для остальных подкатегорий «Электроники».
+  List<Widget> _techSection() {
+    return [
+      const SizedBox(height: 20),
+      const Text('Характеристики', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      const SizedBox(height: 4),
+      const Text(
+        'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
+        style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
+      ),
+      for (final f in techFieldsFor(_subcategoryId ?? -1)) ...[
+        const SizedBox(height: 12),
+        _pick(f.label, _techVals[f.key] ?? '', f.options, (v) {
+          _techVals[f.key] = v.isEmpty ? null : v;
+        }),
+      ],
     ];
   }
 
@@ -887,6 +925,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           if (_isAuto) ..._carSection(),
           if (_isPhone) ..._phoneSection(),
           if (_isLaptop) ..._laptopSection(),
+          if (_isTech) ..._techSection(),
           if (widget.listing == null) ...[
           const SizedBox(height: 16),
           Text(
