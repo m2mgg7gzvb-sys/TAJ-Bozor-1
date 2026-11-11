@@ -143,13 +143,13 @@ final techSpecs = <String, TechSpec>{
   // Недвижимость: базовый набор (тип и сделка) и свой набор на каждый тип.
   'cat:2': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду', 'Посуточно']),
     TechField('new_or_secondary', 'Новостройки и вторичка', ['Вторичка', 'Новостройка']),
     TechField('rooms', 'Количество комнат', ['Студия', '1', '2', '3', '4', '5+']),
   ], shared: false),
   'cat:2:Квартиры': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду', 'Посуточно']),
     TechField('new_or_secondary', 'Новостройки и вторичка', ['Вторичка', 'Новостройка']),
     TechField('rooms', 'Количество комнат', ['Студия', '1', '2', '3', '4', '5+']),
     TechField('mortgage', 'Можно в ипотеке', ['Да']),
@@ -174,7 +174,7 @@ final techSpecs = <String, TechSpec>{
   ], shared: false),
   'cat:2:Комнаты': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду']),
     TechField('room_share', 'Тип комнаты', ['Изолированная', 'Смежная']),
     TechField('rooms_count', 'Комнат в квартире', ['1', '2', '3', '4+']),
     TechField('floor_pos', 'Этаж', ['Не первый', 'Не последний', 'Только последний']),
@@ -185,7 +185,7 @@ final techSpecs = <String, TechSpec>{
   ], shared: false),
   'cat:2:Дома, дачи, коттеджи': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду']),
     TechField('house_kind', 'Тип', ['Дом', 'Дача', 'Коттедж', 'Таунхаус']),
     TechField('material', 'Материал стен', ['Кирпич', 'Газоблок', 'Дерево', 'Панель', 'Монолит', 'Другой']),
     TechField('floors', 'Этажей', ['1', '2', '3', '4+']),
@@ -196,7 +196,7 @@ final techSpecs = <String, TechSpec>{
   ], shared: false),
   'cat:2:Земельные участки': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду']),
     TechField('land_purpose', 'Назначение', ['ИЖС', 'ЛПХ', 'Дачное', 'Коммерческое', 'Сельхоз']),
     TechField('communications', 'Коммуникации', ['Газ', 'Электричество', 'Вода', 'Канализация']),
     TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
@@ -204,7 +204,7 @@ final techSpecs = <String, TechSpec>{
   ], shared: false),
   'cat:2:Гаражи и машиноместа': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду']),
     TechField('garage_type', 'Тип', ['Гараж', 'Машиноместо', 'Бокс']),
     TechField('heating', 'Отопление', ['Есть', 'Нет']),
     TechField('pit', 'Смотровая яма', ['Есть', 'Нет']),
@@ -213,7 +213,7 @@ final techSpecs = <String, TechSpec>{
   ], shared: false),
   'cat:2:Коммерческая недвижимость': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
-    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('deal', 'Сделка', ['Купить', 'В аренду']),
     TechField('commercial_type', 'Тип', ['Офис', 'Магазин', 'Склад', 'Производство', 'Общепит', 'Свободного назначения']),
     TechField('entrance', 'Отдельный вход', ['Есть', 'Нет']),
     TechField('repair', 'Ремонт', ['С ремонтом', 'Без ремонта']),

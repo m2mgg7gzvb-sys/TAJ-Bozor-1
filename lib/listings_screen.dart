@@ -1272,146 +1272,172 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Widget _realEstateBlock() {
     final fields = {for (final f in techFieldsFor(2, null)) f.key: f};
     String? val(String k) => _techFilters[k];
+    final propertyType = val('property_type');
+    final isFlat = propertyType == null || propertyType == 'Квартиры';
     final deal = val('deal') ?? 'Купить';
     final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
     final pt = fields['property_type']!;
     final nos = fields['new_or_secondary']!;
     final rooms = fields['rooms']!;
+
+    final cityRow = Material(
+      color: const Color(0xFFF1F1F1),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => showCityPicker(context).then((_) {
+          if (mounted) _reload();
+        }),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.location_on_outlined, size: 18),
+              const SizedBox(width: 4),
+              Text(
+                selectedCity.value ?? 'Все города',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final dealTabs = Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F1F1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          for (final d in fields['deal']!.options.where((d) => isFlat || d != 'Посуточно'))
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  setState(() => _techFilters['deal'] = d);
+                  _reload();
+                },
+                child: Container(
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: d == deal ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    d,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: d == deal ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    final priceBox = _fBox(
+      priceText ?? 'Цена',
+      priceText != null,
+      () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
+    );
+
+    final showBtn = FilledButton(
+      style: _blackBtn,
+      onPressed: () => _reload(),
+      child: const Text('Показать объявления'),
+    );
+
+    final typeBtn = OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        minimumSize: const Size.fromHeight(52),
+        side: const BorderSide(color: Colors.black, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      onPressed: () => _thenReload(
+        () => _pickValue(pt.label, pt.options, (v) => _techFilters['property_type'] = v, current: propertyType),
+      ),
+      child: Text(propertyType ?? pt.label),
+    );
+
+    final filterBtn = Material(
+      color: const Color(0xFFF1F1F1),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _openTechFilters,
+        child: const SizedBox(
+          width: 52,
+          height: 52,
+          child: Icon(Icons.tune_rounded),
+        ),
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Column(
         children: [
-          Material(
-            color: const Color(0xFFF1F1F1),
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () => showCityPicker(context).then((_) {
-                if (mounted) _reload();
-              }),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 18),
-                    const SizedBox(width: 4),
-                    Text(
-                      selectedCity.value ?? 'Все города',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                    ),
-                    const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          cityRow,
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F1F1),
-              borderRadius: BorderRadius.circular(16),
+          dealTabs,
+          const SizedBox(height: 8),
+          if (isFlat) ...[
+            _fBox(
+              val('new_or_secondary') ?? nos.label,
+              val('new_or_secondary') != null,
+              () => _thenReload(() => _pickValue(nos.label, nos.options, (v) => _techFilters['new_or_secondary'] = v, current: val('new_or_secondary'))),
             ),
-            child: Row(
+            const SizedBox(height: 8),
+            Row(
               children: [
-                for (final d in fields['deal']!.options)
-                  Expanded(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        setState(() => _techFilters['deal'] = d);
-                        _reload();
-                      },
-                      child: Container(
-                        height: 44,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: d == deal ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          d,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: d == deal ? FontWeight.w700 : FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ),
+                Expanded(
+                  child: _fBox(
+                    val('rooms') ?? rooms.label,
+                    val('rooms') != null,
+                    () => _thenReload(() => _pickValue(rooms.label, rooms.options, (v) => _techFilters['rooms'] = v, current: val('rooms'))),
                   ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: priceBox),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-          _fBox(
-            val('new_or_secondary') ?? nos.label,
-            val('new_or_secondary') != null,
-            () => _thenReload(() => _pickValue(nos.label, nos.options, (v) => _techFilters['new_or_secondary'] = v, current: val('new_or_secondary'))),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _fBox(
-                  val('rooms') ?? rooms.label,
-                  val('rooms') != null,
-                  () => _thenReload(() => _pickValue(rooms.label, rooms.options, (v) => _techFilters['rooms'] = v, current: val('rooms'))),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _fBox(
-                  priceText ?? 'Цена',
-                  priceText != null,
-                  () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  style: _blackBtn,
-                  onPressed: () => _reload(),
-                  child: const Text('Показать объявления'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Material(
-                color: const Color(0xFFF1F1F1),
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: _openTechFilters,
-                  child: const SizedBox(
-                    width: 52,
-                    height: 52,
-                    child: Icon(Icons.tune_rounded),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                minimumSize: const Size.fromHeight(52),
-                side: const BorderSide(color: Colors.black, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () => _thenReload(
-                () => _pickValue(pt.label, pt.options, (v) => _techFilters['property_type'] = v, current: val('property_type')),
-              ),
-              child: Text(val('property_type') ?? pt.label),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: showBtn),
+                const SizedBox(width: 8),
+                filterBtn,
+              ],
             ),
-          ),
+            const SizedBox(height: 8),
+            SizedBox(width: double.infinity, child: typeBtn),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(child: showBtn),
+                const SizedBox(width: 8),
+                Expanded(child: priceBox),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: typeBtn),
+                const SizedBox(width: 8),
+                filterBtn,
+              ],
+            ),
+          ],
         ],
       ),
     );
