@@ -1392,8 +1392,14 @@ class _ListingsScreenState extends State<ListingsScreen> {
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              style: _blackBtn,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                minimumSize: const Size.fromHeight(52),
+                side: const BorderSide(color: Colors.black, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
               onPressed: () => _thenReload(
                 () => _pickValue(pt.label, pt.options, (v) => _techFilters['property_type'] = v, current: val('property_type')),
               ),
