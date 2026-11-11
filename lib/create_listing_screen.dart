@@ -106,9 +106,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _subcategoryId == phoneSubcategoryId;
 
   /// Остальные подкатегории «Электроники» с общим набором характеристик.
-  bool get _isTech =>
-      _categories.any((c) => c['id'] == _categoryId && c['slug'] == phoneCategorySlug) &&
-      isTechSubcategory(_subcategoryId);
+  bool get _isTech => hasTech(_categoryId ?? -1, _subcategoryId);
+
+  /// Есть ли в наборе поля, которые заполняются в этой форме.
+  bool get _techHasForm => techFieldsFor(_categoryId ?? -1, _subcategoryId).any((f) => f.inForm);
 
   /// Ноутбук: категория «Электроника», подкатегория «Ноутбуки».
   bool get _isLaptop =>
@@ -230,7 +231,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _lapOs = d['os'] as String?;
     _lapCondition = d['condition'] as String?;
     _lapSeller = d['seller_type'] as String?;
-    for (final k in techKeys) {
+    for (final k in techAllKeys) {
       _techVals[k] = d[k] as String?;
     }
   }
@@ -412,9 +413,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return m;
   }
 
+  /// Авто: блок «Про автомобиль» плюс характеристики подкатегории.
+  Map<String, dynamic> _autoDetails() => {..._carDetails(), ..._techDetails()};
+
   Map<String, dynamic> _techDetails() {
     final m = <String, dynamic>{};
-    for (final f in techFieldsFor(_subcategoryId ?? -1)) {
+    for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId).where((f) => f.inForm)) {
       final v = _techVals[f.key];
       if (v != null && v.trim().isNotEmpty) m[f.key] = v.trim();
     }
@@ -499,7 +503,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'address': _addressCtrl.text.trim(),
           'lat': _lat,
           'lng': _lng,
-          'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : (_isTech ? _techDetails() : null))),
+          'details': _isAuto ? _autoDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : (_isTech ? _techDetails() : null))),
         }).eq('id', editing['id'] as String);
         if (!mounted) return;
         Navigator.of(context).pop(true);
@@ -519,7 +523,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'address': _addressCtrl.text.trim(),
             'lat': _lat,
             'lng': _lng,
-            'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : (_isTech ? _techDetails() : null))),
+            'details': _isAuto ? _autoDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : (_isTech ? _techDetails() : null))),
             'status': 'moderation',
             'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
           })
@@ -620,7 +624,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
-      for (final f in techFieldsFor(_subcategoryId ?? -1)) ...[
+      for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId).where((f) => f.inForm)) ...[
         const SizedBox(height: 12),
         _pick(f.label, _techVals[f.key] ?? '', f.options, (v) {
           _techVals[f.key] = v.isEmpty ? null : v;
@@ -925,7 +929,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           if (_isAuto) ..._carSection(),
           if (_isPhone) ..._phoneSection(),
           if (_isLaptop) ..._laptopSection(),
-          if (_isTech) ..._techSection(),
+          if (_techHasForm) ..._techSection(),
           if (widget.listing == null) ...[
           const SizedBox(height: 16),
           Text(
