@@ -29,6 +29,24 @@ class ListingCard extends StatelessWidget {
     );
   }
 
+  /// Главные характеристики из details: комнаты, площадь, год, пробег, память.
+  static String _facts(Map<String, dynamic> item) {
+    final d = (item['details'] as Map?) ?? const {};
+    final parts = <String>[];
+    void add(String key, String Function(String v) fmt) {
+      final v = '${d[key] ?? ''}'.trim();
+      if (v.isNotEmpty) parts.add(fmt(v));
+    }
+
+    add('rooms', (v) => v == 'Студия' ? 'Студия' : '$v комн.');
+    add('area', (v) => '$v м²');
+    add('year', (v) => '$v г.');
+    add('mileage_km', (v) => '$v км');
+    add('ram', (v) => 'RAM $v');
+    add('storage', (v) => v);
+    return parts.take(3).join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final photo = photoUrl(item);
@@ -133,6 +151,15 @@ class ListingCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (_facts(item).isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _facts(item),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                    ),
+                  ],
                   if (city != null && city.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(

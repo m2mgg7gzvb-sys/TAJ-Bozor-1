@@ -4,13 +4,16 @@ import 'phone_catalog.dart';
 
 /// Характеристика: ключ в details, подпись и варианты выбора.
 class TechField {
-  const TechField(this.key, this.label, this.options, {this.inForm = true});
+  const TechField(this.key, this.label, this.options, {this.inForm = true, this.range = false});
   final String key;
   final String label;
   final List<String> options;
 
   /// false — поле уже заполняется в форме (блок «Про автомобиль»), здесь только для фильтра.
   final bool inForm;
+
+  /// true — числовое поле: в форме ввод числа, в фильтре диапазон «от / до».
+  final bool range;
 }
 
 /// Набор полей для одной подкатегории («sub:N») или категории без подкатегорий («cat:N»).
@@ -152,6 +155,8 @@ final techSpecs = <String, TechSpec>{
     TechField('deal', 'Сделка', ['Купить', 'В аренду', 'Посуточно']),
     TechField('new_or_secondary', 'Новостройки и вторичка', ['Вторичка', 'Новостройка']),
     TechField('rooms', 'Количество комнат', ['Студия', '1', '2', '3', '4', '5+']),
+    TechField('area', 'Общая площадь, м²', [], range: true),
+    TechField('kitchen_area', 'Площадь кухни, м²', [], range: true),
     TechField('mortgage', 'Можно в ипотеке', ['Да']),
     TechField('profitable', 'Выгодно', ['Да']),
     TechField('verified', 'Проверенные квартиры', ['Данные Росреестра и сроки сдачи ЖК']),
@@ -175,6 +180,7 @@ final techSpecs = <String, TechSpec>{
   'cat:2:Комнаты': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
     TechField('deal', 'Сделка', ['Купить', 'В аренду']),
+    TechField('area', 'Площадь, м²', [], range: true),
     TechField('room_share', 'Тип комнаты', ['Изолированная', 'Смежная']),
     TechField('rooms_count', 'Комнат в квартире', ['1', '2', '3', '4+']),
     TechField('floor_pos', 'Этаж', ['Не первый', 'Не последний', 'Только последний']),
@@ -186,6 +192,8 @@ final techSpecs = <String, TechSpec>{
   'cat:2:Дома, дачи, коттеджи': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
     TechField('deal', 'Сделка', ['Купить', 'В аренду']),
+    TechField('area', 'Площадь дома, м²', [], range: true),
+    TechField('year_built', 'Год постройки', [], range: true),
     TechField('house_kind', 'Тип', ['Дом', 'Дача', 'Коттедж', 'Таунхаус']),
     TechField('material', 'Материал стен', ['Кирпич', 'Газоблок', 'Дерево', 'Панель', 'Монолит', 'Другой']),
     TechField('floors', 'Этажей', ['1', '2', '3', '4+']),
@@ -197,6 +205,7 @@ final techSpecs = <String, TechSpec>{
   'cat:2:Земельные участки': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
     TechField('deal', 'Сделка', ['Купить', 'В аренду']),
+    TechField('area', 'Площадь, сот.', [], range: true),
     TechField('land_purpose', 'Назначение', ['ИЖС', 'ЛПХ', 'Дачное', 'Коммерческое', 'Сельхоз']),
     TechField('communications', 'Коммуникации', ['Газ', 'Электричество', 'Вода', 'Канализация']),
     TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
@@ -214,6 +223,7 @@ final techSpecs = <String, TechSpec>{
   'cat:2:Коммерческая недвижимость': TechSpec([
     TechField('property_type', 'Тип недвижимости', realEstateTypes),
     TechField('deal', 'Сделка', ['Купить', 'В аренду']),
+    TechField('area', 'Площадь, м²', [], range: true),
     TechField('commercial_type', 'Тип', ['Офис', 'Магазин', 'Склад', 'Производство', 'Общепит', 'Свободного назначения']),
     TechField('entrance', 'Отдельный вход', ['Есть', 'Нет']),
     TechField('repair', 'Ремонт', ['С ремонтом', 'Без ремонта']),
