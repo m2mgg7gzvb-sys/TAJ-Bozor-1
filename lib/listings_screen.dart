@@ -241,7 +241,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (lMax != null) query = query.lte('price', lMax);
     }
     if (_isTech) {
-      for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId)) {
+      _pruneTechFilters();
+      for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) {
         final v = _techFilters[f.key];
         if (v != null) query = query.eq('details->>${f.key}', v);
       }
@@ -1127,7 +1128,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   /// Ряд быстрых фильтров для подкатегорий с общим набором характеристик.
   Widget _techChipsRow() {
     final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
-    final fields = techFieldsFor(widget.categoryId ?? -1, _subcatId);
+    final fields = techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type']);
     return SizedBox(
       height: 44,
       child: ListView(
@@ -1159,7 +1160,6 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Фильтры подкатегории на весь экран.
   void _openTechFilters() {
-    final fields = techFieldsFor(widget.categoryId ?? -1, _subcatId);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
@@ -1203,7 +1203,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   ),
                   _fLabel('Цена'),
                   _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
-                  for (final f in fields) ...[
+                  for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) ...[
                     _fLabel(f.label),
                     if (f.options.length <= 4)
                       _fChips(
@@ -1241,6 +1241,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
         ),
       ),
     );
+  }
+
+  /// Убирает фильтры, которых нет в наборе выбранного типа (например, после смены типа недвижимости).
+  void _pruneTechFilters() {
+    final keys = {for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) f.key};
+    _techFilters.removeWhere((k, _) => !keys.contains(k));
   }
 
   /// Сбрасывает фильтры подкатегории с общим набором характеристик.

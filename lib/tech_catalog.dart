@@ -36,6 +36,15 @@ final _autoCommon = [
   TechField('seller_type', 'Продавец', carSellerTypes, inForm: false),
 ];
 
+const realEstateTypes = [
+  'Квартиры',
+  'Комнаты',
+  'Дома, дачи, коттеджи',
+  'Земельные участки',
+  'Гаражи и машиноместа',
+  'Коммерческая недвижимость',
+];
+
 final techSpecs = <String, TechSpec>{
   // ── Электроника ─────────────────────────────────────────────
   'sub:2': TechSpec([
@@ -131,15 +140,15 @@ final techSpecs = <String, TechSpec>{
   ], shared: false),
 
   // ── Категории без подкатегорий ──────────────────────────────
+  // Недвижимость: базовый набор (тип и сделка) и свой набор на каждый тип.
   'cat:2': TechSpec([
-    TechField('property_type', 'Тип недвижимости', [
-      'Квартиры',
-      'Комнаты',
-      'Дома, дачи, коттеджи',
-      'Земельные участки',
-      'Гаражи и машиноместа',
-      'Коммерческая недвижимость',
-    ]),
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
+    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('new_or_secondary', 'Новостройки и вторичка', ['Вторичка', 'Новостройка']),
+    TechField('rooms', 'Количество комнат', ['Студия', '1', '2', '3', '4', '5+']),
+  ], shared: false),
+  'cat:2:Квартиры': TechSpec([
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
     TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
     TechField('new_or_secondary', 'Новостройки и вторичка', ['Вторичка', 'Новостройка']),
     TechField('rooms', 'Количество комнат', ['Студия', '1', '2', '3', '4', '5+']),
@@ -162,6 +171,54 @@ final techSpecs = <String, TechSpec>{
     TechField('house_type', 'Тип дома', ['Кирпичный', 'Панельный', 'Монолитный', 'Блочный', 'Деревянный']),
     TechField('elevator', 'Лифт', ['Пассажирский', 'Грузовой']),
     TechField('with_photo', 'Объявления с фото', ['Да']),
+  ], shared: false),
+  'cat:2:Комнаты': TechSpec([
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
+    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('room_share', 'Тип комнаты', ['Изолированная', 'Смежная']),
+    TechField('rooms_count', 'Комнат в квартире', ['1', '2', '3', '4+']),
+    TechField('floor_pos', 'Этаж', ['Не первый', 'Не последний', 'Только последний']),
+    TechField('bathroom', 'Санузел', ['Совмещённый', 'Раздельный']),
+    TechField('repair', 'Ремонт', ['С ремонтом', 'Без ремонта']),
+    TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
+    TechField('contact', 'Способы связи', ['Звонки', 'Сообщения']),
+  ], shared: false),
+  'cat:2:Дома, дачи, коттеджи': TechSpec([
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
+    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('house_kind', 'Тип', ['Дом', 'Дача', 'Коттедж', 'Таунхаус']),
+    TechField('material', 'Материал стен', ['Кирпич', 'Газоблок', 'Дерево', 'Панель', 'Монолит', 'Другой']),
+    TechField('floors', 'Этажей', ['1', '2', '3', '4+']),
+    TechField('land', 'Участок', ['Есть', 'Нет']),
+    TechField('repair', 'Ремонт', ['С ремонтом', 'Без ремонта']),
+    TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
+    TechField('contact', 'Способы связи', ['Звонки', 'Сообщения']),
+  ], shared: false),
+  'cat:2:Земельные участки': TechSpec([
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
+    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('land_purpose', 'Назначение', ['ИЖС', 'ЛПХ', 'Дачное', 'Коммерческое', 'Сельхоз']),
+    TechField('communications', 'Коммуникации', ['Газ', 'Электричество', 'Вода', 'Канализация']),
+    TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
+    TechField('contact', 'Способы связи', ['Звонки', 'Сообщения']),
+  ], shared: false),
+  'cat:2:Гаражи и машиноместа': TechSpec([
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
+    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('garage_type', 'Тип', ['Гараж', 'Машиноместо', 'Бокс']),
+    TechField('heating', 'Отопление', ['Есть', 'Нет']),
+    TechField('pit', 'Смотровая яма', ['Есть', 'Нет']),
+    TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
+    TechField('contact', 'Способы связи', ['Звонки', 'Сообщения']),
+  ], shared: false),
+  'cat:2:Коммерческая недвижимость': TechSpec([
+    TechField('property_type', 'Тип недвижимости', realEstateTypes),
+    TechField('deal', 'Сделка', ['Купить', 'Снять надолго', 'Посуточно']),
+    TechField('commercial_type', 'Тип', ['Офис', 'Магазин', 'Склад', 'Производство', 'Общепит', 'Свободного назначения']),
+    TechField('entrance', 'Отдельный вход', ['Есть', 'Нет']),
+    TechField('repair', 'Ремонт', ['С ремонтом', 'Без ремонта']),
+    TechField('seller_type', 'Продавцы', ['Частные', 'Застройщики', 'Агентства']),
+    TechField('contact', 'Способы связи', ['Звонки', 'Сообщения']),
   ], shared: false),
   'cat:4': TechSpec([
     TechField('type', 'Тип', ['Мебель', 'Бытовая техника', 'Декор', 'Текстиль', 'Сад и огород', 'Ремонт и строительство', 'Другое']),
@@ -203,15 +260,20 @@ final techAllKeys = <String>{
   for (final f in techSharedFields) f.key,
 };
 
-String techKey(int categoryId, int? subcategoryId) =>
-    subcategoryId != null ? 'sub:$subcategoryId' : 'cat:$categoryId';
+String techKey(int categoryId, int? subcategoryId, [String? propertyType]) {
+  if (subcategoryId != null) return 'sub:$subcategoryId';
+  if (categoryId == 2 && propertyType != null && techSpecs.containsKey('cat:2:$propertyType')) {
+    return 'cat:2:$propertyType';
+  }
+  return 'cat:$categoryId';
+}
 
 /// Есть ли для этой категории/подкатегории свой набор характеристик.
 bool hasTech(int categoryId, int? subcategoryId) => techSpecs.containsKey(techKey(categoryId, subcategoryId));
 
-/// Поля фильтра и формы для категории/подкатегории (с общими, если нужны).
-List<TechField> techFieldsFor(int categoryId, int? subcategoryId) {
-  final spec = techSpecs[techKey(categoryId, subcategoryId)];
+/// Поля фильтра и формы. Для недвижимости набор зависит от выбранного типа.
+List<TechField> techFieldsFor(int categoryId, int? subcategoryId, [String? propertyType]) {
+  final spec = techSpecs[techKey(categoryId, subcategoryId, propertyType)];
   if (spec == null) return const [];
   final extra = spec.shared
       ? techSharedFields.where((s) => spec.fields.every((f) => f.key != s.key))

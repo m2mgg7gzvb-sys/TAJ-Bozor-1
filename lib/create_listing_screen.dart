@@ -109,7 +109,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool get _isTech => hasTech(_categoryId ?? -1, _subcategoryId);
 
   /// Есть ли в наборе поля, которые заполняются в этой форме.
-  bool get _techHasForm => techFieldsFor(_categoryId ?? -1, _subcategoryId).any((f) => f.inForm);
+  bool get _techHasForm => techFieldsFor(_categoryId ?? -1, _subcategoryId, _techVals['property_type']).any((f) => f.inForm);
 
   /// Ноутбук: категория «Электроника», подкатегория «Ноутбуки».
   bool get _isLaptop =>
@@ -418,7 +418,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Map<String, dynamic> _techDetails() {
     final m = <String, dynamic>{};
-    for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId).where((f) => f.inForm)) {
+    for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId, _techVals['property_type']).where((f) => f.inForm)) {
       final v = _techVals[f.key];
       if (v != null && v.trim().isNotEmpty) m[f.key] = v.trim();
     }
@@ -624,7 +624,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
-      for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId).where((f) => f.inForm)) ...[
+      for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId, _techVals['property_type']).where((f) => f.inForm)) ...[
         const SizedBox(height: 12),
         _pick(f.label, _techVals[f.key] ?? '', f.options, (v) {
           _techVals[f.key] = v.isEmpty ? null : v;
