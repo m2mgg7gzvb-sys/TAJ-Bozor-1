@@ -7,6 +7,7 @@ import 'city_store.dart';
 import 'lang_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'phone_catalog.dart';
 import 'search_terms.dart';
 import 'theme.dart';
 
@@ -77,6 +78,17 @@ class _ListingsScreenState extends State<ListingsScreen> {
   /// Подкатегории выбранной категории и выбранная плитка.
   late Future<List<Map<String, dynamic>>> _subcats = _loadSubcats();
   int? _subcatId;
+
+  /// Фильтры Телефонов (цена и цвет берутся из общих контроллеров).
+  String? _pBrand;
+  String? _pMemory;
+  String? _pRam;
+  String? _pSim;
+  String? _pCondition;
+  String? _pSeller;
+
+  /// Открыт ли раздел «Электроника → Телефоны».
+  bool get _isPhones => widget.categoryId == 3 && _subcatId == phoneSubcategoryId;
 
   @override
   void initState() {
@@ -168,6 +180,20 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (_turbo != null) query = query.eq('details->>turbo', _turbo!);
       if (_seller != null) query = query.eq('details->>seller_type', _seller!);
       if (_option != null) query = query.ilike('details->>options', '%$_option%');
+    }
+    if (_isPhones) {
+      if (_pBrand != null) query = query.eq('details->>brand', _pBrand!);
+      if (_pMemory != null) query = query.eq('details->>memory', _pMemory!);
+      if (_pRam != null) query = query.eq('details->>ram', _pRam!);
+      if (_pSim != null) query = query.eq('details->>sim', _pSim!);
+      if (_pCondition != null) query = query.eq('details->>condition', _pCondition!);
+      if (_pSeller != null) query = query.eq('details->>seller_type', _pSeller!);
+      final pColor = _colorCtrl.text.trim();
+      if (pColor.isNotEmpty) query = query.ilike('details->>color', '%$pColor%');
+      final pMin = num.tryParse(_priceMinCtrl.text.trim());
+      if (pMin != null) query = query.gte('price', pMin);
+      final pMax = num.tryParse(_priceMaxCtrl.text.trim());
+      if (pMax != null) query = query.lte('price', pMax);
     }
     final order = switch (_sort) {
       'price_asc' => ('price', true),
@@ -680,6 +706,172 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
   }
 
+  /// Ряд быстрых фильтров для Телефонов.
+  Widget _phoneChipsRow() {
+    final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _chip(
+            _pBrand ?? 'Производитель',
+            active: _pBrand != null,
+            onTap: () => _thenReload(() => _pickValue('Производитель', phoneBrands, (v) => _pBrand = v, current: _pBrand)),
+          ),
+          _chip(
+            _pMemory ?? 'Память',
+            active: _pMemory != null,
+            onTap: () => _thenReload(() => _pickValue('Память', phoneMemory, (v) => _pMemory = v, current: _pMemory)),
+          ),
+          _chip(
+            priceText == null ? 'Цена' : 'Цена: $priceText',
+            active: priceText != null,
+            onTap: () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
+          ),
+          _chip(
+            'Фильтры',
+            active: false,
+            arrow: false,
+            icon: Icons.tune_rounded,
+            onTap: _openPhoneFilters,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Фильтры Телефонов на весь экран.
+  void _openPhoneFilters() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setPage) {
+            void rebuild() => setPage(() {});
+
+            Future<void> pick(Future<void> Function() action) async {
+              await action();
+              rebuild();
+            }
+
+            return Scaffold(
+              backgroundColor: Colors.white,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+                title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
+                centerTitle: true,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      _resetPhoneFilters();
+                      rebuild();
+                    },
+                    child: const Text('Сбросить'),
+                  ),
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                children: [
+                  const Text(
+                    'Телефоны',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24),
+                  ),
+                  _fLabel('Состояние'),
+                  _fChips(
+                    ['Все', ...phoneConditions],
+                    _pCondition ?? 'Все',
+                    (v) {
+                      _pCondition = v == 'Все' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Цена'),
+                  _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
+                  _fLabel('Производитель'),
+                  _fBox(
+                    _pBrand ?? 'Любой',
+                    _pBrand != null,
+                    () => pick(() => _pickValue('Производитель', phoneBrands, (v) => _pBrand = v, current: _pBrand)),
+                  ),
+                  _fLabel('Память'),
+                  _fBox(
+                    _pMemory ?? 'Любая',
+                    _pMemory != null,
+                    () => pick(() => _pickValue('Память', phoneMemory, (v) => _pMemory = v, current: _pMemory)),
+                  ),
+                  _fLabel('Оперативная память'),
+                  _fBox(
+                    _pRam ?? 'Любая',
+                    _pRam != null,
+                    () => pick(() => _pickValue('Оперативная память', phoneRam, (v) => _pRam = v, current: _pRam)),
+                  ),
+                  _fLabel('SIM-карты'),
+                  _fBox(
+                    _pSim ?? 'Любые',
+                    _pSim != null,
+                    () => pick(() => _pickValue('SIM-карты', phoneSims, (v) => _pSim = v, current: _pSim)),
+                  ),
+                  _fLabel('Цвет'),
+                  _fBox(
+                    _colorCtrl.text.isEmpty ? 'Любой' : _colorCtrl.text,
+                    _colorCtrl.text.isNotEmpty,
+                    () => pick(() => _textSheet(title: 'Цвет', ctrl: _colorCtrl)),
+                  ),
+                  _fLabel('Продавец'),
+                  _fChips(
+                    ['Все', ...phoneSellers],
+                    _pSeller ?? 'Все',
+                    (v) {
+                      _pSeller = v == 'Все' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                ],
+              ),
+              bottomNavigationBar: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _reload();
+                    },
+                    child: const Text('Показать объявления'),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Сбрасывает все параметры Телефонов.
+  void _resetPhoneFilters() {
+    setState(() {
+      _pBrand = null;
+      _pMemory = null;
+      _pRam = null;
+      _pSim = null;
+      _pCondition = null;
+      _pSeller = null;
+    });
+    _priceMinCtrl.clear();
+    _priceMaxCtrl.clear();
+    _colorCtrl.clear();
+  }
+
   Widget _sheetTile(String label, String? value, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1168,6 +1360,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
           ),
           _subcatRow(),
           if (widget.carFilter) _carChipsRow(),
+          if (_isPhones) _phoneChipsRow(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
