@@ -157,6 +157,8 @@ final techSpecs = <String, TechSpec>{
     TechField('rooms', 'Количество комнат', ['Студия', '1', '2', '3', '4', '5+']),
     TechField('area', 'Общая площадь, м²', [], range: true),
     TechField('kitchen_area', 'Площадь кухни, м²', [], range: true),
+    TechField('floors_total', 'Этажей в доме', [], range: true),
+    TechField('price_m2', 'Цена за м², TJS', [], range: true, inForm: false),
     TechField('mortgage', 'Можно в ипотеке', ['Да']),
     TechField('profitable', 'Выгодно', ['Да']),
     TechField('verified', 'Проверенные квартиры', ['Данные Росреестра и сроки сдачи ЖК']),

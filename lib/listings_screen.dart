@@ -283,7 +283,17 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (rangeChecks.isNotEmpty) {
         items.retainWhere((row) {
           final d = (row['details'] as Map?) ?? const {};
-          return rangeChecks.every((c) => _inNumRange(d, c.$1, c.$2, c.$3));
+          return rangeChecks.every((c) {
+            if (c.$1 == 'price_m2') {
+              // Цена за м² не хранится: считаем из цены и площади.
+              final area = num.tryParse('${d['area'] ?? ''}'.replaceAll(',', '.').replaceAll(' ', ''));
+              final price = num.tryParse('${row['price'] ?? ''}');
+              if (area == null || area == 0 || price == null) return false;
+              final v = price / area;
+              return (c.$2 == null || v >= c.$2!) && (c.$3 == null || v <= c.$3!);
+            }
+            return _inNumRange(d, c.$1, c.$2, c.$3);
+          });
         });
       }
     }
