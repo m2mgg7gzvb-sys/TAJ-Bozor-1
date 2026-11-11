@@ -8,6 +8,7 @@ import 'car_catalog.dart';
 import 'city_store.dart';
 import 'confirm_delete.dart';
 import 'map_picker.dart';
+import 'phone_catalog.dart';
 import 'theme.dart';
 
 const _bodyTypes = ['Седан', 'Хэтчбек', 'Универсал', 'Кроссовер', 'Внедорожник', 'Купе', 'Кабриолет', 'Минивэн', 'Пикап'];
@@ -71,6 +72,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _clearanceCtrl = TextEditingController();
   final _optionsSel = <String>{};
 
+  // Характеристики телефона (цвет — общий контроллер _colorCtrl)
+  String? _phoneBrand;
+  String? _phoneMemory;
+  String? _phoneRam;
+  String? _phoneSim;
+  String? _phoneCondition;
+  String? _phoneSeller;
+
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
   int? _categoryId;
@@ -86,6 +95,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _subcategoryId == motoSubcategoryId ? motoCatalog : carCatalog;
 
   bool get _isAuto => _categories.any((c) => c['id'] == _categoryId && c['slug'] == 'auto');
+
+  /// Телефон: категория «Электроника», подкатегория «Телефоны».
+  bool get _isPhone =>
+      _categories.any((c) => c['id'] == _categoryId && c['slug'] == phoneCategorySlug) &&
+      _subcategoryId == phoneSubcategoryId;
 
   @override
   void initState() {
@@ -186,6 +200,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _trunkCtrl.text = s('trunk_l');
     _clearanceCtrl.text = s('clearance_mm');
     _optionsSel.addAll(s('options').split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
+    _phoneBrand = d['brand'] as String?;
+    _phoneMemory = d['memory'] as String?;
+    _phoneRam = d['ram'] as String?;
+    _phoneSim = d['sim'] as String?;
+    _phoneCondition = d['condition'] as String?;
+    _phoneSeller = d['seller_type'] as String?;
   }
 
   /// Подкатегории выбранной категории (их может не быть).
@@ -348,6 +368,23 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return m;
   }
 
+  /// Характеристики телефона: пустые поля не сохраняем.
+  Map<String, dynamic> _phoneDetails() {
+    final m = <String, dynamic>{};
+    void put(String key, String? value) {
+      if (value != null && value.trim().isNotEmpty) m[key] = value.trim();
+    }
+
+    put('brand', _phoneBrand);
+    put('memory', _phoneMemory);
+    put('ram', _phoneRam);
+    put('sim', _phoneSim);
+    put('color', _colorCtrl.text);
+    put('condition', _phoneCondition);
+    put('seller_type', _phoneSeller);
+    return m;
+  }
+
   /// Удаление: объявление скрывается (статус «hidden»), данные не теряются.
   Future<void> _delete() async {
     final id = widget.listing!['id'] as String;
@@ -406,7 +443,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'address': _addressCtrl.text.trim(),
           'lat': _lat,
           'lng': _lng,
-          'details': _isAuto ? _carDetails() : null,
+          'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : null),
         }).eq('id', editing['id'] as String);
         if (!mounted) return;
         Navigator.of(context).pop(true);
@@ -426,7 +463,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'address': _addressCtrl.text.trim(),
             'lat': _lat,
             'lng': _lng,
-            'details': _isAuto ? _carDetails() : null,
+            'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : null),
             'status': 'moderation',
             'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
           })
@@ -476,6 +513,45 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     );
     final key = const {'Марка': 'brand', 'Модель': 'model', 'Город': 'city'}[hint];
     return key == null ? dd : _hl(key, dd);
+  }
+
+  /// Блок «Про телефон»: показывается для подкатегории «Телефоны». Все поля необязательные.
+  List<Widget> _phoneSection() {
+    return [
+      const SizedBox(height: 20),
+      const Text('Про телефон', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      const SizedBox(height: 4),
+      const Text(
+        'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
+        style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
+      ),
+      const SizedBox(height: 12),
+      _pick('Производитель', _phoneBrand ?? '', phoneBrands, (v) {
+        _phoneBrand = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Память', _phoneMemory ?? '', phoneMemory, (v) {
+        _phoneMemory = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Оперативная память', _phoneRam ?? '', phoneRam, (v) {
+        _phoneRam = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('SIM-карты', _phoneSim ?? '', phoneSims, (v) {
+        _phoneSim = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _field(_colorCtrl, 'Цвет'),
+      const SizedBox(height: 12),
+      _pick('Состояние', _phoneCondition ?? '', phoneConditions, (v) {
+        _phoneCondition = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Продавец', _phoneSeller ?? '', phoneSellers, (v) {
+        _phoneSeller = v.isEmpty ? null : v;
+      }),
+    ];
   }
 
   /// Блок «Про автомобиль»: показывается, когда выбрана категория «Авто».
@@ -717,6 +793,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             decoration: const InputDecoration(hintText: 'Описание'),
           ),
           if (_isAuto) ..._carSection(),
+          if (_isPhone) ..._phoneSection(),
           if (widget.listing == null) ...[
           const SizedBox(height: 16),
           Text(
