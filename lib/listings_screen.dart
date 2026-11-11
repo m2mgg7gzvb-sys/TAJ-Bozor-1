@@ -7,6 +7,7 @@ import 'city_store.dart';
 import 'lang_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'laptop_catalog.dart';
 import 'phone_catalog.dart';
 import 'search_terms.dart';
 import 'theme.dart';
@@ -89,6 +90,21 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Открыт ли раздел «Электроника → Телефоны».
   bool get _isPhones => widget.categoryId == 3 && _subcatId == phoneSubcategoryId;
+
+  /// Фильтры Ноутбуков.
+  String? _lBrand;
+  String? _lDiagonal;
+  String? _lType;
+  String? _lCpu;
+  String? _lRam;
+  String? _lStorage;
+  String? _lGpu;
+  String? _lOs;
+  String? _lCondition;
+  String? _lSeller;
+
+  /// Открыт ли раздел «Электроника → Ноутбуки».
+  bool get _isLaptops => widget.categoryId == 3 && _subcatId == laptopSubcategoryId;
 
   @override
   void initState() {
@@ -194,6 +210,24 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (pMin != null) query = query.gte('price', pMin);
       final pMax = num.tryParse(_priceMaxCtrl.text.trim());
       if (pMax != null) query = query.lte('price', pMax);
+    }
+    if (_isLaptops) {
+      if (_lBrand != null) query = query.eq('details->>brand', _lBrand!);
+      if (_lDiagonal != null) query = query.eq('details->>diagonal', _lDiagonal!);
+      if (_lType != null) query = query.eq('details->>laptop_type', _lType!);
+      if (_lCpu != null) query = query.eq('details->>cpu', _lCpu!);
+      if (_lRam != null) query = query.eq('details->>ram', _lRam!);
+      if (_lStorage != null) query = query.eq('details->>storage', _lStorage!);
+      if (_lGpu != null) query = query.eq('details->>gpu', _lGpu!);
+      if (_lOs != null) query = query.eq('details->>os', _lOs!);
+      if (_lCondition != null) query = query.eq('details->>condition', _lCondition!);
+      if (_lSeller != null) query = query.eq('details->>seller_type', _lSeller!);
+      final lColor = _colorCtrl.text.trim();
+      if (lColor.isNotEmpty) query = query.ilike('details->>color', '%$lColor%');
+      final lMin = num.tryParse(_priceMinCtrl.text.trim());
+      if (lMin != null) query = query.gte('price', lMin);
+      final lMax = num.tryParse(_priceMaxCtrl.text.trim());
+      if (lMax != null) query = query.lte('price', lMax);
     }
     final order = switch (_sort) {
       'price_asc' => ('price', true),
@@ -872,6 +906,203 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _colorCtrl.clear();
   }
 
+  /// Ряд быстрых фильтров для Ноутбуков.
+  Widget _laptopChipsRow() {
+    final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _chip(
+            _lBrand ?? 'Производитель',
+            active: _lBrand != null,
+            onTap: () => _thenReload(() => _pickValue('Производитель', laptopBrands, (v) => _lBrand = v, current: _lBrand)),
+          ),
+          _chip(
+            _lDiagonal ?? 'Диагональ',
+            active: _lDiagonal != null,
+            onTap: () => _thenReload(() => _pickValue('Диагональ экрана, дюйм', laptopDiagonals, (v) => _lDiagonal = v, current: _lDiagonal)),
+          ),
+          _chip(
+            priceText == null ? 'Цена' : 'Цена: $priceText',
+            active: priceText != null,
+            onTap: () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
+          ),
+          _chip(
+            'Фильтры',
+            active: false,
+            arrow: false,
+            icon: Icons.tune_rounded,
+            onTap: _openLaptopFilters,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Фильтры Ноутбуков на весь экран.
+  void _openLaptopFilters() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setPage) {
+            void rebuild() => setPage(() {});
+
+            Future<void> pick(Future<void> Function() action) async {
+              await action();
+              rebuild();
+            }
+
+            return Scaffold(
+              backgroundColor: Colors.white,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+                title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
+                centerTitle: true,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      _resetLaptopFilters();
+                      rebuild();
+                    },
+                    child: const Text('Сбросить'),
+                  ),
+                ],
+              ),
+              body: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                children: [
+                  const Text(
+                    'Ноутбуки',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24),
+                  ),
+                  _fLabel('Состояние'),
+                  _fChips(
+                    ['Все', ...phoneConditions],
+                    _lCondition ?? 'Все',
+                    (v) {
+                      _lCondition = v == 'Все' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Цена'),
+                  _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
+                  _fLabel('Производитель'),
+                  _fBox(
+                    _lBrand ?? 'Любой',
+                    _lBrand != null,
+                    () => pick(() => _pickValue('Производитель', laptopBrands, (v) => _lBrand = v, current: _lBrand)),
+                  ),
+                  _fLabel('Тип ноутбука'),
+                  _fChips(
+                    ['Все', ...laptopTypes],
+                    _lType ?? 'Все',
+                    (v) {
+                      _lType = v == 'Все' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Диагональ экрана, дюйм'),
+                  _fBox(
+                    _lDiagonal ?? 'Любая',
+                    _lDiagonal != null,
+                    () => pick(() => _pickValue('Диагональ экрана, дюйм', laptopDiagonals, (v) => _lDiagonal = v, current: _lDiagonal)),
+                  ),
+                  _fLabel('Процессор'),
+                  _fBox(
+                    _lCpu ?? 'Любой',
+                    _lCpu != null,
+                    () => pick(() => _pickValue('Процессор', laptopCpus, (v) => _lCpu = v, current: _lCpu)),
+                  ),
+                  _fLabel('Оперативная память'),
+                  _fBox(
+                    _lRam ?? 'Любая',
+                    _lRam != null,
+                    () => pick(() => _pickValue('Оперативная память', laptopRam, (v) => _lRam = v, current: _lRam)),
+                  ),
+                  _fLabel('Накопитель'),
+                  _fBox(
+                    _lStorage ?? 'Любой',
+                    _lStorage != null,
+                    () => pick(() => _pickValue('Накопитель', laptopStorage, (v) => _lStorage = v, current: _lStorage)),
+                  ),
+                  _fLabel('Видеокарта'),
+                  _fBox(
+                    _lGpu ?? 'Любая',
+                    _lGpu != null,
+                    () => pick(() => _pickValue('Видеокарта', laptopGpus, (v) => _lGpu = v, current: _lGpu)),
+                  ),
+                  _fLabel('Операционная система'),
+                  _fBox(
+                    _lOs ?? 'Любая',
+                    _lOs != null,
+                    () => pick(() => _pickValue('Операционная система', laptopOs, (v) => _lOs = v, current: _lOs)),
+                  ),
+                  _fLabel('Цвет'),
+                  _fBox(
+                    _colorCtrl.text.isEmpty ? 'Любой' : _colorCtrl.text,
+                    _colorCtrl.text.isNotEmpty,
+                    () => pick(() => _textSheet(title: 'Цвет', ctrl: _colorCtrl)),
+                  ),
+                  _fLabel('Продавцы'),
+                  _fChips(
+                    ['Все', ...phoneSellers],
+                    _lSeller ?? 'Все',
+                    (v) {
+                      _lSeller = v == 'Все' ? null : v;
+                      rebuild();
+                    },
+                  ),
+                ],
+              ),
+              bottomNavigationBar: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _reload();
+                    },
+                    child: const Text('Показать объявления'),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Сбрасывает все параметры Ноутбуков.
+  void _resetLaptopFilters() {
+    setState(() {
+      _lBrand = null;
+      _lDiagonal = null;
+      _lType = null;
+      _lCpu = null;
+      _lRam = null;
+      _lStorage = null;
+      _lGpu = null;
+      _lOs = null;
+      _lCondition = null;
+      _lSeller = null;
+    });
+    _priceMinCtrl.clear();
+    _priceMaxCtrl.clear();
+    _colorCtrl.clear();
+  }
+
   Widget _sheetTile(String label, String? value, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1361,6 +1592,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
           _subcatRow(),
           if (widget.carFilter) _carChipsRow(),
           if (_isPhones) _phoneChipsRow(),
+          if (_isLaptops) _laptopChipsRow(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {

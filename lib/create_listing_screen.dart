@@ -8,6 +8,7 @@ import 'car_catalog.dart';
 import 'city_store.dart';
 import 'confirm_delete.dart';
 import 'map_picker.dart';
+import 'laptop_catalog.dart';
 import 'phone_catalog.dart';
 import 'theme.dart';
 
@@ -79,6 +80,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String? _phoneSim;
   String? _phoneCondition;
   String? _phoneSeller;
+  String? _lapBrand, _lapDiagonal, _lapType, _lapCpu, _lapRam, _lapStorage, _lapGpu, _lapOs, _lapCondition, _lapSeller;
 
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
@@ -100,6 +102,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool get _isPhone =>
       _categories.any((c) => c['id'] == _categoryId && c['slug'] == phoneCategorySlug) &&
       _subcategoryId == phoneSubcategoryId;
+
+  /// Ноутбук: категория «Электроника», подкатегория «Ноутбуки».
+  bool get _isLaptop =>
+      _categories.any((c) => c['id'] == _categoryId && c['slug'] == phoneCategorySlug) &&
+      _subcategoryId == laptopSubcategoryId;
 
   @override
   void initState() {
@@ -206,6 +213,16 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _phoneSim = d['sim'] as String?;
     _phoneCondition = d['condition'] as String?;
     _phoneSeller = d['seller_type'] as String?;
+    _lapBrand = d['brand'] as String?;
+    _lapDiagonal = d['diagonal'] as String?;
+    _lapType = d['laptop_type'] as String?;
+    _lapCpu = d['cpu'] as String?;
+    _lapRam = d['ram'] as String?;
+    _lapStorage = d['storage'] as String?;
+    _lapGpu = d['gpu'] as String?;
+    _lapOs = d['os'] as String?;
+    _lapCondition = d['condition'] as String?;
+    _lapSeller = d['seller_type'] as String?;
   }
 
   /// Подкатегории выбранной категории (их может не быть).
@@ -385,6 +402,26 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return m;
   }
 
+  Map<String, dynamic> _laptopDetails() {
+    final m = <String, dynamic>{};
+    void put(String key, String? value) {
+      if (value != null && value.trim().isNotEmpty) m[key] = value.trim();
+    }
+
+    put('brand', _lapBrand);
+    put('diagonal', _lapDiagonal);
+    put('laptop_type', _lapType);
+    put('cpu', _lapCpu);
+    put('ram', _lapRam);
+    put('storage', _lapStorage);
+    put('gpu', _lapGpu);
+    put('os', _lapOs);
+    put('color', _colorCtrl.text);
+    put('condition', _lapCondition);
+    put('seller_type', _lapSeller);
+    return m;
+  }
+
   /// Удаление: объявление скрывается (статус «hidden»), данные не теряются.
   Future<void> _delete() async {
     final id = widget.listing!['id'] as String;
@@ -443,7 +480,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'address': _addressCtrl.text.trim(),
           'lat': _lat,
           'lng': _lng,
-          'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : null),
+          'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : null)),
         }).eq('id', editing['id'] as String);
         if (!mounted) return;
         Navigator.of(context).pop(true);
@@ -463,7 +500,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'address': _addressCtrl.text.trim(),
             'lat': _lat,
             'lng': _lng,
-            'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : null),
+            'details': _isAuto ? _carDetails() : (_isPhone ? _phoneDetails() : (_isLaptop ? _laptopDetails() : null)),
             'status': 'moderation',
             'expires_at': DateTime.now().toUtc().add(Duration(days: _days)).toIso8601String(),
           })
@@ -550,6 +587,61 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 12),
       _pick('Продавец', _phoneSeller ?? '', phoneSellers, (v) {
         _phoneSeller = v.isEmpty ? null : v;
+      }),
+    ];
+  }
+
+  /// Блок «Про ноутбук»: показывается, когда выбрана подкатегория «Ноутбуки».
+  List<Widget> _laptopSection() {
+    return [
+      const SizedBox(height: 20),
+      const Text('Про ноутбук', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      const SizedBox(height: 4),
+      const Text(
+        'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
+        style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
+      ),
+      const SizedBox(height: 12),
+      _pick('Производитель', _lapBrand ?? '', laptopBrands, (v) {
+        _lapBrand = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Диагональ экрана, дюйм', _lapDiagonal ?? '', laptopDiagonals, (v) {
+        _lapDiagonal = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Тип ноутбука', _lapType ?? '', laptopTypes, (v) {
+        _lapType = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Процессор', _lapCpu ?? '', laptopCpus, (v) {
+        _lapCpu = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Оперативная память', _lapRam ?? '', laptopRam, (v) {
+        _lapRam = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Накопитель', _lapStorage ?? '', laptopStorage, (v) {
+        _lapStorage = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Видеокарта', _lapGpu ?? '', laptopGpus, (v) {
+        _lapGpu = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Операционная система', _lapOs ?? '', laptopOs, (v) {
+        _lapOs = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _field(_colorCtrl, 'Цвет'),
+      const SizedBox(height: 12),
+      _pick('Состояние', _lapCondition ?? '', phoneConditions, (v) {
+        _lapCondition = v.isEmpty ? null : v;
+      }),
+      const SizedBox(height: 12),
+      _pick('Продавец', _lapSeller ?? '', phoneSellers, (v) {
+        _lapSeller = v.isEmpty ? null : v;
       }),
     ];
   }
@@ -794,6 +886,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           ),
           if (_isAuto) ..._carSection(),
           if (_isPhone) ..._phoneSection(),
+          if (_isLaptop) ..._laptopSection(),
           if (widget.listing == null) ...[
           const SizedBox(height: 16),
           Text(
