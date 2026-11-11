@@ -121,6 +121,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     super.initState();
     _searchCtrl.text = widget.initialQuery ?? '';
     _subcatId = widget.subcategoryId;
+    if (widget.categoryId == 2 && _subcatId == null) _techFilters['deal'] = 'Купить';
     _future = _load();
     selectedCity.addListener(_reload);
   }
@@ -1244,43 +1245,162 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Сбрасывает фильтры подкатегории с общим набором характеристик.
   void _resetTechFilters() {
-    setState(() => _techFilters.clear());
+    setState(() {
+      _techFilters.clear();
+      if (_isRealEstateTop) _techFilters['deal'] = 'Купить';
+    });
     _priceMinCtrl.clear();
     _priceMaxCtrl.clear();
   }
 
-  /// Плитка «Тип недвижимости» внизу блока фильтров раздела «Недвижимость» (как на эталоне).
-  Widget _realEstateTiles() {
-    final pt = techFieldsFor(2, null).firstWhere((f) => f.key == 'property_type');
-    final value = _techFilters['property_type'];
+  /// Верхний блок раздела «Недвижимость» (как на эталоне): город, сделка, поля, кнопки.
+  bool get _isRealEstateTop => widget.categoryId == 2 && _subcatId == null;
+
+  ButtonStyle get _blackBtn => FilledButton.styleFrom(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      );
+
+  Widget _realEstateBlock() {
+    final fields = {for (final f in techFieldsFor(2, null)) f.key: f};
+    String? val(String k) => _techFilters[k];
+    final deal = val('deal') ?? 'Купить';
+    final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
+    final pt = fields['property_type']!;
+    final nos = fields['new_or_secondary']!;
+    final rooms = fields['rooms']!;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: InkWell(
-        onTap: () => _thenReload(
-          () => _pickValue(pt.label, pt.options, (v) => _techFilters['property_type'] = v, current: value),
-        ),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 96,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Column(
+        children: [
+          Material(
             color: const Color(0xFFF1F1F1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => showCityPicker(context).then((_) {
+                if (mounted) _reload();
+              }),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on_outlined, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      selectedCity.value ?? 'Все города',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    ),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+                  ],
+                ),
+              ),
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F1F1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                for (final d in fields['deal']!.options)
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        setState(() => _techFilters['deal'] = d);
+                        _reload();
+                      },
+                      child: Container(
+                        height: 44,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: d == deal ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          d,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: d == deal ? FontWeight.w700 : FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _fBox(
+            val('new_or_secondary') ?? nos.label,
+            val('new_or_secondary') != null,
+            () => _thenReload(() => _pickValue(nos.label, nos.options, (v) => _techFilters['new_or_secondary'] = v, current: val('new_or_secondary'))),
+          ),
+          const SizedBox(height: 8),
+          Row(
             children: [
-              const Icon(Icons.home_rounded, size: 32),
-              const Spacer(),
-              Text(
-                value ?? pt.label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              Expanded(
+                child: _fBox(
+                  val('rooms') ?? rooms.label,
+                  val('rooms') != null,
+                  () => _thenReload(() => _pickValue(rooms.label, rooms.options, (v) => _techFilters['rooms'] = v, current: val('rooms'))),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _fBox(
+                  priceText ?? 'Цена',
+                  priceText != null,
+                  () => _thenReload(() => _rangeSheet(title: 'Цена', from: _priceMinCtrl, to: _priceMaxCtrl)),
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  style: _blackBtn,
+                  onPressed: () => _reload(),
+                  child: const Text('Показать объявления'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Material(
+                color: const Color(0xFFF1F1F1),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: _openTechFilters,
+                  child: const SizedBox(
+                    width: 52,
+                    height: 52,
+                    child: Icon(Icons.tune_rounded),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: _blackBtn,
+              onPressed: () => _thenReload(
+                () => _pickValue(pt.label, pt.options, (v) => _techFilters['property_type'] = v, current: val('property_type')),
+              ),
+              child: Text(val('property_type') ?? pt.label),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1775,8 +1895,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
           if (_carMode) _carChipsRow(),
           if (_isPhones) _phoneChipsRow(),
           if (_isLaptops) _laptopChipsRow(),
-          if (_isTech) _techChipsRow(),
-          if (widget.categoryId == 2 && _subcatId == null) _realEstateTiles(),
+          if (_isTech && !_isRealEstateTop) _techChipsRow(),
+          if (_isRealEstateTop) _realEstateBlock(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
