@@ -1249,6 +1249,42 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _priceMaxCtrl.clear();
   }
 
+  /// Плитка «Тип недвижимости» внизу блока фильтров раздела «Недвижимость» (как на эталоне).
+  Widget _realEstateTiles() {
+    final pt = techFieldsFor(2, null).firstWhere((f) => f.key == 'property_type');
+    final value = _techFilters['property_type'];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: InkWell(
+        onTap: () => _thenReload(
+          () => _pickValue(pt.label, pt.options, (v) => _techFilters['property_type'] = v, current: value),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 96,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F1F1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.home_rounded, size: 32),
+              const Spacer(),
+              Text(
+                value ?? pt.label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _sheetTile(String label, String? value, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1740,6 +1776,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
           if (_isPhones) _phoneChipsRow(),
           if (_isLaptops) _laptopChipsRow(),
           if (_isTech) _techChipsRow(),
+          if (widget.categoryId == 2 && _subcatId == null) _realEstateTiles(),
           FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
               builder: (context, snapshot) {
