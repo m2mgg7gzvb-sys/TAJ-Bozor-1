@@ -1205,7 +1205,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
                   for (final f in fields) ...[
                     _fLabel(f.label),
-                    if (f.key == 'condition' || f.key == 'seller_type')
+                    if (f.options.length <= 4)
                       _fChips(
                         ['Все', ...f.options],
                         _techFilters[f.key] ?? 'Все',
