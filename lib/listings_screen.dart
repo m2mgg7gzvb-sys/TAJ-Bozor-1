@@ -111,7 +111,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
   final _techFilters = <String, String?>{};
 
   /// Открыта ли одна из подкатегорий с общим набором характеристик.
-  bool get _isTech => widget.categoryId == 3 && isTechSubcategory(_subcatId);
+  bool get _isTech => hasTech(widget.categoryId ?? -1, _subcatId);
+
+  /// Старый фильтр авто (марка, модель и т.д.) — только там, где нет своего набора.
+  bool get _carMode => widget.carFilter && !_isTech;
 
   @override
   void initState() {
@@ -177,7 +180,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       }
       query = query.inFilter('id', ids);
     }
-    if (widget.carFilter) {
+    if (_carMode) {
       if (_brand != null) query = query.eq('details->>brand', _brand!);
       if (_model != null) query = query.eq('details->>model', _model!);
       if (_generation != null) query = query.eq('details->>generation', _generation!);
@@ -237,7 +240,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (lMax != null) query = query.lte('price', lMax);
     }
     if (_isTech) {
-      for (final f in techFieldsFor(_subcatId!)) {
+      for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId)) {
         final v = _techFilters[f.key];
         if (v != null) query = query.eq('details->>${f.key}', v);
       }
@@ -254,7 +257,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     };
     final rows = await query.order(order.$1, ascending: order.$2).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
-    if (widget.carFilter) {
+    if (_carMode) {
       // Пробег и объём хранятся как текст, поэтому диапазон проверяем здесь.
       final mMin = num.tryParse(_mileageMinCtrl.text.trim());
       final mMax = num.tryParse(_mileageMaxCtrl.text.trim());
@@ -274,7 +277,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         });
       }
     }
-    if (widget.carFilter) {
+    if (_carMode) {
       final checks = <(String, num?, num?)>[];
       for (final e in _rangeCtrls.entries) {
         final lo = num.tryParse(e.value.$1.text.trim().replaceAll(',', '.'));
@@ -1123,7 +1126,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   /// Ряд быстрых фильтров для подкатегорий с общим набором характеристик.
   Widget _techChipsRow() {
     final priceText = _rangeText(_priceMinCtrl, _priceMaxCtrl);
-    final fields = techFieldsFor(_subcatId ?? -1);
+    final fields = techFieldsFor(widget.categoryId ?? -1, _subcatId);
     return SizedBox(
       height: 44,
       child: ListView(
@@ -1155,7 +1158,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Фильтры подкатегории на весь экран.
   void _openTechFilters() {
-    final fields = techFieldsFor(_subcatId ?? -1);
+    final fields = techFieldsFor(widget.categoryId ?? -1, _subcatId);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
@@ -1733,7 +1736,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             ),
           ),
           _subcatRow(),
-          if (widget.carFilter) _carChipsRow(),
+          if (_carMode) _carChipsRow(),
           if (_isPhones) _phoneChipsRow(),
           if (_isLaptops) _laptopChipsRow(),
           if (_isTech) _techChipsRow(),
