@@ -83,6 +83,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String? _phoneSeller;
   String? _lapBrand, _lapDiagonal, _lapType, _lapCpu, _lapRam, _lapStorage, _lapGpu, _lapOs, _lapCondition, _lapSeller;
   final _techVals = <String, String?>{};
+  final _techNumCtrls = <String, TextEditingController>{};
+
+  TextEditingController _techNumCtrl(String k) => _techNumCtrls.putIfAbsent(k, () => TextEditingController());
 
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
@@ -144,6 +147,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   @override
   void dispose() {
+    for (final c in _techNumCtrls.values) {
+      c.dispose();
+    }
     for (final c in [
       _titleCtrl,
       _descCtrl,
@@ -233,6 +239,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _lapSeller = d['seller_type'] as String?;
     for (final k in techAllKeys) {
       _techVals[k] = d[k] as String?;
+      _techNumCtrl(k).text = '${d[k] ?? ''}';
     }
   }
 
@@ -419,7 +426,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   Map<String, dynamic> _techDetails() {
     final m = <String, dynamic>{};
     for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId, _techVals['property_type']).where((f) => f.inForm)) {
-      final v = _techVals[f.key];
+      final v = f.range ? _techNumCtrl(f.key).text : _techVals[f.key];
       if (v != null && v.trim().isNotEmpty) m[f.key] = v.trim();
     }
     return m;
@@ -626,9 +633,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       ),
       for (final f in techFieldsFor(_categoryId ?? -1, _subcategoryId, _techVals['property_type']).where((f) => f.inForm)) ...[
         const SizedBox(height: 12),
-        _pick(f.label, _techVals[f.key] ?? '', f.options, (v) {
-          _techVals[f.key] = v.isEmpty ? null : v;
-        }),
+        if (f.range)
+          _field(_techNumCtrl(f.key), f.label, type: TextInputType.number)
+        else
+          _pick(f.label, _techVals[f.key] ?? '', f.options, (v) {
+            _techVals[f.key] = v.isEmpty ? null : v;
+          }),
       ],
     ];
   }

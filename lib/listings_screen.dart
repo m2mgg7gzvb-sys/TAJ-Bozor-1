@@ -109,6 +109,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
   /// Фильтры остальных подкатегорий «Электроники» (ключ поля → выбранное значение).
   final _techFilters = <String, String?>{};
+  final _techWordsCtrl = TextEditingController();
+  final _techRangeCtrls = <String, (TextEditingController, TextEditingController)>{};
+  (TextEditingController, TextEditingController) _techRange(String key) =>
+      _techRangeCtrls.putIfAbsent(key, () => (TextEditingController(), TextEditingController()));
 
   /// Открыта ли одна из подкатегорий с общим набором характеристик.
   bool get _isTech => hasTech(widget.categoryId ?? -1, _subcatId);
@@ -130,6 +134,11 @@ class _ListingsScreenState extends State<ListingsScreen> {
   void dispose() {
     selectedCity.removeListener(_reload);
     _searchCtrl.dispose();
+    _techWordsCtrl.dispose();
+    for (final r in _techRangeCtrls.values) {
+      r.$1.dispose();
+      r.$2.dispose();
+    }
     _priceMinCtrl.dispose();
     _priceMaxCtrl.dispose();
     _yearMinCtrl.dispose();
@@ -250,6 +259,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (tMin != null) query = query.gte('price', tMin);
       final tMax = num.tryParse(_priceMaxCtrl.text.trim());
       if (tMax != null) query = query.lte('price', tMax);
+      final words = _techWordsCtrl.text.trim();
+      if (words.isNotEmpty) query = query.ilike('description', '%$words%');
     }
     final order = switch (_sort) {
       'price_asc' => ('price', true),
@@ -259,6 +270,23 @@ class _ListingsScreenState extends State<ListingsScreen> {
     };
     final rows = await query.order(order.$1, ascending: order.$2).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
+    if (_isTech) {
+      final rangeChecks = <(String, num?, num?)>[];
+      for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) {
+        if (!f.range) continue;
+        final c = _techRangeCtrls[f.key];
+        if (c == null) continue;
+        final lo = num.tryParse(c.$1.text.trim().replaceAll(',', '.'));
+        final hi = num.tryParse(c.$2.text.trim().replaceAll(',', '.'));
+        if (lo != null || hi != null) rangeChecks.add((f.key, lo, hi));
+      }
+      if (rangeChecks.isNotEmpty) {
+        items.retainWhere((row) {
+          final d = (row['details'] as Map?) ?? const {};
+          return rangeChecks.every((c) => _inNumRange(d, c.$1, c.$2, c.$3));
+        });
+      }
+    }
     if (_carMode) {
       // Пробег и объём хранятся как текст, поэтому диапазон проверяем здесь.
       final mMin = num.tryParse(_mileageMinCtrl.text.trim());
@@ -1205,7 +1233,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fRange(_priceMinCtrl, _priceMaxCtrl, 'От', 'до'),
                   for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) ...[
                     _fLabel(f.label),
-                    if (f.options.length <= 4)
+                    if (f.range)
+                      _fRange(_techRange(f.key).$1, _techRange(f.key).$2, 'От', 'до')
+                    else if (f.options.length <= 4)
                       _fChips(
                         ['Все', ...f.options],
                         _techFilters[f.key] ?? 'Все',
@@ -1221,6 +1251,28 @@ class _ListingsScreenState extends State<ListingsScreen> {
                         () => pick(() => _pickValue(f.label, f.options, (v) => _techFilters[f.key] = v, current: _techFilters[f.key])),
                       ),
                   ],
+                  _fLabel('Сортировка'),
+                  _fChips(
+                    const ['По умолчанию', 'Дешевле', 'Дороже'],
+                    _sort == 'price_asc' ? 'Дешевле' : (_sort == 'price_desc' ? 'Дороже' : 'По умолчанию'),
+                    (v) {
+                      _sort = v == 'Дешевле' ? 'price_asc' : (v == 'Дороже' ? 'price_desc' : 'default');
+                      rebuild();
+                    },
+                  ),
+                  _fLabel('Слова в описании'),
+                  TextField(
+                    controller: _techWordsCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Что-то важное для вас',
+                      filled: true,
+                      fillColor: const Color(0xFFF1F1F1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               bottomNavigationBar: SafeArea(
@@ -1254,9 +1306,15 @@ class _ListingsScreenState extends State<ListingsScreen> {
     setState(() {
       _techFilters.clear();
       if (_isRealEstateTop) _techFilters['deal'] = 'Купить';
+      _sort = 'default';
     });
     _priceMinCtrl.clear();
     _priceMaxCtrl.clear();
+    _techWordsCtrl.clear();
+    for (final r in _techRangeCtrls.values) {
+      r.$1.clear();
+      r.$2.clear();
+    }
   }
 
   /// Верхний блок раздела «Недвижимость» (как на эталоне): город, сделка, поля, кнопки.
