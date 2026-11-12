@@ -5,8 +5,10 @@ import 'favorites_store.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'listings_screen.dart';
+import 'saved_searches_store.dart';
 
-/// Вкладка «Избранное»: объявления, которые пользователь сохранил.
+/// Вкладка «Избранное»: сохранённые объявления и сохранённые поиски.
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -16,11 +18,13 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   late Future<List<Map<String, dynamic>>> _future;
+  int _tab = 0; // 0 — объявления, 1 — сохранённые поиски
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+    SavedSearchesStore.load();
     FavoritesStore.ids.addListener(_onChanged);
   }
 
@@ -46,6 +50,70 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return List<Map<String, dynamic>>.from(rows);
   }
 
+  Widget _listings() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: FilledButton(
+              onPressed: () => setState(() => _future = _load()),
+              child: const Text('Повторить'),
+            ),
+          );
+        }
+        final items = snapshot.data ?? [];
+        if (items.isEmpty) {
+          return const Center(child: Text('В избранном пока пусто'));
+        }
+        return GridView.count(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          crossAxisCount: 2,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.66,
+          children: [for (final item in items) ListingCard(item: item)],
+        );
+      },
+    );
+  }
+
+  Widget _savedSearches() {
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: SavedSearchesStore.queries,
+      builder: (context, queries, _) {
+        if (queries.isEmpty) {
+          return const Center(
+            child: Text('Звёздочкой в поиске можно сохранить запрос'),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.only(bottom: 24),
+          itemCount: queries.length,
+          separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
+          itemBuilder: (context, i) {
+            final q = queries[i];
+            return ListTile(
+              leading: const Icon(Icons.saved_search_rounded),
+              title: Text(q),
+              trailing: IconButton(
+                tooltip: 'Удалить из сохранённых',
+                icon: const Icon(Icons.star_rounded, color: Color(0xFFF5A623)),
+                onPressed: () => SavedSearchesStore.toggle(q),
+              ),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ListingsScreen(initialQuery: q, title: q)),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loggedIn = Supabase.instance.client.auth.currentSession != null;
@@ -57,33 +125,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               title: 'Войдите, чтобы открыть избранное',
               text: 'Сохраняйте понравившиеся объявления и возвращайтесь к ним в любой момент.',
             )
-          : FutureBuilder<List<Map<String, dynamic>>>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                    child: FilledButton(
-                      onPressed: () => setState(() => _future = _load()),
-                      child: const Text('Повторить'),
-                    ),
-                  );
-                }
-                final items = snapshot.data ?? [];
-                if (items.isEmpty) {
-                  return const Center(child: Text('В избранном пока пусто'));
-                }
-                return GridView.count(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.66,
-                  children: [for (final item in items) ListingCard(item: item)],
-                );
-              },
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: SegmentedButton<int>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(value: 0, label: Text('Объявления')),
+                      ButtonSegment(value: 1, label: Text('Сохранённые поиски')),
+                    ],
+                    selected: {_tab},
+                    onSelectionChanged: (s) => setState(() => _tab = s.first),
+                  ),
+                ),
+                Expanded(child: _tab == 0 ? _listings() : _savedSearches()),
+              ],
             ),
     );
   }

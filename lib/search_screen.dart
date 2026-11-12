@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'listings_screen.dart';
+import 'saved_searches_store.dart';
 import 'theme.dart';
 
 const _historyKey = 'search_history';
@@ -22,6 +23,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _loadHistory();
+    SavedSearchesStore.load();
   }
 
   @override
@@ -118,18 +120,29 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             Expanded(
-              child: ListView.separated(
-                itemCount: _history.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
-                itemBuilder: (_, i) {
-                  final q = _history[i];
-                  return ListTile(
-                    leading: const Icon(Icons.history_rounded),
-                    title: Text(q),
-                    trailing: const Icon(Icons.north_west_rounded, size: 18),
-                    onTap: () => _search(q),
-                  );
-                },
+              child: ValueListenableBuilder<List<String>>(
+                valueListenable: SavedSearchesStore.queries,
+                builder: (context, saved, _) => ListView.separated(
+                  itemCount: _history.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
+                  itemBuilder: (_, i) {
+                    final q = _history[i];
+                    final isSaved = saved.contains(q);
+                    return ListTile(
+                      leading: const Icon(Icons.history_rounded),
+                      title: Text(q),
+                      trailing: IconButton(
+                        tooltip: isSaved ? 'Убрать из сохранённых' : 'Сохранить поиск',
+                        icon: Icon(
+                          isSaved ? Icons.star_rounded : Icons.star_outline_rounded,
+                          color: isSaved ? const Color(0xFFF5A623) : AppColors.muted,
+                        ),
+                        onPressed: () => SavedSearchesStore.toggle(q),
+                      ),
+                      onTap: () => _search(q),
+                    );
+                  },
+                ),
               ),
             ),
           ],
