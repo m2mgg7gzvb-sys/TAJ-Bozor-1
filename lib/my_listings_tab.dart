@@ -157,16 +157,37 @@ class _MyListingsTabState extends State<MyListingsTab> {
     }
     return Scaffold(
       appBar: AppBar(title: const Text('Объявления')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 54,
             child: FilledButton.icon(
               onPressed: _create,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Подать объявление'),
+              label: const Text(
+                'Подать объявление',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              style: FilledButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
           ),
+        ),
+      ),
+      body: Column(
+        children: [
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _future,
@@ -181,10 +202,26 @@ class _MyListingsTabState extends State<MyListingsTab> {
                 }
                 final items = snapshot.data ?? [];
                 if (items.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Вы ещё не публиковали объявления',
-                      style: TextStyle(color: AppColors.muted),
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.post_add_rounded, size: 64, color: AppColors.muted),
+                          SizedBox(height: 16),
+                          Text(
+                            'Пока нет объявлений',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Опубликуйте первое объявление — это займёт пару минут',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.muted),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
