@@ -334,21 +334,52 @@ class _ListingsScreenState extends State<ListingsScreen> {
       }
     }
     if (_sort == 'default') {
-      // Выгодные, но свежие: сначала новее по году, при равном году — дешевле, затем меньший пробег.
+      // Выгодные, но свежие. Сравниваем только объявления одной марки и модели:
+      // внутри группы цена, пробег и год нормируются от минимума до максимума,
+      // итоговый балл — среднее (0 — лучший). Чем меньше балл, тем выше в списке.
       Map<String, dynamic> det(Map<String, dynamic> row) => (row['details'] as Map?)?.cast<String, dynamic>() ?? const {};
-      double yearOf(Map<String, dynamic> row) =>
-          num.tryParse('${det(row)['year'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? 0;
-      double priceOf(Map<String, dynamic> row) =>
-          num.tryParse('${row['price'] ?? ''}')?.toDouble() ?? double.infinity;
-      double kmOf(Map<String, dynamic> row) =>
-          num.tryParse('${det(row)['mileage_km'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? double.infinity;
+      double? priceOf(Map<String, dynamic> row) => num.tryParse('${row['price'] ?? ''}')?.toDouble();
+      double? kmOf(Map<String, dynamic> row) =>
+          num.tryParse('${det(row)['mileage_km'] ?? ''}'.replaceAll(' ', ''))?.toDouble();
+      double? yearOf(Map<String, dynamic> row) =>
+          num.tryParse('${det(row)['year'] ?? ''}'.replaceAll(' ', ''))?.toDouble();
 
-      items.sort((a, b) {
-        final byYear = yearOf(b).compareTo(yearOf(a));
-        if (byYear != 0) return byYear;
-        final byPrice = priceOf(a).compareTo(priceOf(b));
-        return byPrice != 0 ? byPrice : kmOf(a).compareTo(kmOf(b));
-      });
+      final groups = <String, List<Map<String, dynamic>>>{};
+      for (final row in items) {
+        final d = det(row);
+        final key = '${d['brand'] ?? ''}|${d['model'] ?? ''}'.trim().toLowerCase();
+        groups.putIfAbsent(key, () => []).add(row);
+      }
+
+      final scored = <(double, Map<String, dynamic>)>[];
+      for (final group in groups.values) {
+        (double, double) range(double? Function(Map<String, dynamic>) f) {
+          final vals = [for (final r in group) if (f(r) != null) f(r)!];
+          if (vals.isEmpty) return (0, 0);
+          return (vals.reduce((a, b) => a < b ? a : b), vals.reduce((a, b) => a > b ? a : b));
+        }
+
+        // 0 — лучшее значение в группе, 1 — худшее или нет данных.
+        double norm(double? v, (double, double) r, {bool higherBetter = false}) {
+          if (v == null) return 1;
+          final (lo, hi) = r;
+          if (hi == lo) return 0;
+          final t = (v - lo) / (hi - lo);
+          return higherBetter ? 1 - t : t;
+        }
+
+        final p = range(priceOf);
+        final k = range(kmOf);
+        final y = range(yearOf);
+        for (final r in group) {
+          final s = (norm(priceOf(r), p) + norm(kmOf(r), k) + norm(yearOf(r), y, higherBetter: true)) / 3;
+          scored.add((s, r));
+        }
+      }
+      scored.sort((a, b) => a.$1.compareTo(b.$1));
+      items
+        ..clear()
+        ..addAll(scored.map((e) => e.$2));
     }
     if (_sort == 'mileage') {
       // Пробег хранится текстом, поэтому сортируем здесь: без пробега в конце.
