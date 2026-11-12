@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'compare_screen.dart';
+import 'fallback_photo.dart';
 import 'favorites_store.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listings_screen.dart';
 import 'saved_searches_store.dart';
+import 'theme.dart';
 
 /// Вкладка «Избранное»: сохранённые объявления и сохранённые поиски.
 class FavoritesScreen extends StatefulWidget {
@@ -17,8 +20,13 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  static const _maxCompare = 3;
+
   late Future<List<Map<String, dynamic>>> _future;
+  List<Map<String, dynamic>> _loaded = [];
   int _tab = 0; // 0 — объявления, 1 — сохранённые поиски
+  bool _compareMode = false;
+  final Set<String> _picked = {};
 
   @override
   void initState() {
@@ -47,7 +55,33 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         .select(listingSelect)
         .inFilter('id', ids)
         .eq('status', 'active');
-    return List<Map<String, dynamic>>.from(rows);
+    final items = List<Map<String, dynamic>>.from(rows);
+    _loaded = items;
+    return items;
+  }
+
+  void _toggleCompare() {
+    setState(() {
+      _compareMode = !_compareMode;
+      _picked.clear();
+    });
+  }
+
+  void _togglePick(String id) {
+    setState(() {
+      if (_picked.contains(id)) {
+        _picked.remove(id);
+      } else if (_picked.length < _maxCompare) {
+        _picked.add(id);
+      }
+    });
+  }
+
+  void _openCompare() {
+    final chosen = _loaded.where((it) => _picked.contains(it['id'] as String)).toList();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => CompareScreen(items: chosen)),
+    );
   }
 
   Widget _listings() {
@@ -69,6 +103,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         if (items.isEmpty) {
           return const Center(child: Text('В избранном пока пусто'));
         }
+        if (_compareMode) return _selectList(items);
         return GridView.count(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           crossAxisCount: 2,
@@ -76,6 +111,49 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           crossAxisSpacing: 8,
           childAspectRatio: 0.66,
           children: [for (final item in items) ListingCard(item: item)],
+        );
+      },
+    );
+  }
+
+  /// Режим сравнения: список с выбором до трёх объявлений.
+  Widget _selectList(List<Map<String, dynamic>> items) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, i) {
+        final it = items[i];
+        final id = it['id'] as String;
+        final on = _picked.contains(id);
+        final photo = photoUrl(it);
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(vertical: 4),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: photo == null
+                  ? FallbackPhoto(item: it)
+                  : Image.network(
+                      photo,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => FallbackPhoto(item: it),
+                    ),
+            ),
+          ),
+          title: Text(
+            it['title'] as String? ?? '',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(priceText(it)),
+          trailing: Icon(
+            on ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            color: on ? AppColors.primary : AppColors.muted,
+          ),
+          onTap: () => _togglePick(id),
         );
       },
     );
@@ -126,8 +204,36 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final loggedIn = Supabase.instance.client.auth.currentSession != null;
+    final showCompare = loggedIn && _tab == 0;
     return Scaffold(
-      appBar: AppBar(title: const Text('Избранное')),
+      appBar: AppBar(
+        title: const Text('Избранное'),
+        actions: [
+          if (showCompare)
+            TextButton(
+              onPressed: _toggleCompare,
+              child: Text(_compareMode ? 'Отмена' : 'Сравнить'),
+            ),
+        ],
+      ),
+      bottomNavigationBar: _compareMode && showCompare
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: SizedBox(
+                  height: 54,
+                  child: FilledButton(
+                    onPressed: _picked.length >= 2 ? _openCompare : null,
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    child: Text('Сравнить (${_picked.length} из $_maxCompare)'),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: !loggedIn
           ? const GuestPrompt(
               icon: Icons.favorite_rounded,

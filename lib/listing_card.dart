@@ -47,6 +47,22 @@ class ListingCard extends StatelessWidget {
     return parts.take(3).join(' · ');
   }
 
+  /// Опубликовано за последние сутки.
+  static bool _isNew(Map<String, dynamic> item) {
+    final created = DateTime.tryParse('${item['created_at'] ?? ''}');
+    if (created == null) return false;
+    return DateTime.now().toUtc().difference(created.toUtc()) < const Duration(hours: 24);
+  }
+
+  static Widget _badge(String text, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+        child: Text(
+          text,
+          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final photo = photoUrl(item);
@@ -90,6 +106,20 @@ class ListingCard extends StatelessWidget {
                           ),
                         );
                       },
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (_isNew(item)) _badge('Новое', const Color(0xFF2E7D5B)),
+                        if (item['good_deal'] == true) ...[
+                          const SizedBox(height: 4),
+                          _badge('Выгодно', const Color(0xFFD9822B)),
+                        ],
+                      ],
                     ),
                   ),
                 ],
