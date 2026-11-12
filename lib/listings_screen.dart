@@ -396,6 +396,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   String? _subcatImage(String name) {
     final n = name.toLowerCase();
     if (n.contains('телефон')) return 'assets/icons/phone.png';
+    if (n.contains('ноутбук')) return 'assets/icons/laptop.png';
     if (n.contains('новые авто')) return 'assets/icons/new-cars.png';
     if (n.contains('селект')) return 'assets/icons/select.png';
     if (n.contains('легков')) return 'assets/icons/auto.png';
