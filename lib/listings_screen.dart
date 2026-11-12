@@ -397,6 +397,13 @@ class _ListingsScreenState extends State<ListingsScreen> {
     final n = name.toLowerCase();
     if (n.contains('телефон')) return 'assets/icons/phone.png';
     if (n.contains('ноутбук')) return 'assets/icons/laptop.png';
+    if (n.contains('аудио')) return 'assets/icons/audio-video.png';
+    if (n.contains('настольн')) return 'assets/icons/desktops.png';
+    if (n.contains('компьютер')) return 'assets/icons/computer-goods.png';
+    if (n.contains('игр')) return 'assets/icons/games.png';
+    if (n.contains('фото')) return 'assets/icons/photo.png';
+    if (n.contains('планшет')) return 'assets/icons/tablets.png';
+    if (n.contains('оргтехник')) return 'assets/icons/office.png';
     if (n.contains('новые авто')) return 'assets/icons/new-cars.png';
     if (n.contains('селект')) return 'assets/icons/select.png';
     if (n.contains('легков')) return 'assets/icons/auto.png';
