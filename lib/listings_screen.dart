@@ -263,8 +263,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (words.isNotEmpty) query = query.ilike('description', '%$words%');
     }
     final order = switch (_sort) {
-      // По умолчанию — «выгодные»: сначала дешевле (см. сортировку ниже).
-      'default' => ('price', true),
+      // По умолчанию — «выгодные, но свежие»: сортировка по году, цене и пробегу ниже.
+      'default' => ('details->>year', false),
       'price_asc' => ('price', true),
       'price_desc' => ('price', false),
       'year' => ('details->>year', false),
@@ -334,15 +334,18 @@ class _ListingsScreenState extends State<ListingsScreen> {
       }
     }
     if (_sort == 'default') {
-      // Выгодные: сначала дешевле, при одинаковой цене — с меньшим пробегом.
+      // Выгодные, но свежие: сначала новее по году, при равном году — дешевле, затем меньший пробег.
+      Map<String, dynamic> det(Map<String, dynamic> row) => (row['details'] as Map?)?.cast<String, dynamic>() ?? const {};
+      double yearOf(Map<String, dynamic> row) =>
+          num.tryParse('${det(row)['year'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? 0;
       double priceOf(Map<String, dynamic> row) =>
           num.tryParse('${row['price'] ?? ''}')?.toDouble() ?? double.infinity;
-      double kmOf(Map<String, dynamic> row) {
-        final d = (row['details'] as Map?) ?? const {};
-        return num.tryParse('${d['mileage_km'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? double.infinity;
-      }
+      double kmOf(Map<String, dynamic> row) =>
+          num.tryParse('${det(row)['mileage_km'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? double.infinity;
 
       items.sort((a, b) {
+        final byYear = yearOf(b).compareTo(yearOf(a));
+        if (byYear != 0) return byYear;
         final byPrice = priceOf(a).compareTo(priceOf(b));
         return byPrice != 0 ? byPrice : kmOf(a).compareTo(kmOf(b));
       });
