@@ -82,30 +82,39 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Widget _savedSearches() {
-    return ValueListenableBuilder<List<String>>(
-      valueListenable: SavedSearchesStore.queries,
-      builder: (context, queries, _) {
-        if (queries.isEmpty) {
+    return ValueListenableBuilder<List<SavedSearch>>(
+      valueListenable: SavedSearchesStore.items,
+      builder: (context, searches, child) {
+        if (searches.isEmpty) {
           return const Center(
-            child: Text('Звёздочкой в поиске можно сохранить запрос'),
+            child: Text('Звёздочкой в поиске можно сохранить запрос или фильтр'),
           );
         }
         return ListView.separated(
           padding: const EdgeInsets.only(bottom: 24),
-          itemCount: queries.length,
+          itemCount: searches.length,
           separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
           itemBuilder: (context, i) {
-            final q = queries[i];
+            final s = searches[i];
             return ListTile(
               leading: const Icon(Icons.saved_search_rounded),
-              title: Text(q),
+              title: Text(s.title),
               trailing: IconButton(
                 tooltip: 'Удалить из сохранённых',
                 icon: const Icon(Icons.star_rounded, color: Color(0xFFF5A623)),
-                onPressed: () => SavedSearchesStore.toggle(q),
+                onPressed: () => SavedSearchesStore.toggle(s),
               ),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => ListingsScreen(initialQuery: q, title: q)),
+                MaterialPageRoute(
+                  builder: (_) => ListingsScreen(
+                    categoryId: s.categoryId,
+                    subcategoryId: s.subcategoryId,
+                    carFilter: s.carFilter,
+                    initialQuery: s.query,
+                    title: s.title,
+                    savedFilters: s.filters,
+                  ),
+                ),
               ),
             );
           },

@@ -10,6 +10,7 @@ import 'listing_utils.dart';
 import 'laptop_catalog.dart';
 import 'tech_catalog.dart';
 import 'phone_catalog.dart';
+import 'saved_searches_store.dart';
 import 'search_terms.dart';
 import 'theme.dart';
 
@@ -31,6 +32,7 @@ class ListingsScreen extends StatefulWidget {
     this.initialQuery,
     this.carFilter = false,
     this.subcategoryId,
+    this.savedFilters,
   });
 
   final int? categoryId;
@@ -38,6 +40,9 @@ class ListingsScreen extends StatefulWidget {
   final String? initialQuery;
   final String title;
   final bool carFilter;
+
+  /// Фильтры из сохранённого поиска (см. _snapshot).
+  final Map<String, dynamic>? savedFilters;
 
   @override
   State<ListingsScreen> createState() => _ListingsScreenState();
@@ -126,6 +131,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     _searchCtrl.text = widget.initialQuery ?? '';
     _subcatId = widget.subcategoryId;
     if (widget.categoryId == 2 && _subcatId == null) _techFilters['deal'] = 'Купить';
+    if (widget.savedFilters != null) _applySnapshot(widget.savedFilters!);
     _future = _load();
     selectedCity.addListener(_reload);
   }
@@ -399,6 +405,182 @@ class _ListingsScreenState extends State<ListingsScreen> {
   }
 
   void _reload() => setState(() => _future = _load());
+
+  /// Все значения фильтров экрана: их сохраняем в «Сохранённые поиски».
+  Map<String, dynamic> _snapshot() => {
+        'sel': {
+          'brand': _brand,
+          'model': _model,
+          'generation': _generation,
+          'bodyType': _bodyType,
+          'fuel': _fuel,
+          'condition': _condition,
+          'gearbox': _gearbox,
+          'drive': _drive,
+          'wheel': _wheel,
+          'country': _country,
+          'gai': _gai,
+          'owners': _owners,
+          'turbo': _turbo,
+          'seller': _seller,
+          'option': _option,
+          'sort': _sort,
+          'subcatId': _subcatId,
+          'pBrand': _pBrand,
+          'pMemory': _pMemory,
+          'pRam': _pRam,
+          'pSim': _pSim,
+          'pCondition': _pCondition,
+          'pSeller': _pSeller,
+          'lBrand': _lBrand,
+          'lDiagonal': _lDiagonal,
+          'lType': _lType,
+          'lCpu': _lCpu,
+          'lRam': _lRam,
+          'lStorage': _lStorage,
+          'lGpu': _lGpu,
+          'lOs': _lOs,
+          'lCondition': _lCondition,
+          'lSeller': _lSeller,
+        },
+        'txt': {
+          'search': _searchCtrl.text,
+          'priceMin': _priceMinCtrl.text,
+          'priceMax': _priceMaxCtrl.text,
+          'yearMin': _yearMinCtrl.text,
+          'yearMax': _yearMaxCtrl.text,
+          'color': _colorCtrl.text,
+          'mileageMin': _mileageMinCtrl.text,
+          'mileageMax': _mileageMaxCtrl.text,
+          'engineMin': _engineMinCtrl.text,
+          'engineMax': _engineMaxCtrl.text,
+          'techWords': _techWordsCtrl.text,
+        },
+        'tech': Map<String, String?>.from(_techFilters),
+        'techRange': {
+          for (final e in _techRangeCtrls.entries) e.key: [e.value.$1.text, e.value.$2.text],
+        },
+        'range': {
+          for (final e in _rangeCtrls.entries) e.key: [e.value.$1.text, e.value.$2.text],
+        },
+      };
+
+  /// Возвращает фильтры из сохранённого поиска.
+  void _applySnapshot(Map<String, dynamic> s) {
+    final sel = (s['sel'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+    final txt = (s['txt'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+    String? v(String k) => sel[k] as String?;
+    void t(TextEditingController c, String k) => c.text = txt[k] as String? ?? '';
+
+    _brand = v('brand');
+    _model = v('model');
+    _generation = v('generation');
+    _bodyType = v('bodyType');
+    _fuel = v('fuel');
+    _condition = v('condition');
+    _gearbox = v('gearbox');
+    _drive = v('drive');
+    _wheel = v('wheel');
+    _country = v('country');
+    _gai = v('gai');
+    _owners = v('owners');
+    _turbo = v('turbo');
+    _seller = v('seller');
+    _option = v('option');
+    _sort = v('sort') ?? 'default';
+    _subcatId = sel['subcatId'] as int?;
+    _pBrand = v('pBrand');
+    _pMemory = v('pMemory');
+    _pRam = v('pRam');
+    _pSim = v('pSim');
+    _pCondition = v('pCondition');
+    _pSeller = v('pSeller');
+    _lBrand = v('lBrand');
+    _lDiagonal = v('lDiagonal');
+    _lType = v('lType');
+    _lCpu = v('lCpu');
+    _lRam = v('lRam');
+    _lStorage = v('lStorage');
+    _lGpu = v('lGpu');
+    _lOs = v('lOs');
+    _lCondition = v('lCondition');
+    _lSeller = v('lSeller');
+
+    t(_searchCtrl, 'search');
+    t(_priceMinCtrl, 'priceMin');
+    t(_priceMaxCtrl, 'priceMax');
+    t(_yearMinCtrl, 'yearMin');
+    t(_yearMaxCtrl, 'yearMax');
+    t(_colorCtrl, 'color');
+    t(_mileageMinCtrl, 'mileageMin');
+    t(_mileageMaxCtrl, 'mileageMax');
+    t(_engineMinCtrl, 'engineMin');
+    t(_engineMaxCtrl, 'engineMax');
+    t(_techWordsCtrl, 'techWords');
+
+    _techFilters
+      ..clear()
+      ..addAll(((s['tech'] as Map?) ?? const {}).cast<String, String?>());
+    final techRange = (s['techRange'] as Map?) ?? const {};
+    for (final e in techRange.entries) {
+      final l = (e.value as List).cast<String>();
+      final c = _techRange(e.key as String);
+      c.$1.text = l[0];
+      c.$2.text = l[1];
+    }
+    final range = (s['range'] as Map?) ?? const {};
+    for (final e in range.entries) {
+      final c = _rangeCtrls[e.key as String];
+      if (c == null) continue;
+      final l = (e.value as List).cast<String>();
+      c.$1.text = l[0];
+      c.$2.text = l[1];
+    }
+  }
+
+  /// Название поиска в списке: слова из строки поиска и выбранные значения.
+  String _savedTitle() {
+    final parts = <String>[];
+    final q = _searchCtrl.text.trim();
+    if (q.isNotEmpty) parts.add(q);
+    if (_brand != null) parts.add(_brand!);
+    if (_model != null) parts.add(_model!);
+    for (final val in _techFilters.values) {
+      if (val != null && val.isNotEmpty) parts.add(val);
+    }
+    final pMin = _priceMinCtrl.text.trim();
+    final pMax = _priceMaxCtrl.text.trim();
+    if (pMin.isNotEmpty || pMax.isNotEmpty) {
+      parts.add('цена ${pMin.isEmpty ? '' : 'от $pMin '}${pMax.isEmpty ? '' : 'до $pMax'}'.trim());
+    }
+    if (parts.isEmpty) return widget.title;
+    return parts.take(4).join(' · ');
+  }
+
+  SavedSearch _currentSaved() => SavedSearch(
+        title: _savedTitle(),
+        categoryId: widget.categoryId,
+        subcategoryId: widget.subcategoryId,
+        carFilter: widget.carFilter,
+        query: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+        filters: _snapshot(),
+      );
+
+  /// Звёздочка: сохраняет текущие фильтры в «Избранное» → «Сохранённые поиски».
+  Widget _saveStar(VoidCallback onChanged) {
+    final on = SavedSearchesStore.contains(_currentSaved());
+    return IconButton(
+      tooltip: on ? 'Убрать из сохранённых' : 'Сохранить поиск',
+      icon: Icon(
+        on ? Icons.star_rounded : Icons.star_outline_rounded,
+        color: on ? const Color(0xFFF5A623) : null,
+      ),
+      onPressed: () async {
+        await SavedSearchesStore.toggle(_currentSaved());
+        onChanged();
+      },
+    );
+  }
 
   /// Выполнить выбор в чипе и сразу обновить ленту.
   Future<void> _thenReload(Future<void> Function() action) async {
@@ -921,6 +1103,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
                 centerTitle: true,
                 actions: [
+                  _saveStar(rebuild),
                   TextButton(
                     onPressed: () {
                       _resetPhoneFilters();
@@ -1087,6 +1270,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
                 centerTitle: true,
                 actions: [
+                  _saveStar(rebuild),
                   TextButton(
                     onPressed: () {
                       _resetLaptopFilters();
@@ -1281,6 +1465,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
                 centerTitle: true,
                 actions: [
+                  _saveStar(rebuild),
                   TextButton(
                     onPressed: () {
                       _resetTechFilters();
@@ -1690,6 +1875,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 title: const Text('Фильтры', style: TextStyle(fontWeight: FontWeight.w800)),
                 centerTitle: true,
                 actions: [
+                  _saveStar(rebuild),
                   TextButton(
                     onPressed: () {
                       _resetCarFilters();
@@ -2031,7 +2217,10 @@ class _ListingsScreenState extends State<ListingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [_saveStar(() => setState(() {}))],
+      ),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
         child: ListView(
