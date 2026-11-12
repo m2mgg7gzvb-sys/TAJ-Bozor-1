@@ -120,14 +120,15 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             Expanded(
-              child: ValueListenableBuilder<List<String>>(
-                valueListenable: SavedSearchesStore.queries,
-                builder: (context, saved, _) => ListView.separated(
+              child: ValueListenableBuilder<List<SavedSearch>>(
+                valueListenable: SavedSearchesStore.items,
+                builder: (context, value, child) => ListView.separated(
                   itemCount: _history.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
                   itemBuilder: (_, i) {
                     final q = _history[i];
-                    final isSaved = saved.contains(q);
+                    final entry = SavedSearch(title: q, query: q);
+                    final isSaved = SavedSearchesStore.contains(entry);
                     return ListTile(
                       leading: const Icon(Icons.history_rounded),
                       title: Text(q),
@@ -137,7 +138,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           isSaved ? Icons.star_rounded : Icons.star_outline_rounded,
                           color: isSaved ? const Color(0xFFF5A623) : AppColors.muted,
                         ),
-                        onPressed: () => SavedSearchesStore.toggle(q),
+                        onPressed: () => SavedSearchesStore.toggle(entry),
                       ),
                       onTap: () => _search(q),
                     );
