@@ -263,6 +263,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
       if (words.isNotEmpty) query = query.ilike('description', '%$words%');
     }
     final order = switch (_sort) {
+      // По умолчанию — «выгодные»: сначала дешевле (см. сортировку ниже).
+      'default' => ('price', true),
       'price_asc' => ('price', true),
       'price_desc' => ('price', false),
       'year' => ('details->>year', false),
@@ -330,6 +332,20 @@ class _ListingsScreenState extends State<ListingsScreen> {
           return checks.every((c) => _inNumRange(d, c.$1, c.$2, c.$3));
         });
       }
+    }
+    if (_sort == 'default') {
+      // Выгодные: сначала дешевле, при одинаковой цене — с меньшим пробегом.
+      double priceOf(Map<String, dynamic> row) =>
+          num.tryParse('${row['price'] ?? ''}')?.toDouble() ?? double.infinity;
+      double kmOf(Map<String, dynamic> row) {
+        final d = (row['details'] as Map?) ?? const {};
+        return num.tryParse('${d['mileage_km'] ?? ''}'.replaceAll(' ', ''))?.toDouble() ?? double.infinity;
+      }
+
+      items.sort((a, b) {
+        final byPrice = priceOf(a).compareTo(priceOf(b));
+        return byPrice != 0 ? byPrice : kmOf(a).compareTo(kmOf(b));
+      });
     }
     if (_sort == 'mileage') {
       // Пробег хранится текстом, поэтому сортируем здесь: без пробега в конце.
@@ -1271,8 +1287,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   ],
                   _fLabel('Сортировка'),
                   _fChips(
-                    const ['По умолчанию', 'Дешевле', 'Дороже'],
-                    _sort == 'price_asc' ? 'Дешевле' : (_sort == 'price_desc' ? 'Дороже' : 'По умолчанию'),
+                    const ['Выгодные', 'Дешевле', 'Дороже'],
+                    _sort == 'price_asc' ? 'Дешевле' : (_sort == 'price_desc' ? 'Дороже' : 'Выгодные'),
                     (v) {
                       _sort = v == 'Дешевле' ? 'price_asc' : (v == 'Дороже' ? 'price_desc' : 'default');
                       rebuild();
@@ -1803,7 +1819,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   ),
                   _fLabel('Сортировка'),
                   for (final o in const [
-                    ('default', 'По умолчанию'),
+                    ('default', 'Выгодные'),
                     ('price_asc', 'Дешевле'),
                     ('price_desc', 'Дороже'),
                     ('year', 'По году выпуска'),
