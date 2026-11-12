@@ -339,6 +339,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         });
       }
     }
+    _markGoodDeals(items);
     if (_sort == 'default') {
       // Выгодные, но свежие. Сравниваем только объявления одной марки и модели:
       // внутри группы цена, пробег и год нормируются от минимума до максимума,
@@ -586,6 +587,36 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Future<void> _thenReload(Future<void> Function() action) async {
     await action();
     if (mounted) _reload();
+  }
+
+  /// Метка «Выгодно»: цена ниже средней по той же марке и модели хотя бы на 15%.
+  /// Считается только если в группе не меньше 3 объявлений.
+  static void _markGoodDeals(List<Map<String, dynamic>> items) {
+    String? keyOf(Map<String, dynamic> r) {
+      final d = (r['details'] as Map?) ?? const {};
+      final brand = '${d['brand'] ?? ''}'.trim().toLowerCase();
+      final model = '${d['model'] ?? ''}'.trim().toLowerCase();
+      if (brand.isEmpty || model.isEmpty) return null;
+      return '$brand|$model';
+    }
+
+    double? priceOf(Map<String, dynamic> r) => num.tryParse('${r['price'] ?? ''}')?.toDouble();
+
+    final groups = <String, List<double>>{};
+    for (final r in items) {
+      final k = keyOf(r);
+      final p = priceOf(r);
+      if (k != null && p != null) groups.putIfAbsent(k, () => []).add(p);
+    }
+    for (final r in items) {
+      r['good_deal'] = false;
+      final k = keyOf(r);
+      final p = priceOf(r);
+      final g = k == null ? null : groups[k];
+      if (p == null || g == null || g.length < 3) continue;
+      final avg = g.reduce((a, b) => a + b) / g.length;
+      if (p <= avg * 0.85) r['good_deal'] = true;
+    }
   }
 
   Future<List<Map<String, dynamic>>> _loadSubcats() async {

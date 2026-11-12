@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'incoming_call_screen.dart';
+import 'listing_detail_screen.dart';
+import 'listing_utils.dart';
 import 'theme.dart';
 
 /// Уведомления пользователя: например, «заказан звонок» с номером покупателя.
@@ -27,7 +29,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (me == null) return [];
     final rows = await db
         .from('notifications')
-        .select('id, title, body, is_read, created_at, kind, data')
+        .select('id, title, body, is_read, created_at, kind, data, listing_id')
         .eq('user_id', me)
         .order('created_at', ascending: false)
         .limit(100);
@@ -82,7 +84,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             itemBuilder: (_, i) {
               final n = items[i];
               final unread = n['is_read'] == false;
-              return Container(
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _openFromNotification(n),
+                child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: unread ? const Color(0xFFE8F3EE) : Colors.white,
@@ -138,11 +143,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ],
                 ),
+                ),
               );
             },
           );
         },
       ),
+    );
+  }
+
+  /// Уведомление про объявление открывает это объявление.
+  Future<void> _openFromNotification(Map<String, dynamic> n) async {
+    final id = n['listing_id'] as String?;
+    if (id == null) return;
+    final row = await Supabase.instance.client
+        .from('listings')
+        .select(listingSelect)
+        .eq('id', id)
+        .maybeSingle();
+    if (row == null || !mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ListingDetailScreen(item: Map<String, dynamic>.from(row))),
     );
   }
 }
