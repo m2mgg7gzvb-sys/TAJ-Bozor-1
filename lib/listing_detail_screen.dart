@@ -18,6 +18,7 @@ import 'favorites_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'nav_state.dart';
+import 'price_history_card.dart';
 import 'photo_viewer.dart';
 import 'lang_store.dart';
 import 'listing_reports.dart';
@@ -633,6 +634,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       child: Text(_descOpen ? 'Свернуть' : 'Читать полностью'),
                     ),
                 ],
+
+                // История цены (показывается, если цену меняли)
+                const SizedBox(height: 24),
+                PriceHistoryCard(listingId: _id),
 
                 // Похожие объявления
                 const SizedBox(height: 24),

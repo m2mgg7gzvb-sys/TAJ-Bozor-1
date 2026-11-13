@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'auth_screen.dart';
 import 'favorites_store.dart';
+import 'seller_stats_screen.dart';
 import 'lang_store.dart';
 import 'legal_screen.dart';
 import 'my_listings_tab.dart';
@@ -155,6 +156,13 @@ class _ProfilePageState extends State<_ProfilePage> {
                       title: tr('Мои объявления', 'Эълонҳои ман'),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const MyListingsTab()),
+                      ),
+                    ),
+                    _MenuTile(
+                      icon: Icons.insights_rounded,
+                      title: tr('Статистика объявлений', 'Омори эълонҳо'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SellerStatsScreen()),
                       ),
                     ),
                     _MenuTile(

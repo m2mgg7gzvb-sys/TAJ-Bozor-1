@@ -371,6 +371,34 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+  bool get _isSeller => _conv?['seller_id'] == _me;
+
+  static const _quick = [
+    'Да, в наличии',
+    'Можно посмотреть сегодня?',
+    'Цена окончательная',
+    'Уточните, пожалуйста, детали',
+    'Спасибо, свяжусь позже',
+  ];
+
+  /// Быстрый ответ: подставляет текст в поле, отправляет продавец сам.
+  Widget _quickReplies() => SizedBox(
+        height: 40,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          itemCount: _quick.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) => ActionChip(
+            label: Text(_quick[i]),
+            onPressed: () {
+              _ctrl.text = _quick[i];
+              _ctrl.selection = TextSelection.collapsed(offset: _quick[i].length);
+            },
+          ),
+        ),
+      );
+
   Future<void> _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty || _sending) return;
@@ -849,6 +877,7 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+          if (_isSeller) _quickReplies(),
           SafeArea(
             top: false,
             child: Padding(
