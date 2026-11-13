@@ -5,6 +5,7 @@ import 'chat_screen.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'copy_id.dart';
+import 'follow_button.dart';
 import 'theme.dart';
 
 /// Кружок с буквой имени или фото пользователя.
@@ -146,6 +147,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (canReview) ...[
+                  FollowButton(sellerId: widget.userId),
+                  const SizedBox(height: 12),
+                ],
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
