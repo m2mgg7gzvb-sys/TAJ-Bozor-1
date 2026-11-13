@@ -119,30 +119,29 @@ class _MyListingsTabState extends State<MyListingsTab> {
     };
     final card = ListingCard(item: item);
     if (label == null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      // Активное объявление: действия в меню в левом верхнем углу, карточка не меняется.
+      return Stack(
         children: [
           card,
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
-                  onPressed: () => _markSold(item),
-                  child: const Text('Продано', style: TextStyle(fontSize: 12)),
-                ),
+          Positioned(
+            top: 6,
+            left: 6,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.92),
+              shape: const CircleBorder(),
+              child: PopupMenuButton<String>(
+                tooltip: 'Действия',
+                icon: const Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.ink),
+                onSelected: (v) {
+                  if (v == 'sold') _markSold(item);
+                  if (v == 'bump') bumpListing(context, item['id'] as String);
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'sold', child: Text('Отметить как продано')),
+                  PopupMenuItem(value: 'bump', child: Text('Поднять в топ')),
+                ],
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
-                  onPressed: () => bumpListing(context, item['id'] as String),
-                  icon: const Icon(Icons.arrow_upward_rounded, size: 14),
-                  label: const Text('В топ', style: TextStyle(fontSize: 12)),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       );
