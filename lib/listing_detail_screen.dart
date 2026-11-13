@@ -114,7 +114,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     try {
       final row = await Supabase.instance.client
           .from('profiles')
-          .select('name, city, phone, avatar_url')
+          .select('name, city, phone, avatar_url, phone_verified')
           .eq('id', uid)
           .maybeSingle();
       if (mounted && row != null) setState(() => _seller = Map<String, dynamic>.from(row));
@@ -582,6 +582,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                             ),
                             const SizedBox(height: 2),
+                            if (_seller?['phone_verified'] == true)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.verified_rounded, size: 16, color: AppColors.primary),
+                                    SizedBox(width: 4),
+                                    Text('Телефон подтверждён', style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                                  ],
+                                ),
+                              ),
                             _SellerRating(sellerId: _item['user_id'] as String?),
                           ],
                         ),

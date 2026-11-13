@@ -27,6 +27,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   int _tab = 0; // 0 — объявления, 1 — сохранённые поиски
   bool _compareMode = false;
   final Set<String> _picked = {};
+  final Map<String, String> _notes = {}; // заметки к избранному: id объявления → текст
 
   @override
   void initState() {
@@ -57,7 +58,99 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         .eq('status', 'active');
     final items = List<Map<String, dynamic>>.from(rows);
     _loaded = items;
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid != null) {
+      try {
+        final notes = await Supabase.instance.client
+            .from('favorite_notes')
+            .select('listing_id, note')
+            .eq('user_id', uid)
+            .inFilter('listing_id', ids);
+        _notes
+          ..clear()
+          ..addAll({for (final n in notes) n['listing_id'] as String: (n['note'] as String?) ?? ''});
+      } catch (_) {
+        // Заметки необязательны: без них список всё равно открывается.
+      }
+    }
     return items;
+  }
+
+  /// Открывает окно заметки к объявлению. Пустой текст удаляет заметку.
+  Future<void> _editNote(String id) async {
+    final current = _notes[id] ?? '';
+    final ctrl = TextEditingController(text: current);
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Заметка к объявлению'),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 4,
+          maxLength: 500,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Например: позвонить после 18:00'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Сохранить')),
+        ],
+      ),
+    );
+    if (text == null || text == current) return;
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      final db = Supabase.instance.client.from('favorite_notes');
+      if (text.isEmpty) {
+        await db.delete().eq('user_id', uid).eq('listing_id', id);
+        _notes.remove(id);
+      } else {
+        await db.upsert({
+          'user_id': uid,
+          'listing_id': id,
+          'note': text,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }, onConflict: 'user_id,listing_id');
+        _notes[id] = text;
+      }
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось сохранить заметку')),
+        );
+      }
+    }
+  }
+
+  /// Карточка с кнопкой заметки в левом верхнем углу.
+  Widget _withNote(Map<String, dynamic> item) {
+    final id = item['id'] as String;
+    final hasNote = (_notes[id] ?? '').trim().isNotEmpty;
+    return Stack(
+      children: [
+        ListingCard(item: item),
+        Positioned(
+          top: 6,
+          left: 6,
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.92),
+            shape: const CircleBorder(),
+            child: IconButton(
+              tooltip: hasNote ? 'Заметка: ${_notes[id]}' : 'Добавить заметку',
+              visualDensity: VisualDensity.compact,
+              icon: Icon(
+                hasNote ? Icons.sticky_note_2_rounded : Icons.edit_note_rounded,
+                size: 20,
+                color: hasNote ? AppColors.primary : AppColors.muted,
+              ),
+              onPressed: () => _editNote(id),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _toggleCompare() {
@@ -110,7 +203,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           childAspectRatio: 0.66,
-          children: [for (final item in items) ListingCard(item: item)],
+          children: [for (final item in items) _withNote(item)],
         );
       },
     );
