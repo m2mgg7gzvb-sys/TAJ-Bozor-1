@@ -200,7 +200,7 @@ class _HomeTabState extends State<HomeTab> {
     final slug = isAll ? 'all' : cat.data!['slug'] as String;
     return SizedBox(
       width: _tileWidths[slug] ?? 113.0,
-      height: 78,
+      height: 92,
       child: _CategoryChip(
         icon: cat.icon,
         image: cat.image,
@@ -596,11 +596,13 @@ class _CategoryChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-              child: Text(
+        // Название сверху, иконка — в своей строке внизу справа: текст и иконка не перекрываются.
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -611,15 +613,15 @@ class _CategoryChip extends StatelessWidget {
                   color: AppColors.ink,
                 ),
               ),
-            ),
-            Positioned(
-              right: 8,
-              bottom: 6,
-              child: image == null
-                  ? Icon(icon, color: accent, size: 36)
-                  : Image.asset(image!, width: 44, height: 44, fit: BoxFit.contain),
-            ),
-          ],
+              const Spacer(),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: image == null
+                    ? Icon(icon, color: accent, size: 34)
+                    : Image.asset(image!, width: 40, height: 40, fit: BoxFit.contain),
+              ),
+            ],
+          ),
         ),
       ),
     );
