@@ -10,6 +10,7 @@ import 'listing_utils.dart';
 import 'laptop_catalog.dart';
 import 'tech_catalog.dart';
 import 'phone_catalog.dart';
+import 'listings_map_screen.dart';
 import 'saved_searches_store.dart';
 import 'search_terms.dart';
 import 'theme.dart';
@@ -80,6 +81,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       k: (TextEditingController(), TextEditingController()),
   };
   late Future<List<Map<String, dynamic>>> _future;
+  List<Map<String, dynamic>> _lastItems = [];
   int? _count;
 
   /// Подкатегории выбранной категории и выбранная плитка.
@@ -402,6 +404,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       items.sort((a, b) => (rank[a['id']] ?? 1 << 30).compareTo(rank[b['id']] ?? 1 << 30));
     }
     if (mounted) setState(() => _count = items.length);
+    _lastItems = items;
     return items;
   }
 
@@ -2250,7 +2253,18 @@ class _ListingsScreenState extends State<ListingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: [_saveStar(() => setState(() {}))],
+        actions: [
+          IconButton(
+            tooltip: 'На карте',
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ListingsMapScreen(items: _lastItems, title: widget.title),
+              ),
+            ),
+          ),
+          _saveStar(() => setState(() {})),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
