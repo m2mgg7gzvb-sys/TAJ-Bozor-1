@@ -42,6 +42,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _cityCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  bool _negotiable = false;
   double? _lat;
   double? _lng;
   final _brandCtrl = TextEditingController();
@@ -123,7 +124,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.listing != null) _prefill();
+    if (widget.listing != null) {
+      _prefill();
+      _negotiable = widget.listing!['negotiable'] == true;
+    }
     _loadCategories();
     _loadPhone();
     if (widget.listing == null) _restoreDraft();
@@ -542,6 +546,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'title': title,
           'description': _descCtrl.text.trim(),
           'price': price,
+          'negotiable': _negotiable,
           'city': _cityCtrl.text.trim(),
           'address': _addressCtrl.text.trim(),
           'lat': _lat,
@@ -561,6 +566,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             'title': title,
             'description': _descCtrl.text.trim(),
             'price': price,
+          'negotiable': _negotiable,
             'currency': 'TJS',
             'city': _cityCtrl.text.trim(),
             'address': _addressCtrl.text.trim(),
@@ -947,6 +953,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(hintText: 'Цена, TJS'),
             ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Цена с торгом'),
+            subtitle: const Text('Покупатели увидят метку «Торг»'),
+            value: _negotiable,
+            onChanged: (v) => setState(() => _negotiable = v),
           ),
           const SizedBox(height: 12),
           _drop(

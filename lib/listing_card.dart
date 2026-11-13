@@ -119,6 +119,10 @@ class ListingCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           _badge('Выгодно', const Color(0xFFD9822B)),
                         ],
+                        if (item['negotiable'] == true) ...[
+                          const SizedBox(height: 4),
+                          _badge('Торг', AppColors.primary),
+                        ],
                       ],
                     ),
                   ),
