@@ -385,7 +385,18 @@ class _ListingsScreenState extends State<ListingsScreen> {
           scored.add((s, r));
         }
       }
-      scored.sort((a, b) => a.$1.compareTo(b.$1));
+      bool bumpedNow(Map<String, dynamic> r) {
+        final at = DateTime.tryParse('${r['bumped_at'] ?? ''}');
+        return at != null && DateTime.now().toUtc().difference(at.toUtc()) < const Duration(hours: 24);
+      }
+
+      // Поднятые за последние сутки — первыми, остальные по баллу.
+      scored.sort((a, b) {
+        final ba = bumpedNow(a.$2) ? 0 : 1;
+        final bb = bumpedNow(b.$2) ? 0 : 1;
+        if (ba != bb) return ba - bb;
+        return a.$1.compareTo(b.$1);
+      });
       items
         ..clear()
         ..addAll(scored.map((e) => e.$2));

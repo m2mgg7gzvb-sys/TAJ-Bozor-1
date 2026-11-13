@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'bump_listing.dart';
 import 'create_listing_screen.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
@@ -85,7 +86,20 @@ class _MyListingsTabState extends State<MyListingsTab> {
       _ => null,
     };
     final card = ListingCard(item: item);
-    if (label == null) return card;
+    if (label == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          card,
+          const SizedBox(height: 6),
+          OutlinedButton.icon(
+            onPressed: () => bumpListing(context, item['id'] as String),
+            icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+            label: const Text('Поднять в топ'),
+          ),
+        ],
+      );
+    }
     final badgeColor = switch (status) {
       'blocked' => Colors.red.shade700,
       'frozen' => Colors.blueGrey.shade700,

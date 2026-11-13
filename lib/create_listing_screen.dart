@@ -9,6 +9,7 @@ import 'city_store.dart';
 import 'confirm_delete.dart';
 import 'map_picker.dart';
 import 'laptop_catalog.dart';
+import 'listing_draft.dart';
 import 'tech_catalog.dart';
 import 'phone_catalog.dart';
 import 'theme.dart';
@@ -125,6 +126,41 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (widget.listing != null) _prefill();
     _loadCategories();
     _loadPhone();
+    if (widget.listing == null) _restoreDraft();
+  }
+
+  /// Восстанавливает черновик, если поля ещё пустые.
+  Future<void> _restoreDraft() async {
+    final d = await ListingDraft.load();
+    if (d == null || !mounted) return;
+    void fill(TextEditingController c, String k) {
+      if (c.text.isEmpty) c.text = (d[k] ?? '').toString();
+    }
+
+    fill(_titleCtrl, 'title');
+    fill(_descCtrl, 'description');
+    fill(_priceCtrl, 'price');
+    fill(_cityCtrl, 'city');
+    fill(_addressCtrl, 'address');
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Восстановлен черновик')),
+    );
+  }
+
+  /// Сохраняет черновик: заголовок, описание, цену, город и адрес.
+  Future<void> _saveDraft() async {
+    final ok = await ListingDraft.save({
+      'title': _titleCtrl.text,
+      'description': _descCtrl.text,
+      'price': _priceCtrl.text,
+      'city': _cityCtrl.text,
+      'address': _addressCtrl.text,
+    });
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Черновик сохранён' : 'Не удалось сохранить черновик')),
+    );
   }
 
   /// Подставляем телефон из профиля, чтобы не вводить его каждый раз.
@@ -823,6 +859,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.listing == null ? 'Подать объявление' : 'Редактировать объявление'),
+        actions: [
+          if (widget.listing == null)
+            TextButton(onPressed: _saveDraft, child: const Text('Черновик')),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
