@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'block_store.dart';
 import 'car_catalog.dart';
+import 'location_helper.dart';
 import 'city_store.dart';
 import 'lang_store.dart';
 import 'listing_card.dart';
@@ -76,6 +79,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   String? _seller;
   String? _option;
   String _sort = 'default';
+  Position? _nearPos; // точка пользователя для сортировки «Рядом со мной»
   final _rangeCtrls = <String, (TextEditingController, TextEditingController)>{
     for (final k in const ['power_hp', 'fuel_consumption', 'acceleration', 'seats', 'trunk_l', 'clearance_mm'])
       k: (TextEditingController(), TextEditingController()),
@@ -168,6 +172,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       widget.subcategoryId == motoSubcategoryId ? motoCatalog : carCatalog;
 
   Future<List<Map<String, dynamic>>> _load() async {
+    if (BlockStore.ids.value.isEmpty) await BlockStore.load();
     var query = Supabase.instance.client
         .from('listings')
         .select(listingSelect)
@@ -270,6 +275,11 @@ class _ListingsScreenState extends State<ListingsScreen> {
       final words = _techWordsCtrl.text.trim();
       if (words.isNotEmpty) query = query.ilike('description', '%$words%');
     }
+    // Объявления заблокированных пользователей не показываем.
+    final blockedIds = BlockStore.ids.value;
+    if (blockedIds.isNotEmpty) {
+      query = query.not('user_id', 'in', '(${blockedIds.join(',')})');
+    }
     final order = switch (_sort) {
       // По умолчанию — «выгодные, но свежие»: сортировка по году, цене и пробегу ниже.
       'default' => ('details->>year', false),
@@ -340,6 +350,21 @@ class _ListingsScreenState extends State<ListingsScreen> {
           return checks.every((c) => _inNumRange(d, c.$1, c.$2, c.$3));
         });
       }
+    }
+    if (_sort == 'nearby' && _nearPos != null) {
+      // Рядом со мной: сортировка по расстоянию, объявления без координат пропускаем.
+      final p = _nearPos!;
+      double? dist(Map<String, dynamic> r) {
+        final la = num.tryParse('${r['lat']}');
+        final lo = num.tryParse('${r['lng']}');
+        if (la == null || lo == null) return null;
+        return distanceKm(p.latitude, p.longitude, la.toDouble(), lo.toDouble());
+      }
+      final withDist = [for (final r in items) if (dist(r) != null) r];
+      withDist.sort((a, b) => dist(a)!.compareTo(dist(b)!));
+      items
+        ..clear()
+        ..addAll(withDist);
     }
     _markGoodDeals(items);
     if (_sort == 'default') {
@@ -2089,9 +2114,20 @@ class _ListingsScreenState extends State<ListingsScreen> {
                     ('price_desc', 'Дороже'),
                     ('year', 'По году выпуска'),
                     ('mileage', 'По пробегу'),
+                    ('nearby', 'Рядом со мной'),
                   ])
                     InkWell(
-                      onTap: () {
+                      onTap: () async {
+                        if (o.$1 == 'nearby') {
+                          final pos = await currentPosition();
+                          if (pos == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                              content: Text('Разрешите доступ к геолокации, чтобы сортировать по расстоянию'),
+                            ));
+                            return;
+                          }
+                          _nearPos = pos;
+                        }
                         _sort = o.$1;
                         rebuild();
                       },

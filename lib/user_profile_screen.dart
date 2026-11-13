@@ -5,6 +5,7 @@ import 'chat_screen.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'copy_id.dart';
+import 'block_store.dart';
 import 'follow_button.dart';
 import 'theme.dart';
 
@@ -68,6 +69,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _db = Supabase.instance.client;
   late Future<_UserData> _future = _load();
 
+  @override
+  void initState() {
+    super.initState();
+    BlockStore.load();
+  }
+
   String get _me => _db.auth.currentUser?.id ?? '';
 
   Future<_UserData> _load() async {
@@ -122,7 +129,30 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Профиль пользователя')),
+      appBar: AppBar(
+        title: const Text('Профиль пользователя'),
+        actions: [
+          if (_me.isNotEmpty && _me != widget.userId)
+            ValueListenableBuilder<Set<String>>(
+              valueListenable: BlockStore.ids,
+              builder: (context, ids, _) {
+                final blocked = ids.contains(widget.userId);
+                return TextButton(
+                  onPressed: () async {
+                    final nowBlocked = await BlockStore.toggle(widget.userId);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(nowBlocked
+                          ? 'Пользователь заблокирован: его объявления скрыты из поиска'
+                          : 'Блокировка снята'),
+                    ));
+                  },
+                  child: Text(blocked ? 'Разблокировать' : 'Заблокировать'),
+                );
+              },
+            ),
+        ],
+      ),
       body: FutureBuilder<_UserData>(
         future: _future,
         builder: (context, snap) {

@@ -18,7 +18,9 @@ import 'favorites_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'nav_state.dart';
+import 'loan_calculator_screen.dart';
 import 'price_history_card.dart';
+import 'safety_tips_screen.dart';
 import 'photo_viewer.dart';
 import 'lang_store.dart';
 import 'listing_reports.dart';
@@ -650,6 +652,39 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 const SizedBox(height: 24),
                 PriceHistoryCard(listingId: _id),
 
+                // Ориентир цены, рассрочка и памятка о безопасности
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: _PriceHint(future: _similar, price: num.tryParse('${_item['price']}')),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      if (num.tryParse('${_item['price']}') != null)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => LoanCalculatorScreen(price: num.tryParse('${_item['price']}')),
+                            )),
+                            icon: const Icon(Icons.calculate_outlined, size: 18),
+                            label: const Text('Рассрочка'),
+                          ),
+                        ),
+                      if (num.tryParse('${_item['price']}') != null) const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const SafetyTipsScreen()),
+                          ),
+                          icon: const Icon(Icons.shield_outlined, size: 18),
+                          label: const Text('Безопасность'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Похожие объявления
                 const SizedBox(height: 24),
                 _Strip(future: _similar),
@@ -736,6 +771,53 @@ class _SellerRating extends StatelessWidget {
                 color: i <= filled ? const Color(0xFFF2B600) : AppColors.muted,
               ),
           ],
+        );
+      },
+    );
+  }
+}
+
+/// Ориентир: средняя цена похожих объявлений и где находится цена этого объявления.
+class _PriceHint extends StatelessWidget {
+  const _PriceHint({required this.future, required this.price});
+
+  final Future<List<Map<String, dynamic>>> future;
+  final num? price;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: future,
+      builder: (context, snap) {
+        final p = price;
+        if (snap.connectionState != ConnectionState.done || p == null) return const SizedBox.shrink();
+        final prices = [
+          for (final r in snap.data ?? const <Map<String, dynamic>>[])
+            if (num.tryParse('${r['price']}') != null) num.parse('${r['price']}'),
+        ];
+        if (prices.length < 3) return const SizedBox.shrink();
+        final avg = prices.reduce((a, b) => a + b) / prices.length;
+        final diff = (p - avg) / avg * 100;
+        final verdict = diff.abs() < 5
+            ? 'Цена близка к среднему'
+            : diff < 0
+                ? 'Ниже среднего на ${diff.abs().round()}%'
+                : 'Выше среднего на ${diff.round()}%';
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: AppColors.mint, borderRadius: BorderRadius.circular(12)),
+          child: Row(
+            children: [
+              const Icon(Icons.insights_rounded, color: AppColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Средняя цена похожих: ${avg.round()} TJS (${prices.length} объявл.)\n$verdict',
+                  style: const TextStyle(fontSize: 13, height: 1.35),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
