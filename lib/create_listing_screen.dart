@@ -863,7 +863,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF2F7F5),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF2F7F5),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
         title: Text(widget.listing == null ? 'Подать объявление' : 'Редактировать объявление'),
         actions: [
           if (widget.listing == null)

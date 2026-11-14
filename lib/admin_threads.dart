@@ -6,6 +6,7 @@ import 'confirm_delete.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'user_profile_screen.dart';
+import 'glass_widgets.dart';
 import 'theme.dart';
 
 const _statusNames = <String, String>{
@@ -180,7 +181,13 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF2F7F5),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF2F7F5),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
         title: const Text('Объявление'),
         actions: [
           IconButton(
@@ -210,7 +217,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: cardDecoration(radius: 18),
+                      decoration: glowDecoration(radius: 18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -396,7 +403,13 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Поиск по ID')),
+      backgroundColor: const Color(0xFFF2F7F5),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF2F7F5),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Поиск по ID')),
       body: Column(
         children: [
           Padding(
