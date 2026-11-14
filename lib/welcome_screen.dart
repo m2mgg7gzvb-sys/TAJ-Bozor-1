@@ -314,22 +314,30 @@ class _SheetState extends State<_Sheet> {
           const SizedBox(height: 18),
           _PillButton(
             label: _register ? 'Зарегистрироваться через Apple' : 'Продолжить с Apple',
+            icon: Image.asset('assets/icons/apple_logo.png', height: 24),
             filled: true,
             onPressed: () => onApple(_register),
           ),
           const SizedBox(height: 12),
           _PillButton(
             label: _register ? 'Зарегистрироваться через Google' : 'Продолжить с Google',
+            icon: Image.asset('assets/icons/google_logo.png', height: 22),
             filled: false,
             onPressed: () => onGoogle(_register),
           ),
           if (!_register) ...[
             const SizedBox(height: 12),
-            _PillButton(label: 'Войти по номеру', filled: true, onPressed: () => onPhone(false)),
+            _PillButton(
+              label: 'Войти по номеру',
+              filled: true,
+              icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 22),
+              onPressed: () => onPhone(false),
+            ),
           ],
           const SizedBox(height: 12),
           _PillButton(
             label: _register ? 'Зарегистрироваться по почте' : 'Войти по почте',
+            icon: const Icon(Icons.mail_outline_rounded, color: AppColors.deep, size: 22),
             filled: false,
             onPressed: () => onEmail(_register),
           ),
@@ -353,11 +361,12 @@ class _SheetState extends State<_Sheet> {
 
 /// Кнопка-капсула: зелёная заливка с мягким свечением или белое стекло с обводкой.
 class _PillButton extends StatelessWidget {
-  const _PillButton({required this.label, required this.filled, required this.onPressed});
+  const _PillButton({required this.label, required this.filled, required this.onPressed, this.icon});
 
   final String label;
   final bool filled;
   final VoidCallback onPressed;
+  final Widget? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -398,13 +407,19 @@ class _PillButton extends StatelessWidget {
             borderRadius: radius,
             onTap: onPressed,
             child: Center(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: filled ? Colors.white : AppColors.deep,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[icon!, const SizedBox(width: 10)],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: filled ? Colors.white : AppColors.deep,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
