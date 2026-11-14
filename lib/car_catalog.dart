@@ -860,6 +860,7 @@ const carCatalog = <String, Map<String, List<String>>>{
     'Taycan': [],
     '918': [],
     'Carrera GT': [],
+    'Mission S': [],
   },
   'Tesla': {
     'Model S': [],
