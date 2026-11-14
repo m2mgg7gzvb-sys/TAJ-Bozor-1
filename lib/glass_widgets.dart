@@ -251,23 +251,10 @@ class _HeaderArtPainter extends CustomPainter {
       ..close();
     canvas.drawPath(wave, Paint()..color = Colors.white.withValues(alpha: 0.06));
 
-    // Силуэт памятника справа: купол, антаблемент и колонны.
-    final mon = Paint()..color = Colors.white.withValues(alpha: 0.14);
-    final domeCx = w * 0.84;
-    final domeR = w * 0.085;
-    final domeTop = h * 0.04;
-    final dome = Path()
-      ..moveTo(domeCx - domeR, h * 0.42)
-      ..quadraticBezierTo(domeCx - domeR, domeTop, domeCx, domeTop)
-      ..quadraticBezierTo(domeCx + domeR, domeTop, domeCx + domeR, h * 0.42)
-      ..close();
-    canvas.drawPath(dome, mon);
-    canvas.drawRect(Rect.fromLTRB(w * 0.66, h * 0.42, w * 1.02, h * 0.47), mon);
-    for (var i = 0; i < 7; i++) {
-      final x = w * 0.68 + i * w * 0.05;
-      canvas.drawRect(Rect.fromLTRB(x, h * 0.47, x + w * 0.018, h * 0.86), mon);
-    }
-    canvas.drawRect(Rect.fromLTRB(w * 0.64, h * 0.86, w * 1.02, h * 0.90), mon);
+    // 3D-модели зданий справа: объёмные коробки с окнами, от дальнего к ближнему.
+    _drawBuilding(canvas, x: w * 0.52, base: h * 0.94, width: w * 0.10, height: h * 0.40, depth: w * 0.05, cols: 2);
+    _drawBuilding(canvas, x: w * 0.66, base: h * 0.94, width: w * 0.12, height: h * 0.62, depth: w * 0.06, cols: 3);
+    _drawBuilding(canvas, x: w * 0.82, base: h * 0.94, width: w * 0.13, height: h * 0.80, depth: w * 0.07, cols: 3);
 
     // Тёмная волна внизу для читаемости поиска и текста.
     final low = Path()
@@ -277,6 +264,54 @@ class _HeaderArtPainter extends CustomPainter {
       ..lineTo(0, h)
       ..close();
     canvas.drawPath(low, Paint()..color = Colors.black.withValues(alpha: 0.14));
+  }
+
+  /// Рисует объёмное здание: фасад, боковая грань, крыша и окна на фасаде.
+  void _drawBuilding(
+    Canvas canvas, {
+    required double x,
+    required double base,
+    required double width,
+    required double height,
+    required double depth,
+    required int cols,
+  }) {
+    final top = base - height;
+    final dy = depth * 0.5; // наклон изометрии
+    final front = Rect.fromLTRB(x, top, x + width, base);
+
+    final sidePath = Path()
+      ..moveTo(x + width, top)
+      ..lineTo(x + width + depth, top - dy)
+      ..lineTo(x + width + depth, base - dy)
+      ..lineTo(x + width, base)
+      ..close();
+    canvas.drawPath(sidePath, Paint()..color = Colors.black.withValues(alpha: 0.16));
+
+    final roofPath = Path()
+      ..moveTo(x, top)
+      ..lineTo(x + depth, top - dy)
+      ..lineTo(x + width + depth, top - dy)
+      ..lineTo(x + width, top)
+      ..close();
+    canvas.drawPath(roofPath, Paint()..color = Colors.white.withValues(alpha: 0.38));
+
+    canvas.drawRect(front, Paint()..color = Colors.white.withValues(alpha: 0.20));
+
+    // Окна на фасаде.
+    final rowH = width * 0.22;
+    final rows = (height / rowH).floor();
+    final winPaint = Paint()..color = Colors.white.withValues(alpha: 0.42);
+    final pad = width * 0.14;
+    final winW = (width - pad * (cols + 1)) / cols;
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final wx = x + pad + c * (winW + pad);
+        final wy = top + pad + r * rowH;
+        if (wy + rowH * 0.55 > base - pad) continue;
+        canvas.drawRect(Rect.fromLTWH(wx, wy, winW, rowH * 0.55), winPaint);
+      }
+    }
   }
 
   @override
