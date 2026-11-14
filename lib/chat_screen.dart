@@ -17,6 +17,7 @@ import 'chat_image.dart';
 import 'notify_store.dart';
 import 'review_dialog.dart';
 import 'theme.dart';
+import 'glass_widgets.dart';
 import 'user_profile_screen.dart';
 
 /// Находит переписку текущего пользователя или создаёт новую.
@@ -429,7 +430,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_sending) return;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      builder: (ctx) => SafeArea(
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GlassSheet(child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -445,7 +447,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
     if (source == null) return;
 

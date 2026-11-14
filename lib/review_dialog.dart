@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'glass_widgets.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
@@ -14,9 +15,10 @@ Future<bool> showReviewSheet(
   final sent = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-    builder: (_) => _ReviewSheet(sellerId: sellerId, conversationId: conversationId),
+    backgroundColor: Colors.transparent,
+    builder: (_) => GlassSheet(
+      child: _ReviewSheet(sellerId: sellerId, conversationId: conversationId),
+    ),
   );
   return sent == true;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'glass_widgets.dart';
 import 'theme.dart';
 
 /// Шторка «Закажите бесплатный звонок»: номер +992, проверка и сохранение заявки.
@@ -8,9 +9,8 @@ Future<void> showCallbackSheet(BuildContext context, {required String listingId}
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-    builder: (_) => _CallbackForm(listingId: listingId),
+    backgroundColor: Colors.transparent,
+    builder: (_) => GlassSheet(child: _CallbackForm(listingId: listingId)),
   );
 }
 

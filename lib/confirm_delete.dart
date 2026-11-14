@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'glass_widgets.dart';
+import 'theme.dart';
+
 /// Окно удаления: кнопка «Удалить» активна только после того, как пользователь напишет Delete.
 Future<bool> confirmDeleteByTyping(BuildContext context) async {
   final ok = await showDialog<bool>(
@@ -28,8 +31,8 @@ class _DeleteDialogState extends State<_DeleteDialog> {
   @override
   Widget build(BuildContext context) {
     final ready = _ctrl.text.trim() == 'Delete';
-    return AlertDialog(
-      title: const Text('Удалить объявление?'),
+    return GlassDialog(
+      title: 'Удалить объявление?',
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,16 +43,31 @@ class _DeleteDialogState extends State<_DeleteDialog> {
             controller: _ctrl,
             autofocus: true,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(hintText: 'Delete', border: OutlineInputBorder()),
+            decoration: InputDecoration(
+            hintText: 'Delete',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.35)),
+          ),
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Отмена', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            backgroundColor: AppColors.ruby,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          ),
           onPressed: ready ? () => Navigator.pop(context, true) : null,
-          child: const Text('Удалить'),
+          child: const Text('Удалить', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     );

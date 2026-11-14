@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'glass_widgets.dart';
 import 'lang_store.dart';
 
 /// Окно выбора способа звонка: через Интернет или обычный телефонный звонок.
@@ -10,10 +11,8 @@ Future<void> showCallOptionsSheet(
 }) {
   return showModalBottomSheet(
     context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (ctx) => SafeArea(
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => GlassSheet(child: SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: Column(
@@ -54,6 +53,6 @@ Future<void> showCallOptionsSheet(
           ],
         ),
       ),
-    ),
+    )),
   );
 }

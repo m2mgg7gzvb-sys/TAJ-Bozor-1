@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_log.dart';
 import 'chat_screen.dart';
+import 'glass_widgets.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
@@ -13,15 +14,28 @@ const _reportReasons = ['Мошенничество', 'Запрещённый т
 Future<void> showReportDialog(BuildContext context, String listingId) async {
   final reason = await showDialog<String>(
     context: context,
-    builder: (ctx) => SimpleDialog(
-      title: const Text('Пожаловаться на объявление'),
-      children: [
-        for (final r in _reportReasons)
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, r),
-            child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(r)),
-          ),
-      ],
+    builder: (ctx) => GlassDialog(
+      title: 'Пожаловаться на объявление',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final r in _reportReasons)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  foregroundColor: AppColors.ink,
+                  alignment: Alignment.centerLeft,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.25)),
+                ),
+                onPressed: () => Navigator.pop(ctx, r),
+                child: Text(r, style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+        ],
+      ),
     ),
   );
   if (reason == null || !context.mounted) return;

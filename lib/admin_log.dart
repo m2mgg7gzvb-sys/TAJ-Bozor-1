@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'glass_widgets.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_threads.dart';
@@ -78,20 +80,34 @@ Future<String?> askReason(BuildContext context, String title) async {
   final ctrl = TextEditingController();
   final result = await showDialog<String>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
+    builder: (ctx) => GlassDialog(
+      title: title,
       content: TextField(
         controller: ctrl,
         autofocus: true,
         maxLines: 3,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Причина (увидит владелец, можно пропустить)',
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
-        FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Далее')),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          ),
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Отмена', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          ),
+          onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+          child: const Text('Далее', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
       ],
     ),
   );
