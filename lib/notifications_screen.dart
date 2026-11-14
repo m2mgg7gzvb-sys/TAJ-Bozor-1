@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'incoming_call_screen.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
@@ -96,45 +95,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        // Красная точка: уведомление было непрочитанным, когда экран открыли.
-                        if (unread) ...[
-                          Container(
-                            width: 9,
-                            height: 9,
-                            decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Expanded(
-                          child: Text(
-                            (n['title'] as String?) ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if ((n['body'] as String?)?.isNotEmpty ?? false) ...[
-                      const SizedBox(height: 4),
-                      Text((n['body'] as String?)!, style: const TextStyle(fontSize: 15)),
-                    ],
-                    if (n['kind'] == 'incoming_call' && n['data'] is Map && (n['data']['channel'] as String?) != null) ...[
-                      const SizedBox(height: 10),
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: const Color(0xFF13C15A)),
-                        icon: const Icon(Icons.call_rounded),
-                        label: const Text('Открыть звонок'),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            fullscreenDialog: true,
-                            builder: (_) => IncomingCallScreen(
-                              channel: n['data']['channel'] as String,
-                              callerName: (n['data']['caller_name'] as String?) ?? 'Звонит пользователь',
+                    if (n['kind'] == 'incoming_call')
+                      _callBody(n)
+                    else ...[
+                      Row(
+                        children: [
+                          // Красная точка: уведомление было непрочитанным, когда экран открыли.
+                          if (unread) ...[
+                            Container(
+                              width: 9,
+                              height: 9,
+                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: Text(
+                              (n['title'] as String?) ?? '',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                             ),
                           ),
-                        ),
+                        ],
                       ),
+                      if ((n['body'] as String?)?.isNotEmpty ?? false) ...[
+                        const SizedBox(height: 4),
+                        Text((n['body'] as String?)!, style: const TextStyle(fontSize: 15)),
+                      ],
                     ],
                     const SizedBox(height: 6),
                     Text(
@@ -149,6 +135,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           );
         },
       ),
+    );
+  }
+
+  /// Входящий звонок: имя сверху, снизу «Звонок» (состоялся, стрелка вверх)
+  /// или «Пропущенный» (красным, стрелка вниз).
+  Widget _callBody(Map<String, dynamic> n) {
+    final data = (n['data'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+    final caller = (data['caller_name'] as String?)?.trim();
+    final name = (caller == null || caller.isEmpty) ? 'Звонит пользователь' : caller;
+    final answered = data['status'] == 'answered';
+    final color = answered ? AppColors.ink : Colors.red;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(
+              answered ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+              size: 18,
+              color: color,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              answered ? 'Звонок' : 'Пропущенный',
+              style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 15),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
