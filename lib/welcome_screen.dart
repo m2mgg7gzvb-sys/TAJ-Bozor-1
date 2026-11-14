@@ -31,7 +31,10 @@ class _LoginRouteState extends State<LoginRoute> {
     super.initState();
     _sub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
       if (state.session != null && mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Даём показать галочку «подтверждено», потом закрываем экран входа.
+        Future.delayed(const Duration(milliseconds: 1300), () {
+          if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+        });
       }
     });
   }
