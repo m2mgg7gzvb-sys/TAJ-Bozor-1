@@ -12,6 +12,7 @@ import 'listing_utils.dart';
 import 'lang_store.dart';
 import 'listings_screen.dart';
 import 'nav_state.dart';
+import 'glass_widgets.dart';
 import 'theme.dart';
 
 /// Главная вкладка «Поиск»: поиск, баннер, категории и новые объявления.
@@ -300,16 +301,14 @@ class _HomeTabState extends State<HomeTab> {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-              // Фон как на экране входа: памятник справа вверху, затемнён зелёным.
-              image: DecorationImage(
-                image: const AssetImage('assets/welcome_bg.jpg'),
-                fit: BoxFit.cover,
-                alignment: Alignment.topRight,
-                colorFilter: ColorFilter.mode(AppColors.deep.withValues(alpha: 0.55), BlendMode.srcOver),
-              ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Фон шапки: волны и памятник, рисуются векторно.
+                const Positioned(left: -9, top: -9, right: -9, bottom: -14, child: HeaderArt()),
+                Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const _CityButton(),
@@ -383,6 +382,7 @@ class _HomeTabState extends State<HomeTab> {
                 ),
               ],
             ),
+            ]),
           ),
           Expanded(
             child: RefreshIndicator(

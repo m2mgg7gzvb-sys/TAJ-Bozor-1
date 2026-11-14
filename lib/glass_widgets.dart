@@ -219,3 +219,67 @@ BoxDecoration glassSheetDecoration() => BoxDecoration(
         ),
       ],
     );
+
+/// Фон зелёной шапки главной: векторные волны и силуэт памятника (чёткий при любом размере).
+class HeaderArt extends StatelessWidget {
+  const HeaderArt({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: const CustomPaint(painter: _HeaderArtPainter(), size: Size.infinite),
+    );
+  }
+}
+
+class _HeaderArtPainter extends CustomPainter {
+  const _HeaderArtPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // Светлая волна сверху.
+    final wave = Path()
+      ..moveTo(0, h * 0.20)
+      ..quadraticBezierTo(w * 0.35, h * 0.02, w * 0.7, h * 0.16)
+      ..quadraticBezierTo(w * 0.9, h * 0.24, w, h * 0.10)
+      ..lineTo(w, 0)
+      ..lineTo(0, 0)
+      ..close();
+    canvas.drawPath(wave, Paint()..color = Colors.white.withValues(alpha: 0.06));
+
+    // Силуэт памятника справа: купол, антаблемент и колонны.
+    final mon = Paint()..color = Colors.white.withValues(alpha: 0.14);
+    final domeCx = w * 0.84;
+    final domeR = w * 0.085;
+    final domeTop = h * 0.04;
+    final dome = Path()
+      ..moveTo(domeCx - domeR, h * 0.42)
+      ..quadraticBezierTo(domeCx - domeR, domeTop, domeCx, domeTop)
+      ..quadraticBezierTo(domeCx + domeR, domeTop, domeCx + domeR, h * 0.42)
+      ..close();
+    canvas.drawPath(dome, mon);
+    canvas.drawRect(Rect.fromLTRB(w * 0.66, h * 0.42, w * 1.02, h * 0.47), mon);
+    for (var i = 0; i < 7; i++) {
+      final x = w * 0.68 + i * w * 0.05;
+      canvas.drawRect(Rect.fromLTRB(x, h * 0.47, x + w * 0.018, h * 0.86), mon);
+    }
+    canvas.drawRect(Rect.fromLTRB(w * 0.64, h * 0.86, w * 1.02, h * 0.90), mon);
+
+    // Тёмная волна внизу для читаемости поиска и текста.
+    final low = Path()
+      ..moveTo(0, h * 0.74)
+      ..quadraticBezierTo(w * 0.5, h * 0.62, w, h * 0.78)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(low, Paint()..color = Colors.black.withValues(alpha: 0.14));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
