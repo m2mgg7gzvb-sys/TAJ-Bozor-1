@@ -889,12 +889,19 @@ class _ListingsScreenState extends State<ListingsScreen> {
     required List<String> items,
     required String anyLabel,
     String? current,
+    List<String> popular = const [],
   }) {
     return showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _PickerSheet(title: title, items: items, anyLabel: anyLabel, current: current),
+      builder: (ctx) => _PickerSheet(
+        title: title,
+        items: items,
+        anyLabel: anyLabel,
+        current: current,
+        popular: popular,
+      ),
     );
   }
 
@@ -1009,6 +1016,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       items: _catalog[_brand]?.keys.toList() ?? <String>[],
       anyLabel: 'Все модели',
       current: _model,
+      popular: carPopularModels[_brand] ?? const <String>[],
     );
     if (model == null) return;
     setState(() {
@@ -2401,12 +2409,19 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
 /// Список выбора с поиском: марки, модели, поколения и любые значения.
 class _PickerSheet extends StatefulWidget {
-  const _PickerSheet({required this.title, required this.items, required this.anyLabel, this.current});
+  const _PickerSheet({
+    required this.title,
+    required this.items,
+    required this.anyLabel,
+    this.current,
+    this.popular = const [],
+  });
 
   final String title;
   final List<String> items;
   final String anyLabel;
   final String? current;
+  final List<String> popular;
 
   @override
   State<_PickerSheet> createState() => _PickerSheetState();
@@ -2419,6 +2434,16 @@ class _PickerSheetState extends State<_PickerSheet> {
   void dispose() {
     _query.dispose();
     super.dispose();
+  }
+
+  Widget _sectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.black45),
+      ),
+    );
   }
 
   Widget _row(String text, {required bool selected, required VoidCallback onTap}) {
@@ -2456,6 +2481,10 @@ class _PickerSheetState extends State<_PickerSheet> {
     final shown = q.isEmpty
         ? widget.items
         : widget.items.where((i) => i.toLowerCase().contains(q)).toList();
+    final popularShown = [
+      for (final m in widget.popular)
+        if (widget.items.contains(m)) m,
+    ];
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
@@ -2520,12 +2549,28 @@ class _PickerSheetState extends State<_PickerSheet> {
                     selected: widget.current == null,
                     onTap: () => Navigator.pop(context, ''),
                   ),
-                  for (final i in shown)
-                    _row(
-                      i,
-                      selected: i == widget.current,
-                      onTap: () => Navigator.pop(context, i),
-                    ),
+                  if (q.isEmpty && popularShown.isNotEmpty) ...[
+                    _sectionTitle('Популярные'),
+                    for (final i in popularShown)
+                      _row(
+                        i,
+                        selected: i == widget.current,
+                        onTap: () => Navigator.pop(context, i),
+                      ),
+                    _sectionTitle('Все'),
+                    for (final i in shown.where((i) => !popularShown.contains(i)))
+                      _row(
+                        i,
+                        selected: i == widget.current,
+                        onTap: () => Navigator.pop(context, i),
+                      ),
+                  ] else
+                    for (final i in shown)
+                      _row(
+                        i,
+                        selected: i == widget.current,
+                        onTap: () => Navigator.pop(context, i),
+                      ),
                 ],
               ),
             ),
