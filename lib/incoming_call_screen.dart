@@ -1,6 +1,7 @@
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'call_screen.dart';
 
@@ -43,8 +44,16 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
     } catch (_) {}
   }
 
+  /// Запоминает итог звонка в уведомлении: 'answered' или 'declined'.
+  void _setStatus(String status) {
+    Supabase.instance.client
+        .rpc('set_call_status', params: {'p_channel': widget.channel, 'p_status': status})
+        .catchError((_) {});
+  }
+
   void _accept() {
     _stopRing();
+    _setStatus('answered');
     // Уже звоним этому человеку (оба позвонили друг другу): просто закрываем экран входящего.
     if (activeCallChannel == widget.channel) {
       Navigator.of(context).pop();
@@ -59,6 +68,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
 
   void _decline() {
     _stopRing();
+    _setStatus('declined');
     Navigator.of(context).pop();
   }
 
