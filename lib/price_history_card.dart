@@ -76,3 +76,57 @@ class PriceHistoryCard extends StatelessWidget {
     );
   }
 }
+
+/// Старая (более высокая) цена перечёркнута под текущей ценой.
+/// Берём последнюю запись истории, где цена была выше текущей.
+class OldPriceLine extends StatelessWidget {
+  const OldPriceLine({super.key, required this.listingId, required this.price, required this.currency});
+
+  final String listingId;
+  final num? price;
+  final String currency;
+
+  Future<num?> _load() async {
+    final cur = price;
+    if (cur == null) return null;
+    try {
+      final rows = await Supabase.instance.client
+          .from('listing_price_history')
+          .select('price')
+          .eq('listing_id', listingId)
+          .gt('price', cur)
+          .order('changed_at', ascending: false)
+          .limit(1);
+      final list = List<Map<String, dynamic>>.from(rows);
+      if (list.isEmpty) return null;
+      return num.tryParse('${list.first['price']}');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (price == null) return const SizedBox.shrink();
+    return FutureBuilder<num?>(
+      future: _load(),
+      builder: (context, snap) {
+        final old = snap.data;
+        if (old == null || old <= price!) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(
+            '${groupDigits(old)} $currency',
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              decoration: TextDecoration.lineThrough,
+              decorationThickness: 2,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
