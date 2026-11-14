@@ -14,6 +14,7 @@ import 'callback_sheet.dart';
 import 'chat_screen.dart';
 import 'create_listing_screen.dart';
 import 'fallback_photo.dart';
+import 'glass_widgets.dart';
 import 'favorites_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
@@ -329,8 +330,16 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final sellerCity = (_seller?['city'] as String?) ?? city;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF2F7F5),
       appBar: AppBar(
-        title: Text(tr('Объявление', 'Эълон')),
+        backgroundColor: const Color(0xFFF2F7F5),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          tr('Объявление', 'Эълон'),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        ),
         actions: [
           if (!_isOwner && Supabase.instance.client.auth.currentUser != null)
             IconButton(
@@ -566,7 +575,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           ),
                   child: Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: cardDecoration(radius: 18),
+                  decoration: glowDecoration(radius: 18),
                   child: Row(
                     children: [
                       UserAvatar(
@@ -610,7 +619,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   Text(tr('Про автомобиль', 'Дар бораи мошин'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 8),
                   Container(
-                    decoration: cardDecoration(radius: 16),
+                    decoration: glowDecoration(radius: 16),
                     child: Column(
                       children: [
                         for (final r in _carRows())

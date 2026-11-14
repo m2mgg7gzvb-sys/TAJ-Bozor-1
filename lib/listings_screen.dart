@@ -16,6 +16,7 @@ import 'phone_catalog.dart';
 import 'listings_map_screen.dart';
 import 'saved_searches_store.dart';
 import 'search_terms.dart';
+import 'glass_widgets.dart';
 import 'theme.dart';
 
 /// Проверка числа из details (хранится текстом) по диапазону «от / до».
@@ -901,10 +902,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
+        decoration: glassSheetDecoration(),
         child: SafeArea(
           top: false,
           child: Padding(
@@ -1161,9 +1159,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: const Color(0xFFF2F7F5),
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF2F7F5),
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
@@ -1328,9 +1326,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: const Color(0xFFF2F7F5),
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF2F7F5),
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
@@ -1523,9 +1521,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: const Color(0xFFF2F7F5),
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF2F7F5),
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
@@ -1933,9 +1931,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 : <String>[];
 
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: const Color(0xFFF2F7F5),
               appBar: AppBar(
-                backgroundColor: Colors.white,
+                backgroundColor: const Color(0xFFF2F7F5),
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
