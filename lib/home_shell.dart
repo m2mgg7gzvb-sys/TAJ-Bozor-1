@@ -105,29 +105,14 @@ class _HomeShellState extends State<HomeShell> {
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(color: AppColors.deep.withValues(alpha: 0.14), blurRadius: 24, offset: const Offset(0, 8)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: ColoredBox(
-              color: Colors.white.withValues(alpha: 0.94),
-              child: NavigationBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedIndex: _index,
-        onDestinationSelected: (i) => tabIndex.value = i,
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.search_rounded), label: tr('Поиск', 'Ҷустуҷӯ')),
-          NavigationDestination(icon: const Icon(Icons.favorite_border_rounded), label: tr('Избранное', 'Интихобшуда')),
-          NavigationDestination(icon: const Icon(Icons.post_add_rounded), label: tr('Объявления', 'Эълонҳо')),
-          NavigationDestination(
+      bottomNavigationBar: _GlassTabBar(
+        index: _index,
+        onChanged: (i) => tabIndex.value = i,
+        items: [
+          _NavItem(icon: const Icon(Icons.search_rounded), label: tr('Поиск', 'Ҷустуҷӯ')),
+          _NavItem(icon: const Icon(Icons.favorite_border_rounded), label: tr('Избранное', 'Интихобшуда')),
+          _NavItem(icon: const Icon(Icons.post_add_rounded), label: tr('Объявления', 'Эълонҳо')),
+          _NavItem(
             icon: ValueListenableBuilder<bool>(
               valueListenable: hasUnread,
               builder: (_, has, __) => Badge(
@@ -139,17 +124,13 @@ class _HomeShellState extends State<HomeShell> {
             ),
             label: tr('Сообщения', 'Паёмҳо'),
           ),
-          NavigationDestination(
+          _NavItem(
             icon: const Icon(Icons.person_outline_rounded),
             label: Supabase.instance.client.auth.currentSession != null
                 ? tr('Профиль', 'Профил')
                 : tr('Войти', 'Ворид'),
           ),
         ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -170,6 +151,135 @@ class _MessagesTab extends StatelessWidget {
               title: 'Войдите, чтобы писать продавцам',
               text: 'Переписка в приложении удобна и безопасна: все детали по объявлению в одном месте.',
             ),
+    );
+  }
+}
+
+class _NavItem {
+  const _NavItem({required this.icon, required this.label});
+
+  final Widget icon;
+  final String label;
+}
+
+/// Нижняя панель в стиле iOS: стеклянная капсула, по которой плавно скользит подсветка
+/// к выбранной вкладке. Можно нажать или провести пальцем по панели.
+class _GlassTabBar extends StatelessWidget {
+  const _GlassTabBar({required this.items, required this.index, required this.onChanged});
+
+  final List<_NavItem> items;
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = items.length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      child: Container(
+        height: 68,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(34),
+          boxShadow: [
+            BoxShadow(color: AppColors.deep.withValues(alpha: 0.16), blurRadius: 24, offset: const Offset(0, 8)),
+          ],
+        ),
+        padding: const EdgeInsets.all(6),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragUpdate: (d) {
+                final i = (d.localPosition.dx / constraints.maxWidth * n).floor().clamp(0, n - 1);
+                if (i != index) onChanged(i);
+              },
+              child: Stack(
+                children: [
+                  // Подсветка-капля: плавно переезжает к выбранной вкладке.
+                  AnimatedAlign(
+                    duration: const Duration(milliseconds: 380),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment(n <= 1 ? 0 : -1 + 2 * index / (n - 1), 0),
+                    child: FractionallySizedBox(
+                      widthFactor: 1 / n,
+                      heightFactor: 1,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.24),
+                              AppColors.primary.withValues(alpha: 0.08),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.28),
+                              blurRadius: 14,
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      for (var i = 0; i < n; i++)
+                        Expanded(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onChanged(i),
+                            child: _TabCell(item: items[i], selected: i == index),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _TabCell extends StatelessWidget {
+  const _TabCell({required this.item, required this.selected});
+
+  final _NavItem item;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.primary : AppColors.ink;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedScale(
+            scale: selected ? 1.12 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutBack,
+            child: IconTheme(data: IconThemeData(color: color, size: 24), child: item.icon),
+          ),
+          const SizedBox(height: 2),
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 220),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+            ),
+            child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ],
+      ),
     );
   }
 }
