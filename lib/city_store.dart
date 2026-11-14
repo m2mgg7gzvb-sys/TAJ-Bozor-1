@@ -59,47 +59,105 @@ Future<void> setSelectedCity(String? city) async {
   }
 }
 
-/// Окно выбора города со списком всех городов.
+/// Окно выбора города: белая панель с зелёными волнами по углам, галочка у выбранного города.
 Future<void> showCityPicker(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
     builder: (ctx) {
       final current = selectedCity.value;
-      Widget tick(bool selected) =>
-          selected ? const Icon(Icons.check_rounded, color: AppColors.primary) : const SizedBox.shrink();
-      return SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.only(bottom: 16),
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
-              child: Text(
-                'Выберите город',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+      final cities = <String?>[null, ...tajCities];
+      return Stack(
+        children: [
+          // Зелёные волны в углах, как в шапке приложения.
+          Positioned(
+            top: -70,
+            right: -60,
+            child: _Glow(size: 200, color: AppColors.primary.withValues(alpha: 0.14)),
+          ),
+          Positioned(
+            bottom: -80,
+            left: -70,
+            child: _Glow(size: 220, color: AppColors.primary.withValues(alpha: 0.10)),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 4, 16, 14),
+                    child: Text(
+                      'Выберите город',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+                    ),
+                  ),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: cities.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16),
+                      itemBuilder: (context, i) {
+                        final city = cities[i];
+                        final selected = city == current;
+                        return ListTile(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          title: Text(
+                            city ?? tr('Все города', 'Ҳама шаҳрҳо'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                              color: selected ? AppColors.deep : AppColors.ink,
+                            ),
+                          ),
+                          trailing: AnimatedScale(
+                            scale: selected ? 1 : 0,
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeOutBack,
+                            child: Container(
+                              width: 26,
+                              height: 26,
+                              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                              child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                            ),
+                          ),
+                          onTap: () {
+                            setSelectedCity(city);
+                            Navigator.of(ctx).pop();
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              title: Text(tr('Все города', 'Ҳама шаҳрҳо')),
-              trailing: tick(current == null),
-              onTap: () {
-                setSelectedCity(null);
-                Navigator.of(ctx).pop();
-              },
-            ),
-            for (final c in tajCities)
-              ListTile(
-                title: Text(c),
-                trailing: tick(c == current),
-                onTap: () {
-                  setSelectedCity(c);
-                  Navigator.of(ctx).pop();
-                },
-              ),
-          ],
-        ),
+          ),
+        ],
       );
     },
   );
+}
+
+/// Мягкое зелёное пятно для украшения углов.
+class _Glow extends StatelessWidget {
+  const _Glow({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      ),
+    );
+  }
 }
