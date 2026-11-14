@@ -462,8 +462,15 @@ class _SearchFieldState extends State<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF4F6F5),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(color: AppColors.deep.withValues(alpha: 0.18), blurRadius: 14, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Material(
+      color: Colors.white,
       borderRadius: BorderRadius.circular(26),
       child: InkWell(
         borderRadius: BorderRadius.circular(26),
@@ -502,6 +509,7 @@ class _SearchFieldState extends State<_SearchField> {
           ),
         ),
       ),
+    ),
     );
   }
 }
