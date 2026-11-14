@@ -151,6 +151,26 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       ),
       child: Stack(
         children: [
+          // Фото памятника справа вверху, плавно гаснет к левому и нижнему краю.
+          Align(
+            alignment: Alignment.topRight,
+            child: FractionallySizedBox(
+              widthFactor: 0.78,
+              heightFactor: 0.62,
+              child: ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  colors: [Colors.transparent, Colors.white],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: Opacity(
+                  opacity: 0.55,
+                  child: Image.asset('assets/welcome_bg.jpg', fit: BoxFit.cover, alignment: Alignment.topRight),
+                ),
+              ),
+            ),
+          ),
           const Positioned.fill(child: CustomPaint(painter: _DarkWavesPainter())),
           SafeArea(
         child: Column(
@@ -170,14 +190,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                     const SizedBox(height: 22),
                     FadeTransition(
                       opacity: _part(0.35, 0.7),
-                      child: const Text(
-                        'TAJ Bozor',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 40,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'TAJ Bozor',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 40,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // Двойная золотая линия под названием, как в макете.
+                          Container(height: 3, color: const Color(0xFFF5C842)),
+                          const SizedBox(height: 2),
+                          Container(height: 3, color: const Color(0xFFF5C842)),
+                        ],
                       ),
                     ),
                   ],
