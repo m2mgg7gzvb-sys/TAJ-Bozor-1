@@ -6,6 +6,7 @@ import 'create_listing_screen.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'promote_sheet.dart';
 import 'theme.dart';
 
 /// Статусы, при которых объявление переходит в раздел «Завершённые».
@@ -135,10 +136,14 @@ class _MyListingsTabState extends State<MyListingsTab> {
                 onSelected: (v) {
                   if (v == 'sold') _markSold(item);
                   if (v == 'bump') bumpListing(context, item['id'] as String);
+                  if (v == 'top') {
+                    showPromoteSheet(context, title: (item['title'] as String?) ?? '');
+                  }
                 },
                 itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'sold', child: Text('Отметить как продано')),
+                  PopupMenuItem(value: 'top', child: Text('TOP: продвинуть')),
                   PopupMenuItem(value: 'bump', child: Text('Поднять в топ')),
+                  PopupMenuItem(value: 'sold', child: Text('Отметить как продано')),
                 ],
               ),
             ),
