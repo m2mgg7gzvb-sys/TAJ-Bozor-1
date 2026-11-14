@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_screen.dart';
 import 'theme.dart';
+import 'glass_widgets.dart';
 
 const _defaultReason = 'Вход нужен, чтобы писать продавцам и сохранять избранное';
 
@@ -107,10 +108,7 @@ class _Sheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      decoration: glassSheetDecoration(),
       child: SafeArea(
         top: false,
         child: Padding(
