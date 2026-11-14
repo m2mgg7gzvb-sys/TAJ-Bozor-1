@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_phone.dart';
 import 'auth_intent.dart';
 import 'auth_screen.dart';
+import 'glass_widgets.dart';
 import 'nav_state.dart';
 import 'theme.dart';
 
@@ -228,21 +229,25 @@ class _SheetState extends State<_Sheet> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.97),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 28,
+            spreadRadius: -4,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SegmentedButton<bool>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: false, label: Text('Вход')),
-              ButtonSegment(value: true, label: Text('Регистрация')),
-            ],
-            selected: {_register},
-            onSelectionChanged: (s) => setState(() => _register = s.first),
+          GlassTabs(
+            labels: const ['Вход', 'Регистрация'],
+            selected: _register ? 1 : 0,
+            onChanged: (i) => setState(() => _register = i == 1),
           ),
           const SizedBox(height: 14),
           Text(
