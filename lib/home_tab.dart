@@ -300,6 +300,13 @@ class _HomeTabState extends State<HomeTab> {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
+              // Фон как на экране входа: памятник справа вверху, затемнён зелёным.
+              image: DecorationImage(
+                image: const AssetImage('assets/welcome_bg.jpg'),
+                fit: BoxFit.cover,
+                alignment: Alignment.topRight,
+                colorFilter: ColorFilter.mode(AppColors.deep.withValues(alpha: 0.55), BlendMode.srcOver),
+              ),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
