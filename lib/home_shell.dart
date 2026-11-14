@@ -15,6 +15,7 @@ import 'nav_state.dart';
 import 'notify_store.dart';
 import 'push.dart';
 import 'theme.dart';
+import 'wave_background.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок.
 class HomeShell extends StatefulWidget {
@@ -91,17 +92,35 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: [
-          HomeTab(),
-          FavoritesScreen(),
-          MyListingsTab(),
-          const _MessagesTab(),
-          AccountTab(),
-        ],
+      backgroundColor: const Color(0xFFF2F7F5),
+      body: WaveBackground(
+        child: IndexedStack(
+          index: _index,
+          children: [
+            HomeTab(),
+            FavoritesScreen(),
+            MyListingsTab(),
+            const _MessagesTab(),
+            AccountTab(),
+          ],
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(color: AppColors.deep.withValues(alpha: 0.14), blurRadius: 24, offset: const Offset(0, 8)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: ColoredBox(
+              color: Colors.white.withValues(alpha: 0.94),
+              child: NavigationBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         selectedIndex: _index,
         onDestinationSelected: (i) => tabIndex.value = i,
         destinations: [
@@ -127,6 +146,10 @@ class _HomeShellState extends State<HomeShell> {
                 : tr('Войти', 'Ворид'),
           ),
         ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -599,8 +599,10 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFEEF1F0),
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.white.withValues(alpha: 0.82),
+      elevation: 1.5,
+      shadowColor: AppColors.deep.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
