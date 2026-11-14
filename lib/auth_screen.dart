@@ -116,8 +116,12 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     if (_codeStep) {
       return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(),
+        backgroundColor: const Color(0xFFF2F7F5),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF2F7F5),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -135,6 +139,7 @@ class _AuthScreenState extends State<AuthScreen> {
       );
     }
     return Scaffold(
+      backgroundColor: const Color(0xFFF2F7F5),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -170,7 +175,23 @@ class _AuthScreenState extends State<AuthScreen> {
                 Text(_error!, style: const TextStyle(color: Colors.red)),
               ],
               const SizedBox(height: 20),
-              FilledButton(
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      spreadRadius: -2,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: FilledButton(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                ),
                 onPressed: _loading ? null : _sendCode,
                 child: _loading
                     ? const SizedBox(
@@ -179,6 +200,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : const Text('Получить код на почту'),
+              ),
               ),
               const SizedBox(height: 8),
               TextButton(
