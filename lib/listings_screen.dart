@@ -17,6 +17,7 @@ import 'listings_map_screen.dart';
 import 'saved_searches_store.dart';
 import 'search_terms.dart';
 import 'glass_widgets.dart';
+import 'wave_background.dart';
 import 'theme.dart';
 
 /// Проверка числа из details (хранится текстом) по диапазону «от / до».
@@ -875,7 +876,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) => SizedBox(width: 165, child: ListingCard(item: items[i])),
+            itemBuilder: (_, i) => SizedBox(width: 165, child: GlowCard(child: ListingCard(item: items[i]))),
           ),
         ),
       ],
@@ -2296,8 +2297,16 @@ class _ListingsScreenState extends State<ListingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text(widget.title),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          widget.title,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        ),
         actions: [
           IconButton(
             tooltip: 'На карте',
@@ -2311,7 +2320,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
           _saveStar(() => setState(() {})),
         ],
       ),
-      body: RefreshIndicator(
+      body: WaveBackground(
+        child: RefreshIndicator(
         onRefresh: () async => _reload(),
         child: ListView(
           padding: EdgeInsets.zero,
@@ -2374,7 +2384,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                         mainAxisSpacing: 8,
                         crossAxisSpacing: 8,
                         childAspectRatio: 0.66,
-                        children: [for (final item in items) ListingCard(item: item)],
+                        children: [for (final item in items) GlowCard(child: ListingCard(item: item))],
                       ),
                     ),
                   ],
@@ -2383,6 +2393,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
