@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'otp_code_view.dart';
+import 'theme.dart';
+
 /// Регистрация и вход по почте.
 /// Шаг 1: почта (и имя при регистрации) → Supabase присылает 6-значный код.
 /// Шаг 2: код из письма → verifyOTP создаёт сессию.
@@ -17,7 +20,6 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _codeCtrl = TextEditingController();
 
   bool _codeStep = false;
   bool _loading = false;
@@ -69,29 +71,36 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _verifyCode() async {
-    final code = _codeCtrl.text.trim();
-    if (code.length != 6) {
-      setState(() => _error = 'Введите 6 цифр из письма');
-      return;
-    }
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  /// Проверяет код из письма. Возвращает null, если код верный, иначе текст ошибки.
+  Future<String?> _verifyCode(String code) async {
     try {
       await _db.auth.verifyOTP(
         type: OtpType.email,
         email: _emailCtrl.text.trim(),
         token: code,
       );
-      // Успешный вход перехватит RootGate через onAuthStateChange.
-    } on AuthException catch (e) {
-      setState(() => _error = e.message);
+      // Успешный вход перехватит экран приветствия или RootGate через onAuthStateChange.
+      return null;
+    } on AuthException {
+      return 'Код неверный или устарел. Попробуйте ещё раз';
     } catch (_) {
-      setState(() => _error = 'Не удалось проверить код');
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      return 'Не удалось проверить код. Проверьте сеть';
+    }
+  }
+
+  /// Отправляет код повторно. Возвращает null при успехе.
+  Future<String?> _resendCode() async {
+    try {
+      await _db.auth.signInWithOtp(
+        email: _emailCtrl.text.trim(),
+        shouldCreateUser: _isRegister,
+        data: _isRegister ? {'name': _nameCtrl.text.trim()} : null,
+      );
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Не удалось отправить код. Проверьте сеть';
     }
   }
 
@@ -99,13 +108,32 @@ class _AuthScreenState extends State<AuthScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
-    _codeCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (_codeStep) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: OtpCodeView(
+              email: _emailCtrl.text.trim(),
+              onVerify: _verifyCode,
+              onResend: _resendCode,
+              onChangeEmail: () => setState(() {
+                _codeStep = false;
+                _error = null;
+              }),
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -115,75 +143,51 @@ class _AuthScreenState extends State<AuthScreen> {
             children: [
               const SizedBox(height: 40),
               Text(
-                _codeStep ? 'Введите код' : (_isRegister ? 'Регистрация' : 'Вход'),
+                _isRegister ? 'Регистрация' : 'Вход',
                 style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
-                _codeStep
-                    ? 'Мы отправили 6-значный код на ${_emailCtrl.text.trim()}'
-                    : 'Войдите по почте, код придёт на письмо',
+                'Войдите по почте, код придёт на письмо',
                 style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54),
               ),
               const SizedBox(height: 24),
-              if (!_codeStep) ...[
-                if (_isRegister)
-                  TextField(
-                    controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Имя', border: OutlineInputBorder()),
-                  ),
-                if (_isRegister) const SizedBox(height: 12),
+              if (_isRegister) ...[
                 TextField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: const InputDecoration(labelText: 'Почта', border: OutlineInputBorder()),
+                  controller: _nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Имя'),
                 ),
-              ] else ...[
-                TextField(
-                  controller: _codeCtrl,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, letterSpacing: 6),
-                  decoration: const InputDecoration(counterText: '', border: OutlineInputBorder()),
-                ),
+                const SizedBox(height: 12),
               ],
+              TextField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                decoration: const InputDecoration(labelText: 'Почта'),
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!, style: const TextStyle(color: Colors.red)),
               ],
               const SizedBox(height: 20),
               FilledButton(
-                onPressed: _loading ? null : (_codeStep ? _verifyCode : _sendCode),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                onPressed: _loading ? null : _sendCode,
                 child: _loading
                     ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(_codeStep ? 'Подтвердить' : 'Получить код на почту'),
+                    : const Text('Получить код на почту'),
               ),
               const SizedBox(height: 8),
-              const SizedBox(height: 8),
-              if (!_codeStep)
-                TextButton(
-                  onPressed: () => setState(() {
-                    _isRegister = !_isRegister;
-                    _error = null;
-                  }),
-                  child: Text(_isRegister ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'),
-                )
-              else
-                TextButton(
-                  onPressed: () => setState(() {
-                    _codeStep = false;
-                    _codeCtrl.clear();
-                    _error = null;
-                  }),
-                  child: const Text('Изменить почту'),
-                ),
+              TextButton(
+                onPressed: () => setState(() {
+                  _isRegister = !_isRegister;
+                  _error = null;
+                }),
+                child: Text(_isRegister ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться'),
+              ),
             ],
           ),
         ),
