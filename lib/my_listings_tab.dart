@@ -5,6 +5,7 @@ import 'create_listing_screen.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'listing_actions_sheet.dart';
 import 'promote_sheet.dart';
 import 'theme.dart';
 
@@ -129,47 +130,15 @@ class _MyListingsTabState extends State<MyListingsTab> {
             child: Material(
               color: Colors.white.withValues(alpha: 0.92),
               shape: const CircleBorder(),
-              child: PopupMenuButton<String>(
+              child: IconButton(
                 tooltip: 'Действия',
                 icon: const Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.ink),
-                offset: const Offset(0, 8),
-                elevation: 10,
-                color: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                shadowColor: Colors.black26,
-                constraints: const BoxConstraints(minWidth: 230),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                onSelected: (v) {
-                  if (v == 'sold') _markSold(item);
-                  if (v == 'top') {
-                    showPromoteSheet(context, title: (item['title'] as String?) ?? '');
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'top',
-                    height: 58,
-                    child: _menuRow(
-                      Icons.rocket_launch_rounded,
-                      'Продвинуть в TOP',
-                      'Выше в списке',
-                      AppColors.ink,
-                      iconBg: AppColors.saffron,
-                    ),
-                  ),
-                  const PopupMenuDivider(height: 1),
-                  PopupMenuItem(
-                    value: 'sold',
-                    height: 58,
-                    child: _menuRow(
-                      Icons.check_circle_outline_rounded,
-                      'Отметить как продано',
-                      'Уйдёт в завершённые',
-                      AppColors.primary,
-                      iconBg: AppColors.mint,
-                    ),
-                  ),
-                ],
+                onPressed: () => showListingActions(
+                  context,
+                  title: (item['title'] as String?) ?? '',
+                  onTop: () => showPromoteSheet(context, title: (item['title'] as String?) ?? ''),
+                  onSold: () => _markSold(item),
+                ),
               ),
             ),
           ),
@@ -230,32 +199,6 @@ class _MyListingsTabState extends State<MyListingsTab> {
               ),
             ),
           ),
-      ],
-    );
-  }
-
-  /// Строка меню: цветной кружок с иконкой, название и короткое пояснение.
-  Widget _menuRow(IconData icon, String title, String subtitle, Color iconColor, {required Color iconBg}) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, size: 20, color: iconColor),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.ink)),
-              const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
-            ],
-          ),
-        ),
       ],
     );
   }
