@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'auth_screen.dart';
+import 'glass_widgets.dart';
 import 'favorites_store.dart';
 import 'seller_stats_screen.dart';
 import 'lang_store.dart';
@@ -98,7 +99,17 @@ class _ProfilePageState extends State<_ProfilePage> {
   Widget build(BuildContext context) {
     final isGuest = widget.user.isAnonymous;
     return Scaffold(
-      appBar: AppBar(title: Text(tr('Профиль', 'Профил'))),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          tr('Профиль', 'Профил'),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        ),
+      ),
       body: FutureBuilder<_ProfileData>(
         future: _data,
         builder: (context, snap) {
@@ -266,7 +277,7 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: cardDecoration(radius: 20),
+      decoration: glowDecoration(radius: 20),
       child: Column(
         children: [
           Row(
@@ -330,7 +341,7 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: cardDecoration(radius: 16),
+      decoration: glowDecoration(radius: 16),
       child: Column(
         children: [
           Text(
@@ -591,7 +602,7 @@ class _MenuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: cardDecoration(radius: 18),
+      decoration: glowDecoration(radius: 18),
       child: Column(children: children),
     );
   }
