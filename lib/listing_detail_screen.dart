@@ -433,9 +433,19 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        priceText(item),
-                        style: const TextStyle(color: AppColors.primary, fontSize: 28, fontWeight: FontWeight.w800),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            priceText(item),
+                            style: const TextStyle(color: AppColors.primary, fontSize: 28, fontWeight: FontWeight.w800),
+                          ),
+                          OldPriceLine(
+                            listingId: _id,
+                            price: num.tryParse('${item['price']}'),
+                            currency: item['currency'] as String? ?? 'TJS',
+                          ),
+                        ],
                       ),
                     ),
                     if (_views != null)
