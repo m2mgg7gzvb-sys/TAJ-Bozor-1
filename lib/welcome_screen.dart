@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_phone.dart';
+import 'auth_intent.dart';
 import 'auth_screen.dart';
 import 'nav_state.dart';
 import 'theme.dart';
@@ -90,16 +91,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => LoginRoute(child: page)));
   }
 
-  void _openEmail() {
+  void _openEmail(bool register) {
     _push(
       Scaffold(
         appBar: AppBar(),
-        body: const SafeArea(child: AuthScreen()),
+        body: SafeArea(child: AuthScreen(startRegister: register)),
       ),
     );
   }
 
-  void _openPhone() => _push(const PhoneAuthScreen());
+  void _openPhone(bool register) => _push(PhoneAuthScreen(register: register));
 
   void _skip() {
     if (widget.onSkip != null) {
@@ -109,7 +110,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     }
   }
 
-  Future<void> _oauth(OAuthProvider provider) async {
+  Future<void> _oauth(OAuthProvider provider, bool register) async {
+    await rememberAuthIntent(register: register);
     try {
       // prompt=select_account: Google каждый раз спрашивает, каким аккаунтом войти.
       await Supabase.instance.client.auth.signInWithOAuth(
@@ -177,8 +179,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
               position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
                   .animate(_part(0.75, 1, Curves.easeOutCubic)),
               child: _Sheet(
-                onApple: () => _oauth(OAuthProvider.apple),
-                onGoogle: () => _oauth(OAuthProvider.google),
+                onApple: (r) => _oauth(OAuthProvider.apple, r),
+                onGoogle: (r) => _oauth(OAuthProvider.google, r),
                 onPhone: _openPhone,
                 onEmail: _openEmail,
                 onSkip: _skip,
@@ -200,10 +202,10 @@ class _Sheet extends StatefulWidget {
     required this.onSkip,
   });
 
-  final VoidCallback onApple;
-  final VoidCallback onGoogle;
-  final VoidCallback onPhone;
-  final VoidCallback onEmail;
+  final ValueChanged<bool> onApple;
+  final ValueChanged<bool> onGoogle;
+  final ValueChanged<bool> onPhone;
+  final ValueChanged<bool> onEmail;
   final VoidCallback onSkip;
 
   @override
@@ -255,8 +257,8 @@ class _SheetState extends State<_Sheet> {
           const SizedBox(height: 16),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-            onPressed: onApple,
-            child: const Text('Продолжить с Apple'),
+            onPressed: () => onApple(_register),
+            child: Text(_register ? 'Зарегистрироваться через Apple' : 'Продолжить с Apple'),
           ),
           const SizedBox(height: 10),
           OutlinedButton(
@@ -266,21 +268,23 @@ class _SheetState extends State<_Sheet> {
               side: const BorderSide(color: Color(0xFFD5DAD8)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            onPressed: onGoogle,
-            child: const Text('Продолжить с Google'),
+            onPressed: () => onGoogle(_register),
+            child: Text(_register ? 'Зарегистрироваться через Google' : 'Продолжить с Google'),
           ),
-          const SizedBox(height: 10),
-          FilledButton(
-            onPressed: onPhone,
-            child: Text(_register ? 'Зарегистрироваться по номеру' : 'Войти по номеру'),
-          ),
+          if (!_register) ...[
+            const SizedBox(height: 10),
+            FilledButton(
+              onPressed: () => onPhone(false),
+              child: const Text('Войти по номеру'),
+            ),
+          ],
           const SizedBox(height: 10),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFF1F4F3),
               foregroundColor: AppColors.ink,
             ),
-            onPressed: onEmail,
+            onPressed: () => onEmail(_register),
             child: Text(_register ? 'Зарегистрироваться по почте' : 'Войти по почте'),
           ),
           TextButton(
