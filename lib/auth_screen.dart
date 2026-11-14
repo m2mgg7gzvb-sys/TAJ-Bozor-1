@@ -5,7 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Шаг 1: почта (и имя при регистрации) → Supabase присылает 6-значный код.
 /// Шаг 2: код из письма → verifyOTP создаёт сессию.
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({super.key, this.startRegister = false});
+
+  /// true — открыть сразу регистрацию.
+  final bool startRegister;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -22,6 +25,12 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isRegister = false;
 
   SupabaseClient get _db => Supabase.instance.client;
+
+  @override
+  void initState() {
+    super.initState();
+    _isRegister = widget.startRegister;
+  }
 
   bool _validEmail(String v) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(v);
 

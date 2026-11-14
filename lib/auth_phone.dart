@@ -6,7 +6,10 @@ import 'theme.dart';
 /// Вход по номеру +992: сначала номер, потом код из SMS.
 /// Работает, когда в Supabase подключён SMS-провайдер (см. инструкцию).
 class PhoneAuthScreen extends StatefulWidget {
-  const PhoneAuthScreen({super.key});
+  const PhoneAuthScreen({super.key, this.register = false});
+
+  /// true — регистрация (аккаунт создастся), false — вход (аккаунта может не быть).
+  final bool register;
 
   @override
   State<PhoneAuthScreen> createState() => _PhoneAuthScreenState();
@@ -38,8 +41,19 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       _error = null;
     });
     try {
-      await Supabase.instance.client.auth.signInWithOtp(phone: '+992$_digits');
+      await Supabase.instance.client.auth.signInWithOtp(
+        phone: '+992$_digits',
+        shouldCreateUser: widget.register,
+      );
       if (mounted) setState(() => _codeStep = true);
+    } on AuthException catch (e) {
+      final notFound = e.message.toLowerCase().contains('signups not allowed') ||
+          e.message.toLowerCase().contains('signup');
+      if (mounted) {
+        setState(() => _error = !widget.register && notFound
+            ? 'Аккаунта с этим номером нет. Зарегистрируйтесь'
+            : 'Не удалось отправить код. Проверьте номер и попробуйте позже');
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'Не удалось отправить код. Проверьте номер и попробуйте позже');
     } finally {
