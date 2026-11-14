@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{bg1}}"/>
+      <stop offset="1" stop-color="{{bg2}}"/>
+    </linearGradient>
+    <linearGradient id="sofa" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{a}}"/>
+      <stop offset="1" stop-color="{{b}}"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <rect y="300" width="400" height="100" fill="#000000" opacity="0.08"/>
+  <rect x="150" y="70" width="100" height="70" rx="6" fill="#FFFFFF" opacity="0.55"/>
+  <rect x="160" y="80" width="80" height="50" rx="3" fill="{{a}}" opacity="0.55"/>
+  <rect x="330" y="150" width="6" height="150" fill="#3A4743"/>
+  <path d="M312 150 L354 150 L344 108 L322 108 Z" fill="#F5D26B"/>
+  <rect x="318" y="296" width="36" height="8" rx="4" fill="#3A4743"/>
+  <rect x="42" y="256" width="40" height="44" rx="6" fill="#B9803F"/>
+  <path d="M62 256 Q30 220 40 180 Q62 200 62 256" fill="#3C9B6B"/>
+  <path d="M62 256 Q92 214 84 176 Q64 198 62 256" fill="#2F7F58"/>
+  <path d="M62 256 Q60 210 62 168 Q68 210 62 256" fill="#4DB081"/>
+  <ellipse cx="200" cy="318" rx="140" ry="11" fill="#000000" opacity="0.18"/>
+  <rect x="96" y="196" width="208" height="84" rx="22" fill="url(#sofa)"/>
+  <rect x="82" y="232" width="236" height="62" rx="18" fill="url(#sofa)"/>
+  <rect x="68" y="216" width="46" height="84" rx="20" fill="url(#sofa)"/>
+  <rect x="286" y="216" width="46" height="84" rx="20" fill="url(#sofa)"/>
+  <rect x="124" y="214" width="66" height="44" rx="14" fill="#FFFFFF" opacity="0.28"/>
+  <rect x="210" y="214" width="66" height="44" rx="14" fill="#FFFFFF" opacity="0.18"/>
+  <rect x="92" y="296" width="12" height="20" rx="4" fill="#3A4743"/>
+  <rect x="296" y="296" width="12" height="20" rx="4" fill="#3A4743"/>
+</svg>
