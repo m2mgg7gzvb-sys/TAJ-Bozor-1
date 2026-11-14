@@ -5,6 +5,7 @@ import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'admin_log.dart';
 import 'confirm_delete.dart';
+import 'glass_widgets.dart';
 import 'theme.dart';
 
 /// Все объявления для админов: фильтр по статусу, поиск по названию и действия
@@ -71,7 +72,13 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
   Widget build(BuildContext context) {
     final query = _searchCtrl.text.trim().toLowerCase();
     return Scaffold(
-      appBar: AppBar(title: const Text('Все объявления')),
+      backgroundColor: const Color(0xFFF2F7F5),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF2F7F5),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Все объявления')),
       body: Column(
         children: [
           SingleChildScrollView(
@@ -230,7 +237,7 @@ class _AdminTile extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: cardDecoration(radius: 20),
+      decoration: glowDecoration(radius: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
