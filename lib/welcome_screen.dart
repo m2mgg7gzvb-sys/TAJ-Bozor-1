@@ -137,12 +137,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       _c.value = 1;
     }
 
-    return Container(
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
       width: double.infinity,
       height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.deep],
+          colors: [Color(0xFF0B6A57), Color(0xFF063A30)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -198,6 +200,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -381,7 +384,7 @@ class _PillButton extends StatelessWidget {
   }
 }
 
-/// Мягкие волны на зелёном фоне входа.
+/// Волны на зелёном фоне входа: светлые дуги сверху и тёмные холмы снизу.
 class _DarkWavesPainter extends CustomPainter {
   const _DarkWavesPainter();
 
@@ -389,20 +392,37 @@ class _DarkWavesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final top = Path()
-      ..moveTo(0, h * 0.12)
-      ..quadraticBezierTo(w * 0.5, h * 0.02, w, h * 0.14)
+    // Светлая дуга сверху.
+    final arc1 = Path()
+      ..moveTo(0, h * 0.20)
+      ..quadraticBezierTo(w * 0.5, h * 0.02, w, h * 0.22)
       ..lineTo(w, 0)
       ..lineTo(0, 0)
       ..close();
-    canvas.drawPath(top, Paint()..color = Colors.white.withValues(alpha: 0.05));
-    final low = Path()
-      ..moveTo(0, h * 0.52)
-      ..quadraticBezierTo(w * 0.45, h * 0.40, w, h * 0.56)
+    canvas.drawPath(arc1, Paint()..color = Colors.white.withValues(alpha: 0.07));
+    final arc2 = Path()
+      ..moveTo(0, h * 0.30)
+      ..quadraticBezierTo(w * 0.55, h * 0.12, w, h * 0.34)
+      ..lineTo(w, h * 0.10)
+      ..quadraticBezierTo(w * 0.5, 0, 0, h * 0.14)
+      ..close();
+    canvas.drawPath(arc2, Paint()..color = Colors.white.withValues(alpha: 0.05));
+    // Тёмные холмы внизу.
+    final hill1 = Path()
+      ..moveTo(0, h * 0.58)
+      ..quadraticBezierTo(w * 0.35, h * 0.46, w * 0.7, h * 0.62)
+      ..quadraticBezierTo(w * 0.9, h * 0.70, w, h * 0.66)
       ..lineTo(w, h)
       ..lineTo(0, h)
       ..close();
-    canvas.drawPath(low, Paint()..color = Colors.black.withValues(alpha: 0.10));
+    canvas.drawPath(hill1, Paint()..color = Colors.black.withValues(alpha: 0.18));
+    final hill2 = Path()
+      ..moveTo(0, h * 0.78)
+      ..quadraticBezierTo(w * 0.5, h * 0.70, w, h * 0.82)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(hill2, Paint()..color = Colors.black.withValues(alpha: 0.14));
   }
 
   @override
