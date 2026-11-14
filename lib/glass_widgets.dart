@@ -27,7 +27,7 @@ class GlowCard extends StatelessWidget {
   }
 }
 
-/// Переключатель в виде стеклянной капсулы: выбранная вкладка подсвечена зелёным.
+/// Переключатель в виде стеклянной капсулы: подсветка плавно переезжает на выбранную вкладку.
 class GlassTabs extends StatelessWidget {
   const GlassTabs({required this.labels, required this.selected, required this.onChanged});
 
@@ -37,6 +37,7 @@ class GlassTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final n = labels.length;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -46,49 +47,63 @@ class GlassTabs extends StatelessWidget {
           BoxShadow(color: AppColors.deep.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
         ],
       ),
-      child: Row(
-        children: [
-          for (var i = 0; i < labels.length; i++)
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOut,
-                  height: 42,
-                  alignment: Alignment.center,
+      child: SizedBox(
+        height: 42,
+        child: Stack(
+          children: [
+            // Подсветка, которая скользит между вкладками.
+            AnimatedAlign(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment(n <= 1 ? 0 : -1 + 2 * selected / (n - 1), 0),
+              child: FractionallySizedBox(
+                widthFactor: 1 / n,
+                heightFactor: 1,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(22),
-                    gradient: i == selected
-                        ? LinearGradient(
-                            colors: [
-                              AppColors.primary.withValues(alpha: 0.22),
-                              AppColors.primary.withValues(alpha: 0.06),
-                            ],
-                          )
-                        : null,
-                    boxShadow: i == selected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.30),
-                              blurRadius: 12,
-                              spreadRadius: -2,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Text(
-                    labels[i],
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
-                      color: i == selected ? AppColors.deep : AppColors.ink,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withValues(alpha: 0.22),
+                        AppColors.primary.withValues(alpha: 0.06),
+                      ],
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.30),
+                        blurRadius: 12,
+                        spreadRadius: -2,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-        ],
+            Row(
+              children: [
+                for (var i = 0; i < n; i++)
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onChanged(i),
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 220),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
+                            color: i == selected ? AppColors.deep : AppColors.ink,
+                          ),
+                          child: Text(labels[i], maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
