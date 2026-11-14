@@ -814,7 +814,7 @@ class _PriceHint extends StatelessWidget {
           for (final r in snap.data ?? const <Map<String, dynamic>>[])
             if (num.tryParse('${r['price']}') != null) num.parse('${r['price']}'),
         ];
-        if (prices.length < 3) return const SizedBox.shrink();
+        if (prices.length < 10) return const SizedBox.shrink();
         final avg = prices.reduce((a, b) => a + b) / prices.length;
         final diff = (p - avg) / avg * 100;
         final verdict = diff.abs() < 5
