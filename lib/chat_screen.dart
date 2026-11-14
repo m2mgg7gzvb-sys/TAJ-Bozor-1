@@ -615,7 +615,13 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
     final channel = pairChannel(me, otherId as String);
-    inviteToCall(calleeId: otherId, channel: channel);
+    inviteToCall(calleeId: otherId, channel: channel).then((ok) {
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Собеседник не получил уведомление о звонке. Попросите его открыть приложение'),
+        ));
+      }
+    });
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CallScreen(

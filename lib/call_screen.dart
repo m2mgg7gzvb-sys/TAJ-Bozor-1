@@ -28,12 +28,15 @@ String pairChannel(String a, String b) {
 }
 
 /// Отправляет собеседнику входящий звонок (push и экран у него в приложении).
-Future<void> inviteToCall({required String calleeId, required String channel}) async {
+/// Возвращает false, если приглашение не дошло до сервера.
+Future<bool> inviteToCall({required String calleeId, required String channel}) async {
   try {
-    await Supabase.instance.client.functions
+    final res = await Supabase.instance.client.functions
         .invoke('call-invite', body: {'callee_id': calleeId, 'channel': channel});
+    return res.status == 200;
   } catch (_) {
-    // Даже если приглашение не ушло, звонящий сам попадает в канал.
+    // Звонящий сам попадает в канал, но собеседник о звонке не узнает.
+    return false;
   }
 }
 
