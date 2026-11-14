@@ -172,7 +172,17 @@ class _MessagesTabState extends State<MessagesTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Сообщения')),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Сообщения',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           final f = _loadChats();
@@ -329,7 +339,9 @@ class _ChatTile extends StatelessWidget {
     final photo = listing == null ? null : photoUrl(listing);
     final listingTitle = (listing?['title'] as String?) ?? 'Объявление удалено';
     return Material(
-      color: Colors.white,
+      color: Colors.white.withValues(alpha: 0.94),
+      elevation: 4,
+      shadowColor: AppColors.primary.withValues(alpha: 0.35),
       borderRadius: BorderRadius.circular(18),
       child: ListTile(
         onTap: onTap,
@@ -402,7 +414,9 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: Colors.white.withValues(alpha: 0.94),
+      elevation: 4,
+      shadowColor: AppColors.primary.withValues(alpha: 0.35),
       borderRadius: BorderRadius.circular(18),
       child: ListTile(
         onTap: onTap,
