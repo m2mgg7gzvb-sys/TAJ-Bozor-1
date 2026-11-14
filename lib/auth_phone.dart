@@ -86,7 +86,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE3ECE9)),
                       ),
                       child: const Text('+992', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
@@ -99,12 +100,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         decoration: InputDecoration(
                           counterText: '',
                           hintText: '90 000 00 00',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
                         ),
                       ),
                     ),
@@ -122,12 +117,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: '6 цифр из SMS',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
                   ),
                 ),
               ],
