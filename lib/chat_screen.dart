@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -367,6 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     markChatRead(widget.conversationId);
     _ctrl.dispose();
+    _recTimer?.cancel();
     _recorder.dispose();
     super.dispose();
   }
@@ -486,6 +489,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final _recorder = AudioRecorder();
   bool _recording = false;
+  Timer? _recTimer;
+  Duration _recElapsed = Duration.zero;
 
   void _snack(String text) {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -547,6 +552,20 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Отмена записи: запись останавливается и не отправляется.
+  Future<void> _cancelRecord() async {
+    _recTimer?.cancel();
+    try {
+      await _recorder.stop();
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _recording = false;
+        _recElapsed = Duration.zero;
+      });
+    }
+  }
+
   /// Нажал — начинается запись, нажал ещё раз — запись уходит в чат.
   Future<void> _toggleRecord() async {
     if (_sending) return;
@@ -556,9 +575,15 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
       await _recorder.start(const RecordConfig(encoder: AudioEncoder.opus), path: 'voice');
+      _recElapsed = Duration.zero;
+      _recTimer?.cancel();
+      _recTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() => _recElapsed += const Duration(seconds: 1));
+      });
       setState(() => _recording = true);
       return;
     }
+    _recTimer?.cancel();
     final recordedUrl = await _recorder.stop();
     setState(() => _recording = false);
     if (recordedUrl == null) return;
@@ -894,19 +919,28 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: _sending ? null : _attachImage,
-                    icon: const Icon(Icons.image_outlined),
+                  if (!_recording) ...[
+                    IconButton(
+                      onPressed: _sending ? null : _attachImage,
+                      icon: const Icon(Icons.image_outlined),
+                    ),
+                    IconButton(
+                      onPressed: _sending ? null : _attachFile,
+                      icon: const Icon(Icons.attach_file_rounded),
+                    ),
+                  ],
+                  Expanded(
+                    child: _recording
+                        ? _RecordingBar(elapsed: _recElapsed, onCancel: _cancelRecord)
+                        : _GlowInput(controller: _ctrl),
                   ),
-                  IconButton(
-                    onPressed: _sending ? null : _attachFile,
-                    icon: const Icon(Icons.attach_file_rounded),
-                  ),
-                  Expanded(child: _GlowInput(controller: _ctrl)),
                   const SizedBox(width: 8),
                   ValueListenableBuilder<TextEditingValue>(
                     valueListenable: _ctrl,
                     builder: (_, value, __) {
+                      if (_recording) {
+                        return _PulseSendButton(onPressed: _sending ? null : _toggleRecord);
+                      }
                       if (value.text.trim().isNotEmpty) {
                         return IconButton.filled(
                           onPressed: _sending ? null : _send,
@@ -1051,6 +1085,146 @@ class _GlowInputState extends State<_GlowInput> with SingleTickerProviderStateMi
             focusedBorder: InputBorder.none,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Строка записи: мигающая красная точка, таймер и «‹ Отмена».
+class _RecordingBar extends StatelessWidget {
+  const _RecordingBar({required this.elapsed, required this.onCancel});
+
+  final Duration elapsed;
+  final Future<void> Function() onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = elapsed.inMinutes.toString();
+    final s = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: _raised(color: _theirBubble, radius: 24),
+      child: Row(
+        children: [
+          const _BlinkDot(),
+          const SizedBox(width: 8),
+          Text(
+            '$m:$s',
+            style: const TextStyle(
+              color: AppColors.ink,
+              fontWeight: FontWeight.w700,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onCancel(),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chevron_left_rounded, color: AppColors.ruby, size: 20),
+                Text('Отмена', style: TextStyle(color: AppColors.ruby, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Красная точка, которая плавно мигает во время записи.
+class _BlinkDot extends StatefulWidget {
+  const _BlinkDot();
+
+  @override
+  State<_BlinkDot> createState() => _BlinkDotState();
+}
+
+class _BlinkDotState extends State<_BlinkDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 700))..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.25, end: 1).animate(_c),
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(color: AppColors.ruby, shape: BoxShape.circle),
+      ),
+    );
+  }
+}
+
+/// Большая синяя кнопка отправки записи с пульсирующими кругами.
+class _PulseSendButton extends StatefulWidget {
+  const _PulseSendButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  State<_PulseSendButton> createState() => _PulseSendButtonState();
+}
+
+class _PulseSendButtonState extends State<_PulseSendButton> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 60,
+      height: 60,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AnimatedBuilder(
+            animation: _c,
+            builder: (_, __) => Container(
+              width: 46 + 14 * _c.value,
+              height: 46 + 14 * _c.value,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.28 * (1 - _c.value)),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: widget.onPressed,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primary, AppColors.deep],
+                ),
+                boxShadow: [
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 26),
+            ),
+          ),
+        ],
       ),
     );
   }
