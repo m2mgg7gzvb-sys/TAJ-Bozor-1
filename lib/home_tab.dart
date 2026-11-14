@@ -600,9 +600,13 @@ class _CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white.withValues(alpha: 0.82),
-      elevation: 1.5,
-      shadowColor: AppColors.deep.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(18),
+      // Зелёное свечение вокруг плитки и тонкая светящаяся рамка.
+      elevation: 6,
+      shadowColor: AppColors.primary.withValues(alpha: 0.45),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.28)),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

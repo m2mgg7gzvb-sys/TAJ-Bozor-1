@@ -130,7 +130,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final hasNote = (_notes[id] ?? '').trim().isNotEmpty;
     return Stack(
       children: [
-        ListingCard(item: item),
+        _GlowCard(child: ListingCard(item: item)),
         Positioned(
           top: 6,
           left: 6,
@@ -299,8 +299,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final loggedIn = Supabase.instance.client.auth.currentSession != null;
     final showCompare = loggedIn && _tab == 0;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Избранное'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Избранное',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        ),
         actions: [
           if (showCompare)
             TextButton(
@@ -337,19 +345,107 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: SegmentedButton<int>(
-                    showSelectedIcon: false,
-                    segments: const [
-                      ButtonSegment(value: 0, label: Text('Объявления')),
-                      ButtonSegment(value: 1, label: Text('Сохранённые поиски')),
-                    ],
-                    selected: {_tab},
-                    onSelectionChanged: (s) => setState(() => _tab = s.first),
+                  child: _GlassTabs(
+                    labels: const ['Объявления', 'Сохранённые поиски'],
+                    selected: _tab,
+                    onChanged: (i) => setState(() => _tab = i),
                   ),
                 ),
                 Expanded(child: _tab == 0 ? _listings() : _savedSearches()),
               ],
             ),
+    );
+  }
+}
+
+/// Мягкое зелёное свечение вокруг карточки объявления.
+class _GlowCard extends StatelessWidget {
+  const _GlowCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.24),
+            blurRadius: 18,
+            spreadRadius: -2,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Переключатель в виде стеклянной капсулы: выбранная вкладка подсвечена зелёным.
+class _GlassTabs extends StatelessWidget {
+  const _GlassTabs({required this.labels, required this.selected, required this.onChanged});
+
+  final List<String> labels;
+  final int selected;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(color: AppColors.deep.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    gradient: i == selected
+                        ? LinearGradient(
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.22),
+                              AppColors.primary.withValues(alpha: 0.06),
+                            ],
+                          )
+                        : null,
+                    boxShadow: i == selected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.30),
+                              blurRadius: 12,
+                              spreadRadius: -2,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    labels[i],
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
+                      color: i == selected ? AppColors.deep : AppColors.ink,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
