@@ -6,7 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'root_gate.dart';
 import 'theme.dart';
 
-/// Загрузочный экран из макета: логотип появляется с пружиной, название плавно проявляется, точки прыгают.
+/// Вход в приложение: логотип плавно появляется, название поднимается снизу,
+/// фон мягко переходит в тёмно-зелёный, затем экран растворяется.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -14,29 +15,37 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late final AnimationController _intro;
-  late final Animation<double> _logo;
-  late final Animation<double> _text;
+  late final AnimationController _exit;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoFade;
+  late final Animation<double> _textFade;
+  late final Animation<Offset> _textSlide;
+  late final Animation<double> _bgShift;
 
   @override
   void initState() {
     super.initState();
-    _intro = AnimationController(vsync: this, duration: const Duration(milliseconds: 1300))
-      ..forward();
-    _logo = CurvedAnimation(
-      parent: _intro,
-      curve: const Interval(0.0, 0.5, curve: Curves.elasticOut),
+    _intro = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..forward();
+    _exit = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _logoScale = Tween(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _intro, curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)),
     );
-    _text = CurvedAnimation(
-      parent: _intro,
-      curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
+    _logoFade = CurvedAnimation(parent: _intro, curve: const Interval(0.0, 0.4, curve: Curves.easeOut));
+    _textFade = CurvedAnimation(parent: _intro, curve: const Interval(0.45, 0.9, curve: Curves.easeOut));
+    _textSlide = Tween(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(parent: _intro, curve: const Interval(0.45, 0.95, curve: Curves.easeOutCubic)),
     );
-    Future.delayed(const Duration(milliseconds: 2200), () {
+    _bgShift = CurvedAnimation(parent: _intro, curve: Curves.easeInOut);
+
+    Future.delayed(const Duration(milliseconds: 2000), () async {
+      if (!mounted) return;
+      await _exit.forward();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 400),
+          transitionDuration: const Duration(milliseconds: 350),
           pageBuilder: (_, __, ___) => const RootGate(),
           transitionsBuilder: (_, animation, __, child) =>
               FadeTransition(opacity: animation, child: child),
@@ -48,45 +57,77 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _intro.dispose();
+    _exit.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ScaleTransition(
-              scale: _logo,
-              child: SvgPicture.asset('assets/logo.svg', width: 120, height: 120),
+      body: AnimatedBuilder(
+        animation: Listenable.merge([_intro, _exit, _bgShift]),
+        builder: (context, child) {
+          final bg = Color.lerp(AppColors.primary, AppColors.deep, _bgShift.value * 0.6)!;
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primary, bg],
+              ),
             ),
-            const SizedBox(height: 24),
-            FadeTransition(
-              opacity: _text,
-              child: Text.rich(
-                const TextSpan(
-                  style: TextStyle(color: Colors.white, fontSize: 32, height: 1),
-                  children: [
-                    TextSpan(text: 'TAJ ', style: TextStyle(fontWeight: FontWeight.w800)),
-                    TextSpan(text: 'Bozor', style: TextStyle(fontWeight: FontWeight.w500)),
-                  ],
+            child: Opacity(
+              opacity: 1 - _exit.value,
+              child: Transform.scale(scale: 1 + _exit.value * 0.05, child: child),
+            ),
+          );
+        },
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FadeTransition(
+                opacity: _logoFade,
+                child: ScaleTransition(
+                  scale: _logoScale,
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                    child: SvgPicture.asset('assets/logo.svg', width: 104, height: 104),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            FadeTransition(
-              opacity: _text,
-              child: const Text(
-                'Бозор дар ҷайби шумо',
-                style: TextStyle(color: Colors.white70, fontSize: 15),
+              const SizedBox(height: 28),
+              SlideTransition(
+                position: _textSlide,
+                child: FadeTransition(
+                  opacity: _textFade,
+                  child: Text.rich(
+                    const TextSpan(
+                      style: TextStyle(color: Colors.white, fontSize: 32, height: 1, letterSpacing: -0.5),
+                      children: [
+                        TextSpan(text: 'TAJ ', style: TextStyle(fontWeight: FontWeight.w800)),
+                        TextSpan(text: 'Bozor', style: TextStyle(fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-            const _BouncingDots(),
-          ],
+              const SizedBox(height: 8),
+              FadeTransition(
+                opacity: _textFade,
+                child: const Text(
+                  'Бозор дар ҷайби шумо',
+                  style: TextStyle(color: Colors.white70, fontSize: 15),
+                ),
+              ),
+              const SizedBox(height: 36),
+              FadeTransition(opacity: _textFade, child: const _BouncingDots()),
+            ],
+          ),
         ),
       ),
     );
