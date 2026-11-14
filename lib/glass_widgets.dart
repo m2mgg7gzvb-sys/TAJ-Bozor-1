@@ -266,7 +266,8 @@ class _HeaderArtPainter extends CustomPainter {
     canvas.drawPath(low, Paint()..color = Colors.black.withValues(alpha: 0.14));
   }
 
-  /// Рисует объёмное здание: фасад, боковая грань, крыша и окна на фасаде.
+  /// Объёмное здание с затенением: светлый фасад с округлым градиентом, тёмная боковая грань,
+  /// светлая крыша, стеклянные окна со скруглением и тень на земле.
   void _drawBuilding(
     Canvas canvas, {
     required double x,
@@ -280,36 +281,84 @@ class _HeaderArtPainter extends CustomPainter {
     final dy = depth * 0.5; // наклон изометрии
     final front = Rect.fromLTRB(x, top, x + width, base);
 
-    final sidePath = Path()
+    // Мягкая тень на земле.
+    canvas.drawOval(
+      Rect.fromLTRB(x - width * 0.15, base - 5, x + width + depth + width * 0.1, base + 9),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+
+    // Боковая грань: от светлого верха к тёмному низу.
+    final side = Path()
       ..moveTo(x + width, top)
       ..lineTo(x + width + depth, top - dy)
       ..lineTo(x + width + depth, base - dy)
       ..lineTo(x + width, base)
       ..close();
-    canvas.drawPath(sidePath, Paint()..color = Colors.black.withValues(alpha: 0.16));
+    final sideRect = Rect.fromLTRB(x + width, top - dy, x + width + depth, base);
+    canvas.drawPath(
+      side,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white.withValues(alpha: 0.22), Colors.black.withValues(alpha: 0.26)],
+        ).createShader(sideRect),
+    );
 
-    final roofPath = Path()
+    // Крыша: самая светлая грань.
+    final roof = Path()
       ..moveTo(x, top)
       ..lineTo(x + depth, top - dy)
       ..lineTo(x + width + depth, top - dy)
       ..lineTo(x + width, top)
       ..close();
-    canvas.drawPath(roofPath, Paint()..color = Colors.white.withValues(alpha: 0.38));
+    canvas.drawPath(roof, Paint()..color = Colors.white.withValues(alpha: 0.58));
 
-    canvas.drawRect(front, Paint()..color = Colors.white.withValues(alpha: 0.20));
+    // Фасад с горизонтальным градиентом: округлость здания.
+    canvas.drawRect(
+      front,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          stops: const [0.0, 0.42, 1.0],
+          colors: [
+            Colors.black.withValues(alpha: 0.12),
+            Colors.white.withValues(alpha: 0.36),
+            Colors.white.withValues(alpha: 0.14),
+          ],
+        ).createShader(front),
+    );
+    canvas.drawRect(
+      front,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = Colors.white.withValues(alpha: 0.40),
+    );
 
-    // Окна на фасаде.
-    final rowH = width * 0.22;
-    final rows = (height / rowH).floor();
-    final winPaint = Paint()..color = Colors.white.withValues(alpha: 0.42);
-    final pad = width * 0.14;
+    // Окна: стеклянные, со скруглением и бликом сверху.
+    final pad = width * 0.12;
     final winW = (width - pad * (cols + 1)) / cols;
-    for (var r = 0; r < rows; r++) {
+    final rowH = width * 0.20;
+    for (var r = 0;; r++) {
+      final wy = top + pad + r * rowH;
+      final wBottom = wy + rowH * 0.6;
+      if (wBottom > base - pad) break;
       for (var c = 0; c < cols; c++) {
         final wx = x + pad + c * (winW + pad);
-        final wy = top + pad + r * rowH;
-        if (wy + rowH * 0.55 > base - pad) continue;
-        canvas.drawRect(Rect.fromLTWH(wx, wy, winW, rowH * 0.55), winPaint);
+        final rect = Rect.fromLTWH(wx, wy, winW, rowH * 0.6);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, Radius.circular(winW * 0.18)),
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white.withValues(alpha: 0.70), Colors.white.withValues(alpha: 0.18)],
+            ).createShader(rect),
+        );
       }
     }
   }
