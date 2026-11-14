@@ -18,7 +18,18 @@ security definer
 set search_path = public
 as $$
 begin
-  if new.price is not null and (tg_op = 'INSERT' or new.price is distinct from old.price) then
+  if tg_op = 'INSERT' then
+    if new.price is not null then
+      insert into public.listing_price_history (listing_id, price) values (new.id, new.price);
+    end if;
+  elsif new.price is not null and new.price is distinct from old.price then
+    -- Первое изменение цены: сохраняем старую цену, чтобы было видно «было → стало».
+    if old.price is not null and not exists (
+      select 1 from public.listing_price_history h where h.listing_id = new.id
+    ) then
+      insert into public.listing_price_history (listing_id, price, changed_at)
+      values (new.id, old.price, old.created_at);
+    end if;
     insert into public.listing_price_history (listing_id, price) values (new.id, new.price);
   end if;
   return new;
