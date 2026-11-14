@@ -83,18 +83,35 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final ctrl = TextEditingController(text: current);
     final text = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Заметка к объявлению'),
+      builder: (ctx) => GlassDialog(
+        title: 'Заметка к объявлению',
         content: TextField(
           controller: ctrl,
           maxLines: 4,
           maxLength: 500,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'Например: позвонить после 18:00'),
+          decoration: InputDecoration(
+            hintText: 'Например: позвонить после 18:00',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Сохранить')),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            ),
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Сохранить', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );

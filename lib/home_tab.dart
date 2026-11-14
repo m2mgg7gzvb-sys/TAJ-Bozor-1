@@ -183,6 +183,26 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  /// Цвет свечения за 3D-иконкой плитки.
+  Color _glowFor(String slug) {
+    switch (slug) {
+      case 'real-estate':
+        return const Color(0xFFFF3B3B); // красный, как крыша дома
+      case 'jobs':
+        return const Color(0xFFFFB300); // жёлтый, как каска
+      case 'auto':
+        return const Color(0xFF2D8CFF); // синий
+      case 'electronics':
+        return const Color(0xFF00C2D1); // бирюзовый
+      case 'services':
+        return const Color(0xFFFF6A1A); // оранжевый
+      case 'home':
+        return const Color(0xFFA56BFF); // фиолетовый
+      default:
+        return AppColors.primary; // зелёный
+    }
+  }
+
   Color _accentFor(String slug) {
     switch (slug) {
       case 'jobs':
@@ -205,6 +225,7 @@ class _HomeTabState extends State<HomeTab> {
         icon: cat.icon,
         image: cat.image,
         accent: _accentFor(slug),
+        glow: _glowFor(slug),
         name: (tajikLang.value ? _tgTileLabels : _tileLabels)[slug] ?? cat.name,
         onTap: isAll
             ? _openAll
@@ -585,6 +606,7 @@ class _CategoryChip extends StatelessWidget {
   const _CategoryChip({
     required this.icon,
     required this.accent,
+    this.glow = AppColors.primary,
     required this.name,
     required this.onTap,
     this.image,
@@ -593,6 +615,7 @@ class _CategoryChip extends StatelessWidget {
   final IconData icon;
   final String? image;
   final Color accent;
+  final Color glow;
   final String name;
   final VoidCallback onTap;
 
@@ -632,7 +655,27 @@ class _CategoryChip extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 child: image == null
                     ? Icon(icon, color: accent, size: 34)
-                    : Image.asset(image!, width: 40, height: 40, fit: BoxFit.contain),
+                    : SizedBox(
+                        width: 58,
+                        height: 50,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Цветное свечение за иконкой.
+                            Container(
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [glow.withValues(alpha: 0.55), glow.withValues(alpha: 0)],
+                                ),
+                              ),
+                            ),
+                            Image.asset(image!, width: 40, height: 40, fit: BoxFit.contain),
+                          ],
+                        ),
+                      ),
               ),
             ],
           ),
