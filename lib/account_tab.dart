@@ -619,22 +619,81 @@ class _MenuTile extends StatelessWidget {
 Future<void> _confirmSignOut(BuildContext context) async {
   final ok = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(tr('Подтвердить выход?', 'Баромадани худро тасдиқ кунед?')),
-      content: Text(tr(
-        'Вы уверены, что хотите выйти из аккаунта?',
-        'Шумо мутмаин ҳастед, ки аз ҳисоб баромадан мехоҳед?',
-      )),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(tr('Отмена', 'Бекор')),
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(22, 26, 22, 18),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.28),
+              blurRadius: 28,
+              spreadRadius: -4,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(tr('Выйти', 'Баромадан')),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.12),
+              ),
+              child: const Icon(Icons.logout_rounded, color: AppColors.primary, size: 28),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              tr('Подтвердить выход?', 'Баромадани худро тасдиқ кунед?'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              tr(
+                'Вы уверены, что хотите выйти из аккаунта?',
+                'Шумо мутмаин ҳастед, ки аз ҳисоб баромадан мехоҳед?',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: AppColors.muted),
+            ),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      side: BorderSide(color: AppColors.primary.withValues(alpha: 0.35)),
+                    ),
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(tr('Отмена', 'Бекор'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                      backgroundColor: AppColors.ruby,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    ),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(tr('Выйти', 'Баромадан'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
   if (ok == true) {
