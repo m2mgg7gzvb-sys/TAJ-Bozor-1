@@ -14,13 +14,24 @@ String? photoUrl(Map<String, dynamic> item) {
   return Supabase.instance.client.storage.from('listing-photos').getPublicUrl(path);
 }
 
-/// Цена в виде текста, например «1500 TJS».
+/// Сумма с точками между разрядами: 25000000 → «25.000.000».
+String groupDigits(num value) {
+  final neg = value < 0;
+  final whole = value.abs().round().toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < whole.length; i++) {
+    if (i > 0 && (whole.length - i) % 3 == 0) buf.write('.');
+    buf.write(whole[i]);
+  }
+  return '${neg ? '-' : ''}$buf';
+}
+
+/// Цена в виде текста, например «25.000.000 TJS».
 String priceText(Map<String, dynamic> item) {
   final price = num.tryParse('${item['price']}');
   if (price == null) return 'Договорная';
   final currency = item['currency'] as String? ?? 'TJS';
-  final amount = price % 1 == 0 ? price.toStringAsFixed(0) : price.toStringAsFixed(2);
-  return '$amount $currency';
+  return '${groupDigits(price)} $currency';
 }
 
 /// Все фото объявления по порядку (пусто, если фото нет).

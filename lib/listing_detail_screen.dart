@@ -821,7 +821,7 @@ class _PriceHint extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Средняя цена похожих: ${avg.round()} TJS (${prices.length} объявл.)\n$verdict',
+                  'Средняя цена похожих: ${groupDigits(avg)} TJS (${prices.length} объявл.)\n$verdict',
                   style: const TextStyle(fontSize: 13, height: 1.35),
                 ),
               ),

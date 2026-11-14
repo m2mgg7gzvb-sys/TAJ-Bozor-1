@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'listing_utils.dart';
 import 'theme.dart';
 
 /// История цены объявления. Показывается, только если цену меняли хотя бы один раз.
@@ -61,7 +62,7 @@ class PriceHistoryCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${r['price']} TJS',
+                          '${groupDigits(num.tryParse('${r['price']}') ?? 0)} TJS',
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ],
