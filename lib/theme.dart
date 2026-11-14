@@ -47,22 +47,59 @@ ThemeData buildAppTheme() {
         minimumSize: const Size.fromHeight(54),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),
     ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: const BorderSide(color: Color(0xFFD5E3DE)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white,
+      hintStyle: const TextStyle(color: AppColors.muted),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE3ECE9)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE3ECE9)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+      ),
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: SegmentedButton.styleFrom(
+        backgroundColor: Colors.white,
+        selectedBackgroundColor: AppColors.mint,
+        selectedForegroundColor: AppColors.deep,
+        side: const BorderSide(color: Color(0xFFE3ECE9)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+    ),
+    dividerTheme: const DividerThemeData(color: Color(0xFFE9EFEC), space: 1),
   );
 }
 
 /// Белая карточка с мягкой тенью.
-BoxDecoration cardDecoration({double radius = 24}) => BoxDecoration(
+BoxDecoration cardDecoration({double radius = 20}) => BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(radius),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF0B1F1A).withValues(alpha: 0.05),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
+          color: const Color(0xFF0B1F1A).withValues(alpha: 0.06),
+          blurRadius: 24,
+          spreadRadius: -4,
+          offset: const Offset(0, 10),
         ),
       ],
     );
