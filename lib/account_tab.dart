@@ -230,7 +230,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                 const SizedBox(height: 24),
                 if (!isGuest)
                   OutlinedButton(
-                    onPressed: () => Supabase.instance.client.auth.signOut(),
+                    onPressed: () => _confirmSignOut(context),
                     child: Text(tr('Выйти', 'Баромадан')),
                   ),
               ],
@@ -612,5 +612,32 @@ class _MenuTile extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );
+  }
+}
+
+/// Спрашивает подтверждение и только после «Выйти» завершает сеанс.
+Future<void> _confirmSignOut(BuildContext context) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('Подтвердить выход?', 'Баромадани худро тасдиқ кунед?')),
+      content: Text(tr(
+        'Вы уверены, что хотите выйти из аккаунта?',
+        'Шумо мутмаин ҳастед, ки аз ҳисоб баромадан мехоҳед?',
+      )),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(tr('Отмена', 'Бекор')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(tr('Выйти', 'Баромадан')),
+        ),
+      ],
+    ),
+  );
+  if (ok == true) {
+    await Supabase.instance.client.auth.signOut();
   }
 }
