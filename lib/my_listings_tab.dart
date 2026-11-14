@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'create_listing_screen.dart';
+import 'glass_widgets.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
@@ -118,7 +119,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
       'hidden' => 'Снято с публикации',
       _ => null,
     };
-    final card = ListingCard(item: item);
+    final card = GlowCard(child: ListingCard(item: item));
     if (label == null) {
       // Активное объявление: действия в меню в левом верхнем углу, карточка не меняется.
       return Stack(
@@ -203,6 +204,20 @@ class _MyListingsTabState extends State<MyListingsTab> {
     );
   }
 
+  /// Прозрачная шапка с заголовком по центру, как во вкладке «Избранное».
+  PreferredSizeWidget _glassAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      title: const Text(
+        'Объявления',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+      ),
+    );
+  }
+
   Widget _emptyState(String title, String text) {
     return Center(
       child: Padding(
@@ -226,7 +241,8 @@ class _MyListingsTabState extends State<MyListingsTab> {
     final loggedIn = Supabase.instance.client.auth.currentUser != null;
     if (!loggedIn) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Объявления')),
+        backgroundColor: Colors.transparent,
+        appBar: _glassAppBar(),
         body: const GuestPrompt(
           icon: Icons.post_add_rounded,
           title: 'Войдите, чтобы публиковать объявления',
@@ -235,12 +251,13 @@ class _MyListingsTabState extends State<MyListingsTab> {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('Объявления')),
+      backgroundColor: Colors.transparent,
+      appBar: _glassAppBar(),
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: Colors.transparent,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
@@ -283,14 +300,10 @@ class _MyListingsTabState extends State<MyListingsTab> {
 
           final tabs = Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: SegmentedButton<int>(
-              showSelectedIcon: false,
-              segments: [
-                ButtonSegment(value: 0, label: Text('Активные (${active.length})')),
-                ButtonSegment(value: 1, label: Text('Завершённые (${completed.length})')),
-              ],
-              selected: {_tab},
-              onSelectionChanged: (s) => setState(() => _tab = s.first),
+            child: GlassTabs(
+              labels: ['Активные (${active.length})', 'Завершённые (${completed.length})'],
+              selected: _tab,
+              onChanged: (i) => setState(() => _tab = i),
             ),
           );
 
