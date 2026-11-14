@@ -191,7 +191,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   }
 }
 
-class _Sheet extends StatelessWidget {
+class _Sheet extends StatefulWidget {
   const _Sheet({
     required this.onApple,
     required this.onGoogle,
@@ -207,10 +207,22 @@ class _Sheet extends StatelessWidget {
   final VoidCallback onSkip;
 
   @override
+  State<_Sheet> createState() => _SheetState();
+}
+
+class _SheetState extends State<_Sheet> {
+  bool _register = false; // false — вход, true — регистрация
+
+  @override
   Widget build(BuildContext context) {
+    final onApple = widget.onApple;
+    final onGoogle = widget.onGoogle;
+    final onPhone = widget.onPhone;
+    final onEmail = widget.onEmail;
+    final onSkip = widget.onSkip;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -218,9 +230,27 @@ class _Sheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Войти',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink),
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: false, label: Text('Вход')),
+              ButtonSegment(value: true, label: Text('Регистрация')),
+            ],
+            selected: {_register},
+            onSelectionChanged: (s) => setState(() => _register = s.first),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _register ? 'Создать аккаунт' : 'Войти',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _register
+                ? 'Аккаунт создастся автоматически при первом входе'
+                : 'Войдите, чтобы публиковать объявления и писать продавцам',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           const SizedBox(height: 16),
           FilledButton(
@@ -242,7 +272,7 @@ class _Sheet extends StatelessWidget {
           const SizedBox(height: 10),
           FilledButton(
             onPressed: onPhone,
-            child: const Text('Войти по номеру'),
+            child: Text(_register ? 'Зарегистрироваться по номеру' : 'Войти по номеру'),
           ),
           const SizedBox(height: 10),
           FilledButton(
@@ -251,7 +281,7 @@ class _Sheet extends StatelessWidget {
               foregroundColor: AppColors.ink,
             ),
             onPressed: onEmail,
-            child: const Text('Войти по почте'),
+            child: Text(_register ? 'Зарегистрироваться по почте' : 'Войти по почте'),
           ),
           TextButton(
             onPressed: onSkip,
