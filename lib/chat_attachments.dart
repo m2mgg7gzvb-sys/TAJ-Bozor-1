@@ -27,6 +27,7 @@ class _ChatAudioTileState extends State<ChatAudioTile> {
   Duration _pos = Duration.zero;
   Duration _dur = Duration.zero;
   late final List<double> _bars = _makeBars(widget.path);
+  Future<String>? _urlFuture; // подписанная ссылка: запрашивается заранее и кэшируется
 
   /// Высоты столбиков волны: одинаковые для одного и того же файла.
   static List<double> _makeBars(String seed) {
@@ -37,6 +38,7 @@ class _ChatAudioTileState extends State<ChatAudioTile> {
   @override
   void initState() {
     super.initState();
+    _signed(); // ссылку получаем сразу, чтобы по нажатию не ждать сеть
     _player.onPositionChanged.listen((p) {
       if (mounted) setState(() => _pos = p);
     });
@@ -59,17 +61,27 @@ class _ChatAudioTileState extends State<ChatAudioTile> {
     super.dispose();
   }
 
+  Future<String> _signed() {
+    return _urlFuture ??= Supabase.instance.client.storage
+        .from('chat-attachments')
+        .createSignedUrl(widget.path, 3600);
+  }
+
   Future<void> _toggle() async {
     if (_playing) {
       await _player.pause();
       if (mounted) setState(() => _playing = false);
       return;
     }
-    final url = await Supabase.instance.client.storage
-        .from('chat-attachments')
-        .createSignedUrl(widget.path, 3600);
-    await _player.play(UrlSource(url));
-    if (mounted) setState(() => _playing = true);
+    // Значок меняется сразу, звук начинается, как только придёт ссылка.
+    setState(() => _playing = true);
+    try {
+      final url = await _signed();
+      await _player.play(UrlSource(url));
+    } catch (_) {
+      _urlFuture = null;
+      if (mounted) setState(() => _playing = false);
+    }
   }
 
   Future<void> _seek(double fraction) async {
