@@ -3,6 +3,16 @@
   let client = null;
   let micTrack = null;
   let remoteConnected = false;
+  // Удалённые пользователи с опубликованным голосом: их звук нужно запустить снова, если браузер его заблокировал.
+  const remoteAudio = new Set();
+
+  function playRemote(user) {
+    try {
+      if (user.audioTrack) user.audioTrack.play();
+    } catch (e) {
+      // Браузер не дал играть звук: попробуем снова при следующем касании экрана.
+    }
+  }
 
   // Гудок ожидания: 425 Гц, 1 сек звук, 3 сек тишина (как в обычной телефонии).
   let audioCtx = null;
@@ -51,14 +61,31 @@
       client.on('user-published', async (user, mediaType) => {
         await client.subscribe(user, mediaType);
         if (mediaType === 'audio') {
-          user.audioTrack.play();
+          remoteAudio.add(user);
+          playRemote(user);
           remoteConnected = true;
           ringStop();
         }
       });
-      client.on('user-left', () => {
+      client.on('user-unpublished', (user, mediaType) => {
+        if (mediaType === 'audio') remoteAudio.delete(user);
+      });
+      client.on('user-left', (user) => {
+        remoteAudio.delete(user);
         remoteConnected = false;
       });
+      // Safari и iPhone не запускают звук без нажатия: запускаем его при первом касании.
+      if (window.AgoraRTC) {
+        window.AgoraRTC.onAudioAutoplayFailed = () => {
+          const resume = () => {
+            remoteAudio.forEach(playRemote);
+            document.removeEventListener('click', resume);
+            document.removeEventListener('touchend', resume);
+          };
+          document.addEventListener('click', resume);
+          document.addEventListener('touchend', resume);
+        };
+      }
     }
     return client;
   }
