@@ -690,6 +690,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _chatBg,
       appBar: AppBar(
         title: Column(
           mainAxisSize: MainAxisSize.min,
@@ -810,11 +811,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     final prof = senderId == null ? null : _profiles[senderId];
                     final name = (prof?['name'] as String?)?.trim();
                     final bubble = Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       constraints: const BoxConstraints(maxWidth: 260),
-                      decoration: BoxDecoration(
-                        color: mine ? AppColors.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                      decoration: _raised(
+                        color: mine ? _mineBubble : _theirBubble,
+                        radius: 18,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -836,12 +837,14 @@ class _ChatScreenState extends State<ChatScreen> {
                           if (m['attachment_kind'] == null)
                             _bodyText(
                               m['body'] as String,
-                              TextStyle(color: mine ? Colors.white : AppColors.ink, height: 1.3),
+                              TextStyle(color: mine ? AppColors.deep : AppColors.ink, height: 1.3, fontWeight: FontWeight.w500),
                             ),
                         ],
                       ),
                     );
-                    return Padding(
+                    return _Appear(
+                      key: ValueKey(m['id'] ?? i),
+                      child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
                         mainAxisAlignment: mine ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -877,6 +880,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ],
                       ),
+                    ),
                     );
                   },
                 );
@@ -898,23 +902,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: _sending ? null : _attachFile,
                     icon: const Icon(Icons.attach_file_rounded),
                   ),
-                  Expanded(
-                    child: TextField(
-                      controller: _ctrl,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Сообщение',
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
+                  Expanded(child: _GlowInput(controller: _ctrl)),
                   const SizedBox(width: 8),
                   ValueListenableBuilder<TextEditingValue>(
                     valueListenable: _ctrl,
@@ -939,6 +927,130 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Фон чата и «объёмные» цвета пузырей в стиле мягкого неморфизма.
+const _chatBg = Color(0xFFE7EEEB);
+const _mineBubble = Color(0xFFD6EDE5);
+const _theirBubble = Color(0xFFF7FAF9);
+
+/// Приподнятая мягкая поверхность: светлый блик сверху слева и тень снизу справа.
+BoxDecoration _raised({required Color color, double radius = 18}) => BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      boxShadow: [
+        BoxShadow(color: Colors.white.withValues(alpha: 0.9), blurRadius: 8, offset: const Offset(-3, -3)),
+        BoxShadow(color: const Color(0xFF3E5F55).withValues(alpha: 0.16), blurRadius: 10, offset: const Offset(4, 5)),
+      ],
+    );
+
+/// Сообщение появляется плавно: поднимается снизу и проявляется.
+class _Appear extends StatelessWidget {
+  const _Appear({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      builder: (_, t, c) => Opacity(
+        opacity: t,
+        child: Transform.translate(offset: Offset(0, (1 - t) * 10), child: c),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Поле ввода-капсула. Когда в него нажали, по краю бежит переливающаяся подсветка.
+class _GlowInput extends StatefulWidget {
+  const _GlowInput({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  State<_GlowInput> createState() => _GlowInputState();
+}
+
+class _GlowInputState extends State<_GlowInput> with SingleTickerProviderStateMixin {
+  final _focus = FocusNode();
+  late final AnimationController _glow =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    _glow.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final focused = _focus.hasFocus;
+    return AnimatedBuilder(
+      animation: _glow,
+      builder: (context, child) {
+        final dx = -1.0 + 2 * _glow.value;
+        return Container(
+          padding: const EdgeInsets.all(1.6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: focused
+                ? LinearGradient(
+                    begin: Alignment(dx - 1, 0),
+                    end: Alignment(dx + 1, 0),
+                    colors: const [AppColors.primary, AppColors.saffron, AppColors.primary],
+                  )
+                : null,
+            color: focused ? null : const Color(0xFFF7FAF9),
+            boxShadow: [
+              BoxShadow(color: Colors.white.withValues(alpha: 0.9), blurRadius: 8, offset: const Offset(-3, -3)),
+              BoxShadow(
+                color: const Color(0xFF3E5F55).withValues(alpha: 0.14),
+                blurRadius: 10,
+                offset: const Offset(3, 4),
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7FAF9),
+          borderRadius: BorderRadius.circular(22.5),
+        ),
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focus,
+          minLines: 1,
+          maxLines: 4,
+          style: const TextStyle(color: AppColors.ink, fontSize: 15),
+          decoration: const InputDecoration(
+            hintText: 'Сообщение',
+            hintStyle: TextStyle(color: AppColors.muted),
+            filled: false,
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
+        ),
       ),
     );
   }
