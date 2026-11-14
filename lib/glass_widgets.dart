@@ -108,3 +108,86 @@ class GlassTabs extends StatelessWidget {
     );
   }
 }
+
+/// Стеклянное окно по центру: белая карточка со свечением, заголовок и кнопки в одном стиле.
+class GlassDialog extends StatelessWidget {
+  const GlassDialog({super.key, required this.title, this.content, this.actions = const []});
+
+  final String title;
+  final Widget? content;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.97),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.28),
+              blurRadius: 28,
+              spreadRadius: -4,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+              ),
+              if (content != null) ...[const SizedBox(height: 14), content!],
+              if (actions.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    for (var i = 0; i < actions.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 12),
+                      Expanded(child: actions[i]),
+                    ],
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Белая нижняя шторка со скруглением сверху и зелёным свечением: оборачивает содержимое шторки.
+class GlassSheet extends StatelessWidget {
+  const GlassSheet({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.97),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.28),
+            blurRadius: 28,
+            spreadRadius: -4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
