@@ -191,3 +191,17 @@ class GlassSheet extends StatelessWidget {
     );
   }
 }
+
+/// Стеклянная карточка с мягким зелёным свечением (для профиля и подобных блоков).
+BoxDecoration glowDecoration({double radius = 20}) => BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.92),
+      borderRadius: BorderRadius.circular(radius),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.22),
+          blurRadius: 22,
+          spreadRadius: -4,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    );
