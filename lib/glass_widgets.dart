@@ -205,3 +205,17 @@ BoxDecoration glowDecoration({double radius = 20}) => BoxDecoration(
         ),
       ],
     );
+
+/// Оформление нижнего окна (фильтры, выбор): белое стекло со скруглением сверху и зелёным свечением.
+BoxDecoration glassSheetDecoration() => BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.97),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.28),
+          blurRadius: 28,
+          spreadRadius: -4,
+          offset: const Offset(0, -6),
+        ),
+      ],
+    );
