@@ -147,7 +147,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
           end: Alignment.bottomCenter,
         ),
       ),
-      child: SafeArea(
+      child: Stack(
+        children: [
+          const Positioned.fill(child: CustomPaint(painter: _DarkWavesPainter())),
+          SafeArea(
         child: Column(
           children: [
             Expanded(
@@ -192,6 +195,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             ),
           ],
         ),
+          ),
+        ],
       ),
     );
   }
@@ -228,16 +233,16 @@ class _SheetState extends State<_Sheet> {
     final onSkip = widget.onSkip;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.97),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(44)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.28),
-            blurRadius: 28,
-            spreadRadius: -4,
-            offset: const Offset(0, -6),
+            color: AppColors.deep.withValues(alpha: 0.35),
+            blurRadius: 36,
+            spreadRadius: -6,
+            offset: const Offset(0, -10),
           ),
         ],
       ),
@@ -249,57 +254,57 @@ class _SheetState extends State<_Sheet> {
             selected: _register ? 1 : 0,
             onChanged: (i) => setState(() => _register = i == 1),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Text(
             _register ? 'Создать аккаунт' : 'Войти',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink),
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.ink),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             _register
                 ? 'Аккаунт создастся автоматически при первом входе'
                 : 'Войдите, чтобы публиковать объявления и писать продавцам',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: const TextStyle(color: AppColors.muted, fontSize: 14),
           ),
-          const SizedBox(height: 16),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-            onPressed: () => onApple(_register),
-            child: Text(_register ? 'Зарегистрироваться через Apple' : 'Продолжить с Apple'),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(54),
-              foregroundColor: AppColors.ink,
-              side: const BorderSide(color: Color(0xFFD5DAD8)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          const SizedBox(height: 12),
+          // Тонкая зелёная линия-разделитель, как в макете.
+          Container(
+            height: 2,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.transparent, AppColors.primary, Colors.transparent],
+              ),
             ),
+          ),
+          const SizedBox(height: 18),
+          _PillButton(
+            label: _register ? 'Зарегистрироваться через Apple' : 'Продолжить с Apple',
+            filled: true,
+            onPressed: () => onApple(_register),
+          ),
+          const SizedBox(height: 12),
+          _PillButton(
+            label: _register ? 'Зарегистрироваться через Google' : 'Продолжить с Google',
+            filled: false,
             onPressed: () => onGoogle(_register),
-            child: Text(_register ? 'Зарегистрироваться через Google' : 'Продолжить с Google'),
           ),
           if (!_register) ...[
-            const SizedBox(height: 10),
-            FilledButton(
-              onPressed: () => onPhone(false),
-              child: const Text('Войти по номеру'),
-            ),
+            const SizedBox(height: 12),
+            _PillButton(label: 'Войти по номеру', filled: true, onPressed: () => onPhone(false)),
           ],
-          const SizedBox(height: 10),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFF1F4F3),
-              foregroundColor: AppColors.ink,
-            ),
+          const SizedBox(height: 12),
+          _PillButton(
+            label: _register ? 'Зарегистрироваться по почте' : 'Войти по почте',
+            filled: false,
             onPressed: () => onEmail(_register),
-            child: Text(_register ? 'Зарегистрироваться по почте' : 'Войти по почте'),
           ),
           TextButton(
             onPressed: onSkip,
             child: const Text(
               'Пропустить',
-              style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.primary, fontSize: 17, fontWeight: FontWeight.w700),
             ),
           ),
           const Text(
@@ -311,4 +316,95 @@ class _SheetState extends State<_Sheet> {
       ),
     );
   }
+}
+
+/// Кнопка-капсула: зелёная заливка с мягким свечением или белое стекло с обводкой.
+class _PillButton extends StatelessWidget {
+  const _PillButton({required this.label, required this.filled, required this.onPressed});
+
+  final String label;
+  final bool filled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(30);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: filled ? 0.45 : 0.18),
+            blurRadius: filled ? 20 : 14,
+            spreadRadius: -3,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        child: Ink(
+          height: 58,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: filled
+                ? const LinearGradient(
+                    colors: [AppColors.primary, AppColors.deep],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  )
+                : const LinearGradient(
+                    colors: [Colors.white, Color(0xFFEEF4F2)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+            border: filled ? null : Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
+          ),
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onPressed,
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: filled ? Colors.white : AppColors.deep,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Мягкие волны на зелёном фоне входа.
+class _DarkWavesPainter extends CustomPainter {
+  const _DarkWavesPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final top = Path()
+      ..moveTo(0, h * 0.12)
+      ..quadraticBezierTo(w * 0.5, h * 0.02, w, h * 0.14)
+      ..lineTo(w, 0)
+      ..lineTo(0, 0)
+      ..close();
+    canvas.drawPath(top, Paint()..color = Colors.white.withValues(alpha: 0.05));
+    final low = Path()
+      ..moveTo(0, h * 0.52)
+      ..quadraticBezierTo(w * 0.45, h * 0.40, w, h * 0.56)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(low, Paint()..color = Colors.black.withValues(alpha: 0.10));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
