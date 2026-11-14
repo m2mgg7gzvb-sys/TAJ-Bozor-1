@@ -286,61 +286,60 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Column(
+  /// Шапка главной: при прокрутке зелёная карточка с городом и баннером уезжает,
+  /// строка поиска остаётся закреплённой вверху. t: 0 — раскрыта, 1 — свёрнута.
+  Widget _homeHeader(double t) {
+    final shown = 1 - t;
+    return DecoratedBox(
+      decoration: BoxDecoration(color: const Color(0xFFF2F7F5).withValues(alpha: t)),
+      child: Stack(
         children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(11, 8, 11, 10),
-            padding: const EdgeInsets.fromLTRB(9, 9, 9, 14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.deep, AppColors.primary],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Фон шапки: волны и памятник, рисуются векторно.
-                const Positioned(left: -9, top: -9, right: -9, bottom: -14, child: HeaderArt()),
-                Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _CityButton(),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(child: _SearchField(onTap: _openSearch)),
-                    if (Supabase.instance.client.auth.currentUser == null) ...[
-                      const SizedBox(width: 10),
-                      Material(
-                        color: const Color(0xFFF4F6F5),
-                        borderRadius: BorderRadius.circular(26),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(26),
-                          onTap: () => tabIndex.value = loginTabIndex,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                            child: Text(
-                              tr('Войти', 'Ворид'),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+          Positioned(
+            left: 11,
+            right: 11,
+            top: 8,
+            bottom: 10,
+            child: Opacity(
+              opacity: shown,
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.deep, AppColors.primary],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 12),
+                child: const HeaderArt(),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 8 + 8 * shown, 20, 8 + 10 * shown),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRect(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    heightFactor: shown,
+                    child: Opacity(opacity: shown, child: const _CityButton()),
+                  ),
+                ),
+                SizedBox(height: 8 * shown),
+                _SearchField(onTap: _openSearch),
+                ClipRect(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    heightFactor: shown,
+                    child: Opacity(
+                      opacity: shown,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
                 InkWell(
                   onTap: () => tabIndex.value = 2,
                   child: Padding(
@@ -380,16 +379,40 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                 ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
-            ]),
           ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        children: [
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refresh,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-                children: [
+              child: CustomScrollView(
+                slivers: [
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _HomeHeaderDelegate(builder: _homeHeader),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
             const SizedBox(height: 4),
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _categories,
@@ -449,7 +472,11 @@ class _HomeTabState extends State<HomeTab> {
                 );
               },
             ),
-          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -690,4 +717,29 @@ class _CategoryChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Закреплённая шапка: сворачивается при прокрутке от полной высоты до строки поиска.
+class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _HomeHeaderDelegate({required this.builder});
+
+  final Widget Function(double t) builder;
+
+  static const double _min = 72;
+  static const double _max = 200;
+
+  @override
+  double get minExtent => _min;
+
+  @override
+  double get maxExtent => _max;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final t = (shrinkOffset / (_max - _min)).clamp(0.0, 1.0);
+    return builder(t);
+  }
+
+  @override
+  bool shouldRebuild(covariant _HomeHeaderDelegate oldDelegate) => true;
 }
