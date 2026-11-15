@@ -99,6 +99,65 @@ class _HomeTabState extends State<HomeTab> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
   }
 
+  /// Нажали на значок TOP: окно с продвижением и редактированием.
+  void _openTopSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (sheetCtx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.muted.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Поднять объявление',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink)),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.saffron,
+                    foregroundColor: AppColors.ink,
+                  ),
+                  onPressed: () {
+                    Navigator.of(sheetCtx).pop();
+                    tabIndex.value = 2;
+                  },
+                  child: const Text('Продвинуть в TOP', style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: GreenButton.icon(
+                  height: 50,
+                  icon: const Icon(Icons.edit_rounded, size: 20),
+                  label: const Text('Редактировать'),
+                  onPressed: () {
+                    Navigator.of(sheetCtx).pop();
+                    tabIndex.value = 2;
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openCategory(int id, String name, {bool carFilter = false}) {
     Navigator.of(context).push(
       fadeRoute(ListingsScreen(categoryId: id, title: name, carFilter: carFilter)),
@@ -356,24 +415,7 @@ class _HomeTabState extends State<HomeTab> {
                         const SizedBox(width: 4),
                         const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 22),
                         const SizedBox(width: 4),
-                        Transform.rotate(
-                          angle: -0.06,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.saffron,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: const Text(
-                              'ТОП',
-                              style: TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
+                        _TopBadge(onTap: _openTopSheet),
                       ],
                     ),
                   ),
@@ -741,4 +783,61 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _HomeHeaderDelegate oldDelegate) => true;
+}
+
+/// Значок TOP с переливом: золотой блик медленно проходит по нему.
+class _TopBadge extends StatefulWidget {
+  const _TopBadge({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_TopBadge> createState() => _TopBadgeState();
+}
+
+class _TopBadgeState extends State<_TopBadge> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 2200))..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Transform.rotate(
+        angle: -0.06,
+        child: AnimatedBuilder(
+          animation: _c,
+          builder: (context, _) {
+            final x = -1 + 2 * _c.value;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9),
+                gradient: LinearGradient(
+                  begin: Alignment(x - 0.7, 0),
+                  end: Alignment(x + 0.7, 0),
+                  colors: const [Color(0xFFE0A526), Color(0xFFFFE08A), Color(0xFFE0A526)],
+                ),
+              ),
+              child: const Text(
+                'TOP',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
