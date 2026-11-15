@@ -69,7 +69,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +88,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         hintText: 'Поиск по объявлениям',
                         prefixIcon: const Icon(Icons.search_rounded),
                         filled: true,
-                        fillColor: const Color(0xFFF1F4F3),
+                        fillColor: AppColors.background,
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         border: OutlineInputBorder(

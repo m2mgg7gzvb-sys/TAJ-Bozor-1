@@ -14,7 +14,7 @@ class WaveBackground extends StatelessWidget {
       children: [
         const Positioned.fill(
           child: DecoratedBox(
-            decoration: BoxDecoration(color: Color(0xFFF2F7F5)),
+            decoration: BoxDecoration(color: AppColors.background),
             child: CustomPaint(painter: _WavePainter()),
           ),
         ),

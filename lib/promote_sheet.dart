@@ -136,7 +136,7 @@ class _PromoteSheetState extends State<_PromoteSheet> {
                       color: _selected == i ? AppColors.mint : AppColors.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: _selected == i ? AppColors.primary : const Color(0xFFE3ECE9),
+                        color: _selected == i ? AppColors.primary : AppColors.line,
                         width: _selected == i ? 1.6 : 1,
                       ),
                     ),
@@ -357,7 +357,7 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                                 color: selected ? AppColors.mint : AppColors.surface,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: selected ? AppColors.primary : const Color(0xFFE3ECE9),
+                                  color: selected ? AppColors.primary : AppColors.line,
                                   width: selected ? 1.6 : 1,
                                 ),
                               ),
@@ -479,7 +479,7 @@ class _DaysPicker extends StatelessWidget {
                       color: current == i ? AppColors.mint : AppColors.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: current == i ? AppColors.primary : const Color(0xFFE3ECE9),
+                        color: current == i ? AppColors.primary : AppColors.line,
                         width: current == i ? 1.6 : 1,
                       ),
                     ),

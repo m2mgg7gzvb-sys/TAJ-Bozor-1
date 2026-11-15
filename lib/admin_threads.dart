@@ -182,9 +182,9 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F7F5),
+        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -273,7 +273,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                           hintText: 'Написать владельцу от имени администратора',
                           isDense: true,
                           filled: true,
-                          fillColor: const Color(0xFFF1F4F3),
+                          fillColor: AppColors.background,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide.none,
@@ -455,9 +455,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F7F5),
+        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,

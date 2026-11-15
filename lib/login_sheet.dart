@@ -132,7 +132,7 @@ class _Sheet extends StatelessWidget {
               const SizedBox(height: 10),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFF1F4F3),
+                  backgroundColor: AppColors.background,
                   foregroundColor: AppColors.ink,
                 ),
                 onPressed: () => _go(context, register: true),

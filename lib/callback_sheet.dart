@@ -118,7 +118,7 @@ class _CallbackFormState extends State<_CallbackForm> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F4F3),
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Text('+992', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -133,7 +133,7 @@ class _CallbackFormState extends State<_CallbackForm> {
                       counterText: '',
                       hintText: '90 123 45 67',
                       filled: true,
-                      fillColor: const Color(0xFFF1F4F3),
+                      fillColor: AppColors.background,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,

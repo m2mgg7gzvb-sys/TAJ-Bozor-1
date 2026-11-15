@@ -1150,9 +1150,9 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 /// Фон чата и «объёмные» цвета пузырей в стиле мягкого неморфизма.
-const _chatBg = Color(0xFFE7EEEB);
-const _mineBubble = Color(0xFFD6EDE5);
-const _theirBubble = Color(0xFFF7FAF9);
+Color get _chatBg => darkMode.value ? AppColors.background : const Color(0xFFE7EEEB);
+Color get _mineBubble => darkMode.value ? const Color(0xFF1E4A40) : const Color(0xFFD6EDE5);
+Color get _theirBubble => AppColors.surface;
 
 /// Приподнятая мягкая поверхность: светлый блик сверху слева и тень снизу справа.
 BoxDecoration _raised({required Color color, double radius = 18}) => BoxDecoration(
@@ -1233,7 +1233,7 @@ class _GlowInputState extends State<_GlowInput> with SingleTickerProviderStateMi
                     colors: const [AppColors.primary, AppColors.saffron, AppColors.primary],
                   )
                 : null,
-            color: focused ? null : const Color(0xFFF7FAF9),
+            color: focused ? null : AppColors.surface,
             boxShadow: [
               BoxShadow(color: Colors.white.withValues(alpha: 0.9), blurRadius: 8, offset: const Offset(-3, -3)),
               BoxShadow(
@@ -1248,7 +1248,7 @@ class _GlowInputState extends State<_GlowInput> with SingleTickerProviderStateMi
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF7FAF9),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(22.5),
         ),
         child: TextField(

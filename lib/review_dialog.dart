@@ -161,7 +161,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
             decoration: InputDecoration(
               hintText: 'Напишите отзыв о продавце',
               filled: true,
-              fillColor: const Color(0xFFF1F4F3),
+              fillColor: AppColors.background,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
