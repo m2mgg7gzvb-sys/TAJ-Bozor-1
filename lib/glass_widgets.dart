@@ -53,7 +53,7 @@ class GlassTabs extends StatelessWidget {
           children: [
             // Подсветка, которая скользит между вкладками.
             AnimatedAlign(
-              duration: Duration.zero,
+              duration: const Duration(milliseconds: 260),
               curve: Curves.easeOutCubic,
               alignment: Alignment(n <= 1 ? 0 : -1 + 2 * selected / (n - 1), 0),
               child: FractionallySizedBox(
@@ -89,7 +89,7 @@ class GlassTabs extends StatelessWidget {
                       onTap: () => onChanged(i),
                       child: Center(
                         child: AnimatedDefaultTextStyle(
-                          duration: Duration.zero,
+                          duration: const Duration(milliseconds: 220),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
