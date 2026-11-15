@@ -857,16 +857,25 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: _chatBg,
       appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.title),
-            if (_statusWidget() != null) _statusWidget()!,
-            if (_conv?['public_id'] != null)
-              Text('ID чата: ${_conv!['public_id']}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
-          ],
+        // Непрозрачная шапка: контент не просвечивает сквозь неё при прокрутке.
+        backgroundColor: _chatBg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        title: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          // Нажатие на имя открывает профиль собеседника.
+          onTap: _otherId == null ? null : () => _openProfile(_otherId!),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.title),
+              if (_statusWidget() != null) _statusWidget()!,
+              if (_conv?['public_id'] != null)
+                Text('ID чата: ${_conv!['public_id']}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
+            ],
+          ),
         ),
         actions: [
           if (_conv != null && _conv!['kind'] != 'support')
@@ -1081,7 +1090,7 @@ class _ChatScreenState extends State<ChatScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 18),
               child: Row(
                 children: [
                   if (!_recording) ...[
