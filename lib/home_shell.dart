@@ -14,6 +14,7 @@ import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'notify_store.dart';
 import 'push.dart';
+import 'frosted_glass.dart';
 import 'theme.dart';
 import 'wave_background.dart';
 import 'green_button.dart';
@@ -177,15 +178,9 @@ class _GlassTabBar extends StatelessWidget {
     final n = items.length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-      child: Container(
+      child: FrostedGlass(
         height: 68,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(color: AppColors.deep.withValues(alpha: 0.16), blurRadius: 24, offset: const Offset(0, 8)),
-          ],
-        ),
+        radius: 34,
         padding: const EdgeInsets.all(6),
         child: LayoutBuilder(
           builder: (context, constraints) {
