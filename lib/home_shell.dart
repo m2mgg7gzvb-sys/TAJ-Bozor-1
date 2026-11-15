@@ -199,7 +199,7 @@ class _GlassTabBar extends StatelessWidget {
                 children: [
                   // Подсветка-капля: плавно переезжает к выбранной вкладке.
                   AnimatedAlign(
-                    duration: Duration.zero,
+                    duration: const Duration(milliseconds: 280),
                     curve: Curves.easeOutCubic,
                     alignment: Alignment(n <= 1 ? 0 : -1 + 2 * index / (n - 1), 0),
                     child: FractionallySizedBox(
@@ -265,13 +265,13 @@ class _TabCell extends StatelessWidget {
         children: [
           AnimatedScale(
             scale: selected ? 1.12 : 1.0,
-            duration: Duration.zero,
+            duration: const Duration(milliseconds: 280),
             curve: Curves.easeOutBack,
             child: IconTheme(data: IconThemeData(color: color, size: 24), child: item.icon),
           ),
           const SizedBox(height: 2),
           AnimatedDefaultTextStyle(
-            duration: Duration.zero,
+            duration: const Duration(milliseconds: 220),
             style: TextStyle(
               fontSize: 11,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
