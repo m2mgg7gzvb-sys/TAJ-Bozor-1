@@ -63,14 +63,28 @@ class _HomeTabState extends State<HomeTab> {
   void _onCityChanged() => _refresh();
 
   Future<List<Map<String, dynamic>>> _loadListings() async {
+    final city = selectedCity.value;
+    // Объявления с действующим TOP идут первыми (срок — listings.top_until).
+    var topQuery = Supabase.instance.client
+        .from('listings')
+        .select(listingSelect)
+        .eq('status', 'active')
+        .gt('top_until', DateTime.now().toUtc().toIso8601String());
+    if (city != null) topQuery = topQuery.eq('city', city);
+    final top = List<Map<String, dynamic>>.from(
+        await topQuery.order('top_until', ascending: false).limit(6));
+
     var query = Supabase.instance.client
         .from('listings')
         .select(listingSelect)
         .eq('status', 'active');
-    final city = selectedCity.value;
     if (city != null) query = query.eq('city', city);
+    if (top.isNotEmpty) {
+      final topIds = top.map((e) => e['id'] as String).join(',');
+      query = query.not('id', 'in', '($topIds)');
+    }
     final rows = await query.order('created_at', ascending: false).limit(20);
-    return List<Map<String, dynamic>>.from(rows);
+    return [...top, ...List<Map<String, dynamic>>.from(rows)];
   }
 
   Future<List<Map<String, dynamic>>> _loadCategories() async {
