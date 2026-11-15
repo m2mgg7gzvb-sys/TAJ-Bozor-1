@@ -187,7 +187,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
               alignment: Alignment.centerRight,
               child: FloatingActionButton.small(
                 heroTag: 'locate-me',
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
                 foregroundColor: AppColors.primary,
                 onPressed: _locating ? null : _moveToMe,
                 child: _locating
@@ -199,7 +199,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, -4)),

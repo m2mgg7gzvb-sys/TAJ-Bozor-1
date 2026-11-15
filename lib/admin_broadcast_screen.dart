@@ -82,7 +82,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             decoration: const InputDecoration(
               labelText: 'Заголовок',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surface,
               border: OutlineInputBorder(borderSide: BorderSide.none),
             ),
           ),
@@ -96,7 +96,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
               labelText: 'Текст',
               alignLabelWithHint: true,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surface,
               border: OutlineInputBorder(borderSide: BorderSide.none),
             ),
           ),

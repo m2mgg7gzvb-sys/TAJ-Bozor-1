@@ -1094,7 +1094,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Material(
-        color: active ? AppColors.primary : Colors.white,
+        color: active ? AppColors.primary : AppColors.surface,
         shape: StadiumBorder(
           side: BorderSide(color: active ? AppColors.primary : const Color(0xFFD9DEDC)),
         ),
@@ -1752,7 +1752,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   height: 44,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: d == deal ? Colors.white : Colors.transparent,
+                    color: d == deal ? AppColors.surface : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -1783,7 +1783,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
 
     final typeBtn = OutlinedButton(
       style: OutlinedButton.styleFrom(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         foregroundColor: Colors.black,
         minimumSize: const Size.fromHeight(52),
         side: const BorderSide(color: Colors.black, width: 1.5),
@@ -2326,7 +2326,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: i == selected ? Colors.white : const Color(0xFFF1F1F1),
+                color: i == selected ? AppColors.surface : const Color(0xFFF1F1F1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: i == selected ? Colors.black : Colors.transparent,
@@ -2527,7 +2527,7 @@ class _PickerSheetState extends State<_PickerSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(

@@ -145,7 +145,7 @@ class _ModerationTile extends StatelessWidget {
     final city = (item['city'] as String?) ?? '';
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

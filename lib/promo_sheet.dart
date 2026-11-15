@@ -10,7 +10,7 @@ Future<void> showPromoSheet(BuildContext context) {
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.surface,
     builder: (_) => const _PromoSheet(),
   );
 }

@@ -96,7 +96,7 @@ class _ProfilePageState extends State<_ProfilePage> {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _EditProfileSheet(user: widget.user, data: d),
     );
@@ -512,7 +512,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     bottom: 0,
                     child: CircleAvatar(
                       radius: 13,
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.surface,
                       child: Icon(Icons.camera_alt_rounded, size: 15, color: AppColors.primary),
                     ),
                   ),

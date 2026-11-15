@@ -64,7 +64,7 @@ Future<void> showCityPicker(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
     builder: (ctx) {
       final current = selectedCity.value;

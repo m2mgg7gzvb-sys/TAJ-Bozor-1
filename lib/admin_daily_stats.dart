@@ -48,7 +48,7 @@ class _AdminDailyStatsState extends State<AdminDailyStats> {
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
             ),

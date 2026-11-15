@@ -144,7 +144,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final admin = d.profile['is_admin'] == true;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -254,7 +254,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget _stat(String value, String label) => Expanded(
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
           child: Column(
             children: [
               Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary)),
@@ -327,7 +327,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ],
                 Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
                   child: Row(
                     children: [
                       UserAvatar(
@@ -444,7 +444,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   for (final r in d.reviews) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
