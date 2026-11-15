@@ -12,6 +12,7 @@ import 'listing_utils.dart';
 import 'lang_store.dart';
 import 'listings_screen.dart';
 import 'nav_state.dart';
+import 'frosted_glass.dart';
 import 'promote_sheet.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
@@ -503,15 +504,10 @@ class _SearchFieldState extends State<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(color: AppColors.deep.withValues(alpha: 0.18), blurRadius: 14, offset: const Offset(0, 6)),
-        ],
-      ),
+    return FrostedGlass(
+      radius: 26,
       child: Material(
-      color: Colors.white,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(26),
       child: InkWell(
         borderRadius: BorderRadius.circular(26),
