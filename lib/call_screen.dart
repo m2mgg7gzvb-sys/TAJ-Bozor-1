@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:js_interop';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'call_widgets.dart';
 import 'lang_store.dart';
 
 // Мост к web/agora.js (Agora Web SDK).
@@ -18,6 +21,9 @@ external JSPromise<JSBoolean> _jsLeave();
 
 @JS('agoraIsConnected')
 external JSBoolean _jsIsConnected();
+
+@JS('agoraLevel')
+external JSNumber _jsLevel();
 
 /// Канал одинаков для двух собеседников: собирается из их id (отсортированных),
 /// поэтому оба попадают в одну комнату, если открыли звонок.
@@ -63,10 +69,15 @@ class CallScreen extends StatefulWidget {
 }
 
 class _CallScreenState extends State<CallScreen> {
-  String _status = 'Подключение…';
   bool _joined = false;
   bool _muted = false;
+  String? _error;
+  // Статус собеседника: 'ringing' — приглашение у него, 'answered', 'declined' или пусто.
+  String _peer = '';
+  bool _polling = false;
   Timer? _ticker;
+  Timer? _levelTimer;
+  final _level = ValueNotifier<double>(0);
   DateTime? _connectedAt; // момент, когда собеседник ответил
   Duration _elapsed = Duration.zero;
 
@@ -91,23 +102,47 @@ class _CallScreenState extends State<CallScreen> {
       if (!mounted) return;
       setState(() => _joined = true);
       _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
+      _levelTimer = Timer.periodic(const Duration(milliseconds: 120), _sampleLevel);
     } catch (e) {
       if (!mounted) return;
       final reason = e.toString();
-      setState(() => _status =
+      setState(() => _error =
           '${tr('Не удалось подключиться', 'Пайваст нашуд')}\n${reason.length > 160 ? reason.substring(0, 160) : reason}');
     }
   }
 
-  /// Раз в секунду проверяем, ответил ли собеседник, и обновляем таймер.
-  void _tick(Timer _) {
+  /// Громкость для анимации золотых линий (часто, без перерисовки всего экрана).
+  void _sampleLevel(Timer _) {
+    if (!mounted || !_joined) return;
+    double raw = 0;
+    try {
+      raw = _jsLevel().toDartDouble;
+    } catch (_) {}
+    _level.value = (raw * 3).clamp(0.0, 1.0);
+  }
+
+  /// Раз в секунду: ответил ли собеседник, его статус и таймер.
+  Future<void> _tick(Timer _) async {
     if (!mounted || !_joined) return;
     if (_connectedAt == null && _jsIsConnected().toDart) {
       _connectedAt = DateTime.now();
     }
-    if (_connectedAt != null) {
-      setState(() => _elapsed = DateTime.now().difference(_connectedAt!));
+    if (_connectedAt == null && _peer != 'declined' && !_polling) {
+      _polling = true;
+      try {
+        final res = await Supabase.instance.client
+            .rpc('call_peer_status', params: {'p_channel': widget.channel});
+        if (mounted && res is String) setState(() => _peer = res);
+      } catch (_) {
+        // Статус не пришёл: покажем «Вызов» до ответа.
+      } finally {
+        _polling = false;
+      }
     }
+    if (!mounted) return;
+    setState(() {
+      if (_connectedAt != null) _elapsed = DateTime.now().difference(_connectedAt!);
+    });
   }
 
   Future<void> _toggleMic() async {
@@ -119,6 +154,7 @@ class _CallScreenState extends State<CallScreen> {
 
   Future<void> _hangUp() async {
     _ticker?.cancel();
+    _levelTimer?.cancel();
     if (_joined) {
       try {
         await _jsLeave().toDart;
@@ -130,6 +166,8 @@ class _CallScreenState extends State<CallScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _levelTimer?.cancel();
+    _level.dispose();
     if (activeCallChannel == widget.channel) activeCallChannel = null;
     if (_joined) {
       _jsLeave().toDart.ignore();
@@ -138,48 +176,93 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   String get _statusText {
-    if (!_joined) return _status;
-    if (_connectedAt == null) return tr('Гудки…', 'Занги…');
-    return _formatDuration(_elapsed);
+    if (_error != null) return _error!;
+    if (_connectedAt != null) return _formatDuration(_elapsed);
+    if (!_joined) return tr('Подключение…', 'Пайваст…');
+    if (_peer == 'declined') return tr('Звонок отклонён', 'Занг рад шуд');
+    if (_peer == 'ringing') return tr('Гудки…', 'Занги…');
+    if (_peer == 'answered') return tr('Подключение…', 'Пайваст…');
+    return tr('Вызов…', 'Занг…');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B2421),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              Text(widget.title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 10),
-              Text(_statusText,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70, fontSize: 15)),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _CircleButton(
+      backgroundColor: Colors.transparent,
+      body: CallBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 28),
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(44),
+                    border: Border.all(color: kCallGold, width: 2),
+                    boxShadow: [
+                      BoxShadow(color: kCallGold.withValues(alpha: 0.2), blurRadius: 30, spreadRadius: 2),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(42),
+                    child: SvgPicture.asset('assets/logo.svg', fit: BoxFit.cover),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Text(widget.title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Text(_statusText,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 16)),
+                const SizedBox(height: 24),
+                VoiceBars(level: _level),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(36),
+                    color: Colors.white.withValues(alpha: 0.05),
+                    border: Border.all(color: const Color(0xFF2FB58A).withValues(alpha: 0.3)),
+                  ),
+                  child: _CallAction(
                     icon: _muted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                    color: Colors.white24,
-                    label: _muted ? tr('Включить', 'Фаъол') : tr('Выключить', 'Хомӯш'),
+                    label: _muted ? tr('Включить', 'Фаъол') : tr('Без звука', 'Хомӯш'),
                     onTap: _toggleMic,
                   ),
-                  _CircleButton(
-                    icon: Icons.call_end_rounded,
-                    color: const Color(0xFFE53935),
-                    label: tr('Завершить', 'Қатъ'),
+                ),
+                const SizedBox(height: 28),
+                PulseRings(
+                  color: const Color(0xFFE0302F),
+                  child: GestureDetector(
                     onTap: _hangUp,
+                    child: Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFE0302F),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE0302F).withValues(alpha: 0.45),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.call_end_rounded, color: Colors.white, size: 36),
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
+                ),
+                const SizedBox(height: 12),
+                Text(tr('Бросить', 'Партофтан'), style: const TextStyle(color: Colors.white, fontSize: 15)),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -187,31 +270,33 @@ class _CallScreenState extends State<CallScreen> {
   }
 }
 
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.color, required this.label, required this.onTap});
+class _CallAction extends StatelessWidget {
+  const _CallAction({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
-  final Color color;
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: color,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: SizedBox(width: 72, height: 72, child: Icon(icon, color: Colors.white, size: 32)),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 30),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)),
-      ],
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)),
+        ],
+      ),
     );
   }
 }
