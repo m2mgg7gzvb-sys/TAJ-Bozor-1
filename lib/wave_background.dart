@@ -12,7 +12,7 @@ class WaveBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        const Positioned.fill(
+        Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(color: AppColors.background),
             child: CustomPaint(painter: _WavePainter()),
