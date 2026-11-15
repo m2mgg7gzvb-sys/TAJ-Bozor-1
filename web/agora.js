@@ -14,23 +14,35 @@
     }
   }
 
-  // Гудок ожидания: 425 Гц, 1 сек звук, 3 сек тишина (как в обычной телефонии).
+  // Мелодия входящего звонка: два тона, 1.8 сек звучит, 1.7 сек тишина, и так пока не ответят.
   let audioCtx = null;
   let ringTimer = null;
+  let vibrateTimer = null;
 
-  function playBeep() {
+  function playRingtone() {
     if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.frequency.value = 425;
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.setValueAtTime(0.25, now + 0.9);
-    gain.gain.linearRampToValueAtTime(0, now + 1);
-    osc.start(now);
-    osc.stop(now + 1);
+    [440, 480].forEach((freq) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+      gain.gain.setValueAtTime(0.2, now + 1.6);
+      gain.gain.linearRampToValueAtTime(0, now + 1.8);
+      osc.start(now);
+      osc.stop(now + 1.8);
+    });
+  }
+
+  function vibrateOnce() {
+    try {
+      if (navigator.vibrate) navigator.vibrate([600, 300, 600, 1300]);
+    } catch (e) {
+      // Вибрация не поддерживается (например, iPhone в браузере).
+    }
   }
 
   function ringStart() {
@@ -38,10 +50,12 @@
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
     } catch (e) {
-      return;
+      // Звук недоступен: остаётся только вибрация и экран.
     }
-    playBeep();
-    if (!ringTimer) ringTimer = setInterval(playBeep, 4000);
+    playRingtone();
+    if (!ringTimer) ringTimer = setInterval(playRingtone, 3500);
+    vibrateOnce();
+    if (!vibrateTimer) vibrateTimer = setInterval(vibrateOnce, 3500);
   }
 
   function ringStop() {
@@ -49,6 +63,13 @@
       clearInterval(ringTimer);
       ringTimer = null;
     }
+    if (vibrateTimer) {
+      clearInterval(vibrateTimer);
+      vibrateTimer = null;
+    }
+    try {
+      if (navigator.vibrate) navigator.vibrate(0);
+    } catch (e) {}
   }
 
   // Гудок для входящего звонка (вызывается из Dart).

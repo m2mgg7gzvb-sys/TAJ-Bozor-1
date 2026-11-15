@@ -7,29 +7,50 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'call_screen.dart';
 import 'call_widgets.dart';
+import 'notify_store.dart';
 
-// Гудок входящего звонка (web/agora.js).
+// Мелодия и вибрация входящего звонка (web/agora.js).
 @JS('agoraRingStart')
 external void _ringStart();
 
 @JS('agoraRingStop')
 external void _ringStop();
 
-/// Экран входящего звонка: звонит, пока его не примут или не отклонят.
-class IncomingCallScreen extends StatefulWidget {
-  const IncomingCallScreen({super.key, required this.channel, required this.callerName});
+OverlayEntry? _banner;
+
+/// Входящий звонок сверху экрана. Не пропадает, пока человек не ответит или не отклонит.
+void showIncomingCallBanner({required String channel, required String callerName}) {
+  if (_banner != null) return; // уже звонит
+  final overlay = appNavigatorKey.currentState?.overlay;
+  if (overlay == null) return;
+  late OverlayEntry entry;
+  void close() {
+    if (entry.mounted) entry.remove();
+    if (identical(_banner, entry)) _banner = null;
+  }
+
+  entry = OverlayEntry(
+    builder: (_) => _IncomingCallBanner(channel: channel, callerName: callerName, close: close),
+  );
+  _banner = entry;
+  overlay.insert(entry);
+}
+
+class _IncomingCallBanner extends StatefulWidget {
+  const _IncomingCallBanner({required this.channel, required this.callerName, required this.close});
 
   final String channel;
   final String callerName;
+  final VoidCallback close;
 
   @override
-  State<IncomingCallScreen> createState() => _IncomingCallScreenState();
+  State<_IncomingCallBanner> createState() => _IncomingCallBannerState();
 }
 
-class _IncomingCallScreenState extends State<IncomingCallScreen> with SingleTickerProviderStateMixin {
+class _IncomingCallBannerState extends State<_IncomingCallBanner> with SingleTickerProviderStateMixin {
   bool _done = false;
   late final AnimationController _pulse =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat();
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))..repeat();
 
   @override
   void initState() {
@@ -37,10 +58,17 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with SingleTick
     try {
       _ringStart();
     } catch (_) {
-      // Если звук не доступен, экран всё равно работает.
+      // Если звук не доступен, баннер всё равно работает.
     }
     // Сообщаем звонящему, что приглашение дошло и звонит у нас.
     _setStatus('ringing');
+  }
+
+  @override
+  void dispose() {
+    _stopRing();
+    _pulse.dispose();
+    super.dispose();
   }
 
   void _stopRing() {
@@ -61,12 +89,10 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with SingleTick
   void _accept() {
     _stopRing();
     _setStatus('answered');
-    // Уже звоним этому человеку (оба позвонили друг другу): просто закрываем экран входящего.
-    if (activeCallChannel == widget.channel) {
-      Navigator.of(context).pop();
-      return;
-    }
-    Navigator.of(context).pushReplacement(
+    widget.close();
+    // Уже звоним этому человеку (оба позвонили друг другу): просто закрываем баннер.
+    if (activeCallChannel == widget.channel) return;
+    appNavigatorKey.currentState?.push(
       MaterialPageRoute(
         builder: (_) => CallScreen(channel: widget.channel, title: widget.callerName),
       ),
@@ -76,127 +102,81 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with SingleTick
   void _decline() {
     _stopRing();
     _setStatus('declined');
-    Navigator.of(context).pop();
-  }
-
-  @override
-  void dispose() {
-    _stopRing();
-    _pulse.dispose();
-    super.dispose();
+    widget.close();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CallBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFF2FB58A).withValues(alpha: 0.45)),
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.verified_user_rounded, color: Color(0xFF24D17E), size: 18),
-                      SizedBox(width: 8),
-                      Text('Защищённый звонок',
-                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0E4A3B), Color(0xFF062E24)],
                 ),
-                const SizedBox(height: 36),
-                Text(widget.callerName,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: 0.2)),
-                const SizedBox(height: 8),
-                Text('Входящий звонок',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 16)),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: 280,
-                  height: 280,
-                  child: AnimatedBuilder(
+                border: Border.all(color: kCallGold.withValues(alpha: 0.5)),
+                boxShadow: const [BoxShadow(blurRadius: 16, color: Colors.black38)],
+              ),
+              child: Row(
+                children: [
+                  AnimatedBuilder(
                     animation: _pulse,
                     builder: (context, _) {
-                      final t = _pulse.value;
-                      // Свечение вокруг логотипа то усиливается, то гаснет.
-                      final glow = 0.5 - 0.5 * math.cos(2 * math.pi * t);
-                      return CustomPaint(
-                        painter: _PulsePainter(t),
-                        child: Center(
-                          child: Container(
-                            width: 190,
-                            height: 190,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const RadialGradient(
-                                colors: [Color(0xFF1A7F5E), Color(0xFF0B5A44)],
-                              ),
-                              border: Border.all(color: kCallGold.withValues(alpha: 0.75), width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: kCallGold.withValues(alpha: 0.15 + 0.35 * glow),
-                                  blurRadius: 24 + 30 * glow,
-                                  spreadRadius: 2 + 6 * glow,
-                                ),
-                              ],
+                      final glow = 0.5 - 0.5 * math.cos(2 * math.pi * _pulse.value);
+                      return Container(
+                        width: 50,
+                        height: 50,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF0B5A44),
+                          border: Border.all(color: kCallGold.withValues(alpha: 0.8)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: kCallGold.withValues(alpha: 0.2 + 0.4 * glow),
+                              blurRadius: 10 + 12 * glow,
+                              spreadRadius: 1 + 3 * glow,
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(38),
-                              child: SvgPicture.asset('assets/logo.svg'),
-                            ),
-                          ),
+                          ],
                         ),
+                        child: SvgPicture.asset('assets/logo.svg'),
                       );
                     },
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text('TAJ Bozor',
-                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 70, height: 1, color: kCallGold.withValues(alpha: 0.6)),
-                    const SizedBox(width: 12),
-                    Text('Всегда рядом',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 16)),
-                    const SizedBox(width: 12),
-                    Container(width: 70, height: 1, color: kCallGold.withValues(alpha: 0.6)),
-                  ],
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _RoundButton(
-                      icon: Icons.call_end_rounded,
-                      color: const Color(0xFFE0302F),
-                      label: 'Бросить',
-                      onTap: _decline,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Входящий звонок',
+                            style: TextStyle(color: kCallGold, fontSize: 13, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(
+                          'от ${widget.callerName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
-                    _RoundButton(
-                      icon: Icons.call_rounded,
-                      color: const Color(0xFF1FA653),
-                      label: 'Взять',
-                      onTap: _accept,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 56),
-              ],
+                  ),
+                  _BannerButton(icon: Icons.call_end_rounded, color: const Color(0xFFE0302F), onTap: _decline),
+                  const SizedBox(width: 10),
+                  _BannerButton(icon: Icons.call_rounded, color: const Color(0xFF1FA653), onTap: _accept),
+                ],
+              ),
             ),
           ),
         ),
@@ -205,69 +185,27 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with SingleTick
   }
 }
 
-/// Расходящиеся золотые круги вокруг логотипа.
-class _PulsePainter extends CustomPainter {
-  const _PulsePainter(this.t);
-
-  final double t;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-    final base = size.width / 2;
-    for (var i = 0; i < 2; i++) {
-      final p = (t + i * 0.5) % 1.0;
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
-        ..color = kCallGold.withValues(alpha: (1 - p) * 0.35);
-      canvas.drawCircle(c, base * (0.7 + 0.3 * p), paint);
-    }
-    final ring = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = kCallGold.withValues(alpha: 0.5);
-    canvas.drawCircle(c, base * 0.82, ring);
-  }
-
-  @override
-  bool shouldRepaint(covariant _PulsePainter old) => old.t != t;
-}
-
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({required this.icon, required this.color, required this.label, required this.onTap});
+class _BannerButton extends StatelessWidget {
+  const _BannerButton({required this.icon, required this.color, required this.onTap});
 
   final IconData icon;
   final Color color;
-  final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        PulseRings(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
           color: color,
-          child: GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color,
-                boxShadow: [
-                  BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 24, spreadRadius: 2),
-                ],
-              ),
-              child: Icon(icon, color: Colors.white, size: 36),
-            ),
-          ),
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 12, spreadRadius: 1)],
         ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 15)),
-      ],
+        child: Icon(icon, color: Colors.white, size: 26),
+      ),
     );
   }
 }

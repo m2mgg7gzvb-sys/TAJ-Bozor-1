@@ -118,7 +118,7 @@ Future<void> _checkRecentCall(String me) async {
   }
 }
 
-/// Входящий звонок: открываем экран с гудком поверх любого экрана.
+/// Входящий звонок: баннер сверху поверх любого экрана, с мелодией и вибрацией.
 void _showIncomingCall(Map<String, dynamic> row) {
   final data = row['data'];
   if (data is! Map) return;
@@ -127,14 +127,8 @@ void _showIncomingCall(Map<String, dynamic> row) {
   if (channel == null || channel.isEmpty) return;
   // Уже в другом звонке: второй входящий не открываем, иначе звонки перемешаются.
   if (activeCallChannel != null && activeCallChannel != channel) return;
-  final nav = appNavigatorKey.currentState;
-  if (nav == null) return;
-  nav.push(
-    MaterialPageRoute(
-      fullscreenDialog: true,
-      builder: (_) => IncomingCallScreen(channel: channel, callerName: callerName),
-    ),
-  );
+  if (appNavigatorKey.currentState == null) return;
+  showIncomingCallBanner(channel: channel, callerName: callerName);
 }
 
 /// Пересчитываем непрочитанное: уведомления и переписки.
