@@ -5,6 +5,7 @@ import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listings_screen.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Порядок категорий на экране «Все категории». Категории из базы, которых нет в списке, идут в конец.
 const _order = [
@@ -189,7 +190,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: FilledButton(
+              child: GreenButton(
                 onPressed: () => setState(() => _future = _load()),
                 child: const Text('Повторить'),
               ),

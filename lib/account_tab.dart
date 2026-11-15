@@ -17,6 +17,7 @@ import 'push.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 import 'welcome_screen.dart';
+import 'green_button.dart';
 
 /// Вкладка «Войти»: форма входа, если никто не вошёл, иначе профиль.
 class AccountTab extends StatelessWidget {
@@ -509,7 +510,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             Text(_error!, style: const TextStyle(color: AppColors.ruby)),
           ],
           const SizedBox(height: 18),
-          FilledButton(
+          GreenButton(
             onPressed: _saving ? null : _save,
             child: _saving
                 ? const SizedBox(
@@ -549,7 +550,7 @@ class _GuestBanner extends StatelessWidget {
             style: TextStyle(color: AppColors.muted, height: 1.4),
           ),
           const SizedBox(height: 14),
-          FilledButton(
+          GreenButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const _RegisterPage()),
             ),

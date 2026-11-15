@@ -187,11 +187,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ],
                 ),
-                child: FilledButton(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                ),
+                child: GreenButton(
+height: 54,
+
                 onPressed: _loading ? null : _sendCode,
                 child: _loading
                     ? const SizedBox(

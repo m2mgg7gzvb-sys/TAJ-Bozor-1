@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'glass_widgets.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Шторка «Закажите бесплатный звонок»: номер +992, проверка и сохранение заявки.
 Future<void> showCallbackSheet(BuildContext context, {required String listingId}) {
@@ -88,7 +89,7 @@ class _CallbackFormState extends State<_CallbackForm> {
               ),
             ),
             const SizedBox(height: 20),
-            FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Готово')),
+            GreenButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Готово')),
           ] else ...[
             Row(
               children: [

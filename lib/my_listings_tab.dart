@@ -9,6 +9,7 @@ import 'listing_utils.dart';
 import 'listing_actions_sheet.dart';
 import 'promote_sheet.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Статусы, при которых объявление переходит в раздел «Завершённые».
 const _completedStatuses = {'sold', 'hidden', 'expired'};
@@ -73,7 +74,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
         content: const Text('Объявление перейдёт в «Завершённые» и перестанет показываться в поиске.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Продано')),
+          GreenButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Продано')),
         ],
       ),
     );
@@ -175,8 +176,8 @@ class _MyListingsTabState extends State<MyListingsTab> {
             left: 8,
             right: 8,
             bottom: 8,
-            child: FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(36)),
+            child: GreenButton(
+              height: 36,
               onPressed: () => _renew(item),
               child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
             ),
@@ -268,15 +269,12 @@ class _MyListingsTabState extends State<MyListingsTab> {
           ),
           child: SizedBox(
             height: 54,
-            child: FilledButton.icon(
+            child: GreenButton.icon(
               onPressed: _create,
               icon: const Icon(Icons.add_rounded),
               label: const Text(
                 'Подать объявление',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
             ),
           ),
@@ -290,7 +288,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: FilledButton(onPressed: _reload, child: const Text('Повторить')),
+              child: GreenButton(onPressed: _reload, child: const Text('Повторить')),
             );
           }
           final all = snapshot.data ?? [];

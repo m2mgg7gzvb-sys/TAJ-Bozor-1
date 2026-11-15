@@ -6,6 +6,7 @@ import 'listing_utils.dart';
 import 'admin_log.dart';
 import 'confirm_delete.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Проверка объявлений для админов: новые и изменённые объявления ждут решения.
 class ModerationScreen extends StatefulWidget {
@@ -187,7 +188,7 @@ class _ModerationTile extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: FilledButton(onPressed: onApprove, child: const Text('Разрешить')),
+                child: GreenButton(onPressed: onApprove, child: const Text('Разрешить')),
               ),
               const SizedBox(width: 8),
               Expanded(

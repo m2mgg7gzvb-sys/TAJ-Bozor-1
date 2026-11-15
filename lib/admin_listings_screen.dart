@@ -7,6 +7,7 @@ import 'admin_log.dart';
 import 'confirm_delete.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Все объявления для админов: фильтр по статусу, поиск по названию и действия
 /// (заморозить, заблокировать, удалить, вернуть в активные).
@@ -223,14 +224,14 @@ class _AdminTile extends StatelessWidget {
           OutlinedButton(onPressed: onBlock, child: const Text('Блокировать')),
         ],
       'frozen' => [
-          FilledButton(onPressed: onUnfreeze, child: const Text('Разморозить')),
+          GreenButton(onPressed: onUnfreeze, child: const Text('Разморозить')),
           OutlinedButton(onPressed: onBlock, child: const Text('Блокировать')),
         ],
       'blocked' => [
-          FilledButton(onPressed: onRestore, child: const Text('Разблокировать')),
+          GreenButton(onPressed: onRestore, child: const Text('Разблокировать')),
         ],
       'hidden' => [
-          FilledButton(onPressed: onRestore, child: const Text('Вернуть')),
+          GreenButton(onPressed: onRestore, child: const Text('Вернуть')),
         ],
       _ => <Widget>[],
     };

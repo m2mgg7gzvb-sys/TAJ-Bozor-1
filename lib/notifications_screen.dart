@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Уведомления пользователя: например, «заказан звонок» с номером покупателя.
 class NotificationsScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: FilledButton(
+              child: GreenButton(
                 onPressed: () => setState(() => _future = _load()),
                 child: const Text('Повторить'),
               ),

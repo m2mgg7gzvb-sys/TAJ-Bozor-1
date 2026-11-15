@@ -19,6 +19,7 @@ import 'review_dialog.dart';
 import 'theme.dart';
 import 'glass_widgets.dart';
 import 'user_profile_screen.dart';
+import 'green_button.dart';
 
 /// Находит переписку текущего пользователя или создаёт новую.
 /// kind: 'support' (чат с командой) или 'listing' (чат по объявлению).
@@ -149,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: _join, child: const Text('Присоединиться')),
+            GreenButton(onPressed: _join, child: const Text('Присоединиться')),
           ],
         ),
       ),
@@ -798,7 +799,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   TextButton(onPressed: _dismissReview, child: const Text('Отказать')),
-                  FilledButton(onPressed: _writeReview, child: const Text('Оставить отзыв')),
+                  GreenButton(onPressed: _writeReview, child: const Text('Оставить отзыв')),
                 ],
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
+import 'green_button.dart';
 
 /// Нижнее окно отзыва: аватар и имя продавца, объявление, звёзды и поле для текста.
 /// Возвращает true, если отзыв сохранён.
@@ -168,9 +169,9 @@ class _ReviewSheetState extends State<_ReviewSheet> {
             ),
           ),
           const SizedBox(height: 14),
-          FilledButton(
+          GreenButton(
             onPressed: _sending ? null : _send,
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+            height: 50,
             child: _sending
                 ? const SizedBox(
                     width: 20,

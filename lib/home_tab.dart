@@ -14,6 +14,7 @@ import 'listings_screen.dart';
 import 'nav_state.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Главная вкладка «Поиск»: поиск, баннер, категории и новые объявления.
 const _tgCats = {
@@ -444,7 +445,7 @@ class _HomeTabState extends State<HomeTab> {
                     children: [
                       Text(tr('Не удалось загрузить объявления', 'Эълонҳоро боргирӣ карда натавонистем')),
                       const SizedBox(height: 8),
-                      FilledButton(
+                      GreenButton(
                         onPressed: () => setState(() => _listings = _loadListings()),
                         child: Text(tr('Повторить', 'Такрор')),
                       ),
