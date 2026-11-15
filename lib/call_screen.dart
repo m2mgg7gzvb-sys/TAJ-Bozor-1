@@ -58,10 +58,13 @@ String? activeCallChannel;
 
 /// Экран голосового звонка через Интернет.
 class CallScreen extends StatefulWidget {
-  const CallScreen({super.key, required this.channel, required this.title});
+  const CallScreen({super.key, required this.channel, required this.title, this.conversationId});
 
   final String channel;
   final String title;
+
+  /// Переписка, куда записать историю звонка (если звонок из чата).
+  final String? conversationId;
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -70,6 +73,7 @@ class CallScreen extends StatefulWidget {
 class _CallScreenState extends State<CallScreen> {
   bool _joined = false;
   bool _muted = false;
+  bool _recorded = false;
   String? _error;
   // Статус собеседника: 'ringing' — приглашение у него, 'answered', 'declined' или пусто.
   String _peer = '';
@@ -157,7 +161,26 @@ class _CallScreenState extends State<CallScreen> {
     if (mounted) setState(() => _muted = next);
   }
 
+  /// Записывает звонок в переписку: статус и время разговора (один раз).
+  void _saveHistory() {
+    final convId = widget.conversationId;
+    final me = Supabase.instance.client.auth.currentUser?.id;
+    if (_recorded || convId == null || me == null) return;
+    _recorded = true;
+    final connected = _connectedAt;
+    final status = connected != null ? 'answered' : (_peer == 'declined' ? 'declined' : 'missed');
+    final secs = connected == null ? 0 : DateTime.now().difference(connected).inSeconds;
+    Supabase.instance.client.from('messages').insert({
+      'conversation_id': convId,
+      'sender_id': me,
+      'body': 'Звонок',
+      'attachment_kind': 'call',
+      'attachment_url': '$status|$secs',
+    }).catchError((_) {});
+  }
+
   Future<void> _hangUp() async {
+    _saveHistory();
     _ticker?.cancel();
     _levelTimer?.cancel();
     if (_joined) {
@@ -170,6 +193,7 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
+    _saveHistory();
     _ticker?.cancel();
     _levelTimer?.cancel();
     _level.dispose();

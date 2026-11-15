@@ -7,6 +7,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
+
+import 'lang_store.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -107,6 +109,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Stream<List<Map<String, dynamic>>>? _stream;
   bool _isStaff = false;
+
+  // Статус собеседника: онлайн, печатает, записывает голос.
+  RealtimeChannel? _peerCh;
+  Timer? _presenceTimer;
+  Timer? _peerActionTimer;
+  Timer? _recActivityTimer;
+  DateTime _lastTypingSent = DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime? _otherSeen;
+  String? _peerAction; // 'typing' | 'recording'
 
   void _startStream() {
     _stream = Supabase.instance.client
@@ -243,6 +254,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .maybeSingle();
       if (!mounted) return;
       setState(() => _conv = row);
+      _loadPresence();
       await _checkReview();
     } catch (_) {
       // Без этого просто не покажем предложение оставить отзыв
@@ -352,6 +364,9 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!widget.joinMode) _startStream();
     _loadStaff();
     _loadConv();
+    _ctrl.addListener(_onInputChanged);
+    _presenceTimer = Timer.periodic(const Duration(seconds: 30), (_) => _loadPresence());
+    _startPeerChannel();
   }
 
   @override
@@ -384,6 +399,10 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
     markChatRead(widget.conversationId);
+    _presenceTimer?.cancel();
+    _peerActionTimer?.cancel();
+    _recActivityTimer?.cancel();
+    _peerCh?.unsubscribe();
     _ctrl.dispose();
     _recTimer?.cancel();
     _recorder.dispose();
@@ -391,6 +410,102 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   bool get _isSeller => _conv?['seller_id'] == _me;
+
+  /// Собеседник в этом чате (для поддержки статуса нет).
+  String? get _otherId {
+    final c = _conv;
+    final me = _me;
+    if (c == null || me == null || c['kind'] == 'support') return null;
+    return (me == c['buyer_id'] ? c['seller_id'] : c['buyer_id']) as String?;
+  }
+
+  Future<void> _loadPresence() async {
+    final id = _otherId;
+    if (id == null) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('profiles')
+          .select('last_seen_at')
+          .eq('id', id)
+          .maybeSingle();
+      final iso = row?['last_seen_at'] as String?;
+      if (mounted) {
+        setState(() => _otherSeen = iso == null ? null : DateTime.tryParse(iso)?.toLocal());
+      }
+    } catch (_) {
+      // Без статуса просто не покажем строку под именем
+    }
+  }
+
+  /// Канал чата, по которому передаём «печатает» и «записывает голос».
+  void _startPeerChannel() {
+    final ch = Supabase.instance.client.channel('chat-${widget.conversationId}');
+    ch.onBroadcast(
+      event: 'activity',
+      callback: (payload) {
+        if (payload['user'] == _me || !mounted) return;
+        final state = payload['state'] as String?;
+        final active = state == 'typing' || state == 'recording';
+        _peerActionTimer?.cancel();
+        setState(() => _peerAction = active ? state : null);
+        if (active) {
+          // Если собеседник перестал печатать, статус гаснет через 3 секунды.
+          _peerActionTimer = Timer(const Duration(seconds: 3), () {
+            if (mounted) setState(() => _peerAction = null);
+          });
+        }
+      },
+    );
+    ch.subscribe();
+    _peerCh = ch;
+  }
+
+  void _sendActivity(String state) {
+    final ch = _peerCh;
+    final me = _me;
+    if (ch == null || me == null || _otherId == null) return;
+    if (state == 'typing') {
+      final now = DateTime.now();
+      if (now.difference(_lastTypingSent) < const Duration(seconds: 2)) return;
+      _lastTypingSent = now;
+    }
+    ch.sendBroadcastMessage(event: 'activity', payload: {'user': me, 'state': state}).catchError((_) {});
+  }
+
+  void _onInputChanged() {
+    if (_ctrl.text.trim().isNotEmpty) _sendActivity('typing');
+  }
+
+  /// Строка под именем собеседника: онлайн, печатает, записывает голос или время захода.
+  Widget? _statusWidget() {
+    if (_otherId == null) return null;
+    const base = TextStyle(fontSize: 12, fontWeight: FontWeight.w600);
+    if (_peerAction == 'typing') {
+      return Text('• • • ${tr('печатает', 'навишта истодааст')}',
+          style: base.copyWith(color: AppColors.primary));
+    }
+    if (_peerAction == 'recording') {
+      return Text(tr('записывает голос', 'паёми овозӣ сабт мекунад'),
+          style: base.copyWith(color: AppColors.primary));
+    }
+    final seen = _otherSeen;
+    if (seen == null) return null;
+    if (DateTime.now().difference(seen) < const Duration(minutes: 2)) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(color: Color(0xFF24B36B), shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(tr('В сети', 'Онлайн'), style: base.copyWith(color: const Color(0xFF24B36B))),
+        ],
+      );
+    }
+    return Text(_lastSeenText(seen), style: base.copyWith(color: AppColors.muted, fontWeight: FontWeight.w500));
+  }
 
   static const _quick = [
     'Да, в наличии',
@@ -572,6 +687,8 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Отмена записи: запись останавливается и не отправляется.
   Future<void> _cancelRecord() async {
     _recTimer?.cancel();
+    _recActivityTimer?.cancel();
+    _sendActivity('idle');
     try {
       await _recorder.stop();
     } catch (_) {}
@@ -598,9 +715,14 @@ class _ChatScreenState extends State<ChatScreen> {
         if (mounted) setState(() => _recElapsed += const Duration(seconds: 1));
       });
       setState(() => _recording = true);
+      _sendActivity('recording');
+      _recActivityTimer?.cancel();
+      _recActivityTimer = Timer.periodic(const Duration(seconds: 2), (_) => _sendActivity('recording'));
       return;
     }
     _recTimer?.cancel();
+    _recActivityTimer?.cancel();
+    _sendActivity('idle');
     final recordedUrl = await _recorder.stop();
     setState(() => _recording = false);
     if (recordedUrl == null) return;
@@ -669,6 +791,7 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (_) => CallScreen(
           channel: channel,
           title: widget.title,
+          conversationId: widget.conversationId,
         ),
       ),
     );
@@ -739,6 +862,7 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.title),
+            if (_statusWidget() != null) _statusWidget()!,
             if (_conv?['public_id'] != null)
               Text('ID чата: ${_conv!['public_id']}',
                   style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
@@ -876,6 +1000,8 @@ class _ChatScreenState extends State<ChatScreen> {
                               name: (m['attachment_name'] ?? 'Файл') as String,
                               mine: mine,
                             ),
+                          if (m['attachment_kind'] == 'call')
+                            _CallEntry(value: m['attachment_url'] as String?, mine: mine),
                           if (m['attachment_kind'] == null)
                             _bodyText(
                               m['body'] as String,
@@ -1267,4 +1393,75 @@ class _PulseSendButtonState extends State<_PulseSendButton> with SingleTickerPro
       ),
     );
   }
+}
+
+String _lastSeenText(DateTime seen) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final t = seen.toUtc().add(const Duration(hours: 5));
+  final now = DateTime.now().toUtc().add(const Duration(hours: 5));
+  final hm = '${two(t.hour)}:${two(t.minute)}';
+  bool sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+  if (sameDay(t, now)) return '${tr('был(а) сегодня в', 'охирин бор имрӯз соати')} $hm';
+  if (sameDay(t, now.subtract(const Duration(days: 1)))) {
+    return '${tr('был(а) вчера в', 'охирин бор дирӯз соати')} $hm';
+  }
+  return '${tr('был(а)', 'охирин бор')} ${two(t.day)}.${two(t.month)}.${t.year} ${tr('в', 'соати')} $hm';
+}
+
+/// Запись о звонке в переписке: статус и время разговора.
+class _CallEntry extends StatelessWidget {
+  const _CallEntry({required this.value, required this.mine});
+
+  /// Формат: 'answered|секунды', 'declined|0' или 'missed|0'.
+  final String? value;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = (value ?? 'missed|0').split('|');
+    final status = parts[0];
+    final secs = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    final answered = status == 'answered';
+    final title = switch (status) {
+      'answered' => tr('Звонок', 'Занг'),
+      'declined' => tr('Звонок отклонён', 'Занг рад шуд'),
+      _ => tr('Пропущенный звонок', 'Занги нарасида'),
+    };
+    final sub = answered
+        ? '${tr('Время разговора', 'Вақти суҳбат')} ${_callDuration(secs)}'
+        : tr('Без ответа', 'Бе ҷавоб');
+    final color = answered ? const Color(0xFF1FA653) : AppColors.ruby;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.15)),
+          child: Icon(answered ? Icons.call_rounded : Icons.call_missed_rounded, color: color, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title,
+                  style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 14)),
+              const SizedBox(height: 2),
+              Text(sub, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _callDuration(int secs) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  final h = secs ~/ 3600;
+  final m = (secs % 3600) ~/ 60;
+  final s = secs % 60;
+  return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
 }
