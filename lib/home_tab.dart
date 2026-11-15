@@ -2,7 +2,6 @@ import 'search_screen.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'all_categories_screen.dart';
@@ -535,7 +534,7 @@ class _SearchFieldState extends State<_SearchField> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           child: Row(
             children: [
-              SvgPicture.asset('assets/logo.svg', width: 28, height: 28),
+              Image.asset('assets/logo.png', width: 28, height: 28),
               const SizedBox(width: 10),
               Expanded(
                 child: AnimatedSwitcher(

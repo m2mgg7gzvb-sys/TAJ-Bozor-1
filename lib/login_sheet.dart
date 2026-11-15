@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_screen.dart';
@@ -58,7 +57,7 @@ class _LoginOverlay extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SvgPicture.asset('assets/logo.svg', width: 110, height: 110),
+                  Image.asset('assets/logo.png', width: 110, height: 110),
                   const SizedBox(height: 18),
                   Text(
                     reason,

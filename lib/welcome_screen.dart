@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_phone.dart';
@@ -184,7 +183,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       scale: Tween<double>(begin: 0.4, end: 1).animate(_part(0, 0.45, Curves.elasticOut)),
                       child: FadeTransition(
                         opacity: _part(0, 0.2),
-                        child: SvgPicture.asset('assets/logo.svg', width: 110, height: 110),
+                        child: Image.asset('assets/logo.png', width: 110, height: 110),
                       ),
                     ),
                     const SizedBox(height: 22),

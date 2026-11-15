@@ -3,7 +3,6 @@ import 'dart:js_interop';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'call_widgets.dart';
@@ -214,7 +213,7 @@ class _CallScreenState extends State<CallScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(26),
-                    child: SvgPicture.asset('assets/logo.svg', fit: BoxFit.cover),
+                    child: Image.asset('assets/logo.png', fit: BoxFit.cover),
                   ),
                 ),
                 const SizedBox(height: 24),

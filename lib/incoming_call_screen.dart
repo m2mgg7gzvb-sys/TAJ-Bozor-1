@@ -2,7 +2,6 @@ import 'dart:js_interop';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'call_screen.dart';
@@ -150,7 +149,7 @@ class _IncomingCallBannerState extends State<_IncomingCallBanner> with SingleTic
                             ),
                           ],
                         ),
-                        child: SvgPicture.asset('assets/logo.svg'),
+                        child: Image.asset('assets/logo.png'),
                       );
                     },
                   ),
