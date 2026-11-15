@@ -135,7 +135,7 @@ class _PromoteSheetState extends State<_PromoteSheet> {
   }
 }
 
-/// Окно TOP с главной: выбор своего активного объявления и срока продвижения в одном окне.
+/// Окно TOP с главной: отмечаем несколько объявлений, у каждого свой срок, внизу общая цена.
 Future<void> showTopPickSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -154,8 +154,8 @@ class _TopPickSheet extends StatefulWidget {
 
 class _TopPickSheetState extends State<_TopPickSheet> {
   late final Future<List<Map<String, dynamic>>> _items = _load();
-  String? _listingId;
-  int _plan = 1; // 7 дней по умолчанию
+  // id объявления -> индекс в promotePlans (срок продвижения для этого объявления)
+  final Map<String, int> _picks = {};
 
   Future<List<Map<String, dynamic>>> _load() async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
@@ -169,65 +169,102 @@ class _TopPickSheetState extends State<_TopPickSheet> {
     return List<Map<String, dynamic>>.from(rows);
   }
 
+  int get _total => _picks.values.fold(0, (sum, i) => sum + promotePlans[i].price);
+
+  /// Нажали на объявление: снизу открывается выбор дней для него.
+  Future<void> _pickDays(String id, String title) async {
+    final result = await showModalBottomSheet<_DaysResult>(
+      context: context,
+      showDragHandle: true,
+      builder: (_) => _DaysPicker(title: title, current: _picks[id]),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      if (result.remove) {
+        _picks.remove(id);
+      } else {
+        _picks[id] = result.plan!;
+      }
+    });
+  }
+
+  void _selectAll(List<Map<String, dynamic>> items) {
+    setState(() {
+      final allSelected = items.every((e) => _picks.containsKey(e['id'] as String));
+      if (allSelected) {
+        _picks.clear();
+      } else {
+        for (final e in items) {
+          _picks.putIfAbsent(e['id'] as String, () => 1); // по умолчанию 7 дней
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final plan = promotePlans[_plan];
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.saffron, borderRadius: BorderRadius.circular(8)),
-                    child: const Text('TOP',
-                        style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text('Продвижение', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              const Text('Выберите объявление',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-              const SizedBox(height: 8),
-              FutureBuilder<List<Map<String, dynamic>>>(
-                future: _items,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  final items = snap.data ?? [];
-                  if (items.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Нет активных объявлений',
-                          style: TextStyle(color: AppColors.muted)),
-                    );
-                  }
-                  return ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 220),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _items,
+          builder: (context, snap) {
+            if (snap.connectionState != ConnectionState.done) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final items = snap.data ?? [];
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: AppColors.saffron, borderRadius: BorderRadius.circular(8)),
+                      child: const Text('TOP',
+                          style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text('Продвижение', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                    ),
+                    if (items.isNotEmpty)
+                      TextButton(
+                        onPressed: () => _selectAll(items),
+                        child: Text(
+                          items.every((e) => _picks.containsKey(e['id'] as String))
+                              ? 'Сбросить'
+                              : 'Выбрать все',
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (items.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('Нет активных объявлений', style: TextStyle(color: AppColors.muted)),
+                  )
+                else
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 340),
                     child: ListView.builder(
                       shrinkWrap: true,
                       itemCount: items.length,
                       itemBuilder: (_, i) {
                         final id = items[i]['id'] as String;
-                        final selected = _listingId == id;
+                        final title = (items[i]['title'] as String?) ?? 'Объявление';
+                        final plan = _picks[id];
+                        final selected = plan != null;
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(14),
-                            onTap: () => setState(() => _listingId = id),
+                            onTap: () => _pickDays(id, title),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                               decoration: BoxDecoration(
@@ -241,16 +278,27 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                               child: Row(
                                 children: [
                                   Icon(
-                                    selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                    selected ? Icons.check_circle_rounded : Icons.circle_outlined,
                                     color: selected ? AppColors.primary : AppColors.muted,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      (items[i]['title'] as String?) ?? 'Объявление',
+                                      title,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    selected
+                                        ? '${promotePlans[plan].days} дн · ${promotePlans[plan].price} TJS'
+                                        : 'выбрать дни',
+                                    style: TextStyle(
+                                      color: selected ? AppColors.primary : AppColors.muted,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
@@ -260,70 +308,117 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                         );
                       },
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              const Text('Срок продвижения', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  for (var i = 0; i < promotePlans.length; i++)
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(right: i == promotePlans.length - 1 ? 0 : 8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () => setState(() => _plan = i),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: _plan == i ? AppColors.mint : Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: _plan == i ? AppColors.primary : const Color(0xFFE3ECE9),
-                                width: _plan == i ? 1.6 : 1,
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('${promotePlans[i].days} дн.',
-                                    style: const TextStyle(fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 2),
-                                Text('${promotePlans[i].price} TJS',
-                                    style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                        ),
+                  ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Text('Итого', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text('$_total TJS',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: GreenButton(
+                    onPressed: null,
+                    child: Text(_picks.isEmpty
+                        ? 'Выберите объявления'
+                        : 'Оплатить $_total TJS · скоро'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Center(
+                  child: Text(
+                    'Онлайн-оплата пока не подключена. Скоро здесь можно будет оплатить продвижение.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Результат выбора дней: срок (индекс в promotePlans) или снятие с продвижения.
+class _DaysResult {
+  const _DaysResult.plan(this.plan) : remove = false;
+  const _DaysResult.removed()
+      : plan = null,
+        remove = true;
+
+  final int? plan;
+  final bool remove;
+}
+
+/// Нижнее окно выбора дней для одного объявления.
+class _DaysPicker extends StatelessWidget {
+  const _DaysPicker({required this.title, required this.current});
+
+  final String title;
+  final int? current;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            const Text('Сколько дней поднимать в TOP', style: TextStyle(color: AppColors.muted)),
+            const SizedBox(height: 14),
+            for (var i = 0; i < promotePlans.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => Navigator.of(context).pop(_DaysResult.plan(i)),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: current == i ? AppColors.mint : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: current == i ? AppColors.primary : const Color(0xFFE3ECE9),
+                        width: current == i ? 1.6 : 1,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: GreenButton(
-                  onPressed: null,
-                  child: Text(
-                    _listingId == null
-                        ? 'Выберите объявление'
-                        : 'Оплатить ${plan.price} TJS · скоро',
+                    child: Row(
+                      children: [
+                        Icon(
+                          current == i ? Icons.radio_button_checked : Icons.radio_button_off,
+                          color: current == i ? AppColors.primary : AppColors.muted,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('${promotePlans[i].days} дней',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                        ),
+                        Text('${promotePlans[i].price} TJS',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              const Center(
-                child: Text(
-                  'Онлайн-оплата пока не подключена. Скоро здесь можно будет оплатить продвижение.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+            if (current != null)
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(const _DaysResult.removed()),
+                  child: const Text('Убрать из продвижения'),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
