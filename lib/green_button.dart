@@ -7,7 +7,7 @@ import 'theme.dart';
 /// Основная зелёная кнопка: переливающийся градиент, движущийся блик и волны.
 /// Замена FilledButton для зелёных кнопок приложения.
 class GreenButton extends StatefulWidget {
-  const GreenButton({super.key, required this.onPressed, required this.child, this.height = 54});
+  const GreenButton({super.key, required this.onPressed, required this.child, this.height = 46});
 
   /// Кнопка с иконкой слева от подписи.
   factory GreenButton.icon({
@@ -15,7 +15,7 @@ class GreenButton extends StatefulWidget {
     required VoidCallback? onPressed,
     required Widget icon,
     required Widget label,
-    double height = 54,
+    double height = 46,
   }) {
     return GreenButton(
       key: key,
@@ -73,8 +73,6 @@ class _GreenButtonState extends State<GreenButton> with SingleTickerProviderStat
                 builder: (context, _) {
                   final t = _ctrl.value;
                   return Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       gradient: LinearGradient(
@@ -99,13 +97,16 @@ class _GreenButtonState extends State<GreenButton> with SingleTickerProviderStat
                           Positioned.fill(
                             child: CustomPaint(painter: _ButtonWavesPainter(t)),
                           ),
-                          DefaultTextStyle.merge(
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: DefaultTextStyle.merge(
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              child: widget.child,
                             ),
-                            child: widget.child,
                           ),
                         ],
                       ),
