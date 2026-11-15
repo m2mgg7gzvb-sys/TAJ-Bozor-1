@@ -78,6 +78,7 @@ class _CallScreenState extends State<CallScreen> {
   Timer? _ticker;
   Timer? _levelTimer;
   final _level = ValueNotifier<double>(0);
+  double _smoothLevel = 0;
   DateTime? _connectedAt; // момент, когда собеседник ответил
   Duration _elapsed = Duration.zero;
 
@@ -118,7 +119,12 @@ class _CallScreenState extends State<CallScreen> {
     try {
       raw = _jsLevel().toDartDouble;
     } catch (_) {}
-    _level.value = (raw * 3).clamp(0.0, 1.0);
+    // Фоновый шум ниже порога не считаем голосом; плавно поднимаем и опускаем столбики.
+    final target = ((raw - 0.05) / 0.35).clamp(0.0, 1.0);
+    _smoothLevel = target > _smoothLevel
+        ? _smoothLevel + (target - _smoothLevel) * 0.6
+        : _smoothLevel + (target - _smoothLevel) * 0.25;
+    _level.value = _smoothLevel;
   }
 
   /// Раз в секунду: ответил ли собеседник, его статус и таймер.
@@ -197,21 +203,21 @@ class _CallScreenState extends State<CallScreen> {
               children: [
                 const SizedBox(height: 28),
                 Container(
-                  width: 200,
-                  height: 200,
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(44),
-                    border: Border.all(color: kCallGold, width: 2),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: kCallGold, width: 1.5),
                     boxShadow: [
-                      BoxShadow(color: kCallGold.withValues(alpha: 0.2), blurRadius: 30, spreadRadius: 2),
+                      BoxShadow(color: kCallGold.withValues(alpha: 0.2), blurRadius: 20, spreadRadius: 1),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(42),
+                    borderRadius: BorderRadius.circular(26),
                     child: SvgPicture.asset('assets/logo.svg', fit: BoxFit.cover),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 Text(widget.title,
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w600)),

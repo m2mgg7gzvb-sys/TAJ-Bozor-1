@@ -194,7 +194,7 @@ class _VoiceBarsState extends State<VoiceBars> with SingleTickerProviderStateMix
                     padding: const EdgeInsets.symmetric(horizontal: 5),
                     child: Container(
                       width: 6,
-                      height: 6 + 46 * _shape[i] * lvl * (0.45 + 0.55 * (0.5 + 0.5 * math.sin(t + i * 1.1))),
+                      height: 4 + 34 * _shape[i] * lvl * (0.6 + 0.4 * (0.5 + 0.5 * math.sin(t + i * 1.1))),
                       decoration: BoxDecoration(color: kCallGold, borderRadius: BorderRadius.circular(3)),
                     ),
                   ),
