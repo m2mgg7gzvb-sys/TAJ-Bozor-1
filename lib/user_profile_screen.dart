@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import 'chat_screen.dart';
+import 'wave_background.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'copy_id.dart';
@@ -89,7 +92,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<_UserData> _load() async {
     final profile = await _db
         .from('profiles')
-        .select('name, city, avatar_url, public_id, is_admin, is_verified, is_blocked')
+        .select('name, city, phone, avatar_url, public_id, is_admin, is_verified, is_blocked')
         .eq('id', widget.userId)
         .maybeSingle();
     var viewerIsAdmin = false;
@@ -208,6 +211,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  /// Звонок по телефону пользователя (как в объявлении).
+  Future<void> _callSeller(String phone) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (phone.trim().isEmpty) {
+      messenger.showSnackBar(const SnackBar(content: Text('Номер пока не указан')));
+      return;
+    }
+    final ok = await launchUrl(Uri(scheme: 'tel', path: phone.trim()));
+    if (!ok && mounted) {
+      messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть звонок')));
+    }
+  }
+
   /// Открывает личную переписку с этим пользователем.
   Future<void> _write(String title) async {
     try {
@@ -240,8 +256,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WaveBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: const Text('Профиль пользователя'),
         actions: [
           if (_me.isNotEmpty && _me != widget.userId)
@@ -337,11 +358,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
                 if (canReview) ...[
                   const SizedBox(height: 12),
-                  GreenButton.icon(
-                    onPressed: () => _write(displayName),
-                    icon: const Icon(Icons.chat_bubble_outline_rounded),
-                    label: const Text('Написать'),
-                    height: 50,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GreenButton.icon(
+                          onPressed: () => _write(displayName),
+                          icon: const Icon(Icons.chat_bubble_outline_rounded),
+                          label: const Text('Написать'),
+                          height: 50,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                          onPressed: () => _callSeller('${d.profile['phone'] ?? ''}'),
+                          icon: const Icon(Icons.phone_outlined, size: 18),
+                          label: const Text('Позвонить'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -427,6 +463,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           );
         },
       ),
-    );
+    ));
   }
 }
