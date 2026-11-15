@@ -94,6 +94,8 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Контент заходит под нижнюю панель: стекло показывает то, что под ним, без белой полосы.
+      extendBody: true,
       backgroundColor: const Color(0xFFF2F7F5),
       body: WaveBackground(
         child: IndexedStack(
