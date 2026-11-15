@@ -1,5 +1,4 @@
--- Рассылка уведомлений всем зарегистрированным пользователям (только админ).
--- Гостевые (анонимные) аккаунты исключены.
+-- Рассылка уведомлений всем аккаунтам, включая гостевые (только админ).
 create or replace function public.admin_broadcast(p_title text, p_body text)
 returns integer
 language plpgsql
@@ -20,8 +19,6 @@ begin
     insert into public.notifications (user_id, kind, title, body, listing_id, data)
     select p.id, 'broadcast', trim(p_title), trim(coalesce(p_body, '')), null, '{}'::jsonb
     from public.profiles p
-    join auth.users u on u.id = p.id
-    where u.is_anonymous is not true
     returning 1
   )
   select count(*) into n from ins;
