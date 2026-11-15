@@ -9,6 +9,8 @@ import 'call_widgets.dart';
 import 'config.dart';
 import 'connection_screens.dart';
 import 'lang_store.dart';
+import 'theme.dart';
+import 'theme_store.dart';
 import 'notify_store.dart';
 import 'presence.dart';
 import 'splash_screen.dart';
@@ -26,9 +28,13 @@ Future<void> bootstrap() async {
     if (state.event == AuthChangeEvent.signedIn && session != null) {
       checkAuthIntent(session.user);
     }
+    if (state.event == AuthChangeEvent.signedIn || state.event == AuthChangeEvent.signedOut) {
+      loadThemeMode();
+    }
   });
   await ViewedStore.load();
   await loadLang();
+  await loadThemeMode();
   startNotifications();
   startPresence();
 }
@@ -136,12 +142,20 @@ class TajBozorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: tajikLang,
-      builder: (_, __, ___) => MaterialApp(
-        navigatorKey: appNavigatorKey,
-        title: 'TAJ Bozor',
-        debugShowCheckedModeBanner: false,
-        theme: buildAppTheme(),
-        home: const SplashScreen(),
+      builder: (_, __, ___) => ValueListenableBuilder<bool>(
+        valueListenable: darkMode,
+        builder: (_, dark, __) => MaterialApp(
+          navigatorKey: appNavigatorKey,
+          title: 'TAJ Bozor',
+          debugShowCheckedModeBanner: false,
+          theme: buildAppTheme(dark: dark),
+          // При смене темы весь экран пересоздаётся, чтобы все цвета обновились сразу.
+          builder: (context, child) => KeyedSubtree(
+            key: ValueKey<bool>(dark),
+            child: child ?? const SizedBox.shrink(),
+          ),
+          home: const SplashScreen(),
+        ),
       ),
     );
   }

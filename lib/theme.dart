@@ -1,46 +1,66 @@
 import 'package:flutter/material.dart';
 
-/// Фирменные цвета TAJBozor (из макета).
+/// Тёмная тема включена (переключается в профиле и хранится в аккаунте).
+final ValueNotifier<bool> darkMode = ValueNotifier<bool>(false);
+
+/// Фирменные цвета TAJBozor (из макета). Нейтральные цвета меняются в тёмной теме.
 class AppColors {
   static const primary = Color(0xFF0E7C66);
   static const deep = Color(0xFF0A5C4B);
   static const saffron = Color(0xFFF5A524);
   static const ruby = Color(0xFFD62D4A);
-  static const ink = Color(0xFF0B1F1A);
-  static const background = Color(0xFFF4F7F6);
-  static const mint = Color(0xFFEAF2EF);
-  static const muted = Color(0xFF5C6F68);
+
+  static bool get _dark => darkMode.value;
+
+  static Color get ink => _dark ? const Color(0xFFE6F2EE) : const Color(0xFF0B1F1A);
+  static Color get background => _dark ? const Color(0xFF0C1513) : const Color(0xFFF4F7F6);
+  static Color get mint => _dark ? const Color(0xFF16302A) : const Color(0xFFEAF2EF);
+  static Color get muted => _dark ? const Color(0xFF9AB3AC) : const Color(0xFF5C6F68);
+
+  /// Поверхность карточек и полей (белая в светлой теме).
+  static Color get surface => _dark ? const Color(0xFF15221F) : Colors.white;
+  static Color get line => _dark ? const Color(0xFF26403A) : const Color(0xFFE3ECE9);
 }
 
-ThemeData buildAppTheme() {
+/// Светлая или тёмная тема в одной сборке. Вызывается при каждом построении MaterialApp.
+ThemeData buildAppTheme({bool dark = false}) {
+  final bg = dark ? const Color(0xFF0C1513) : const Color(0xFFF4F7F6);
+  final ink = dark ? const Color(0xFFE6F2EE) : const Color(0xFF0B1F1A);
+  final muted = dark ? const Color(0xFF9AB3AC) : const Color(0xFF5C6F68);
+  final mint = dark ? const Color(0xFF16302A) : const Color(0xFFEAF2EF);
+  final surface = dark ? const Color(0xFF15221F) : Colors.white;
+  final line = dark ? const Color(0xFF26403A) : const Color(0xFFE3ECE9);
+
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.primary,
+    brightness: dark ? Brightness.dark : Brightness.light,
     primary: AppColors.primary,
-    surface: Colors.white,
+    surface: surface,
   );
   final base = ThemeData(
     useMaterial3: true,
+    brightness: dark ? Brightness.dark : Brightness.light,
     colorScheme: scheme,
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor: bg,
     // Без волны-подсветки при нажатии: реакция кнопок мгновенная.
     splashFactory: NoSplash.splashFactory,
   );
   return base.copyWith(
-    appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.background,
-      foregroundColor: AppColors.ink,
+    appBarTheme: AppBarTheme(
+      backgroundColor: bg,
+      foregroundColor: ink,
       elevation: 0,
       scrolledUnderElevation: 0,
-      titleTextStyle: TextStyle(color: AppColors.ink, fontSize: 20, fontWeight: FontWeight.w800),
+      titleTextStyle: TextStyle(color: ink, fontSize: 20, fontWeight: FontWeight.w800),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: Colors.white,
-      indicatorColor: AppColors.mint,
+      backgroundColor: surface,
+      indicatorColor: mint,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           fontSize: 11,
           fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
-          color: states.contains(WidgetState.selected) ? AppColors.primary : AppColors.muted,
+          color: states.contains(WidgetState.selected) ? AppColors.primary : muted,
         ),
       ),
     ),
@@ -56,23 +76,23 @@ ThemeData buildAppTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primary,
-        side: const BorderSide(color: Color(0xFFD5E3DE)),
+        side: BorderSide(color: line),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
-      hintStyle: const TextStyle(color: AppColors.muted),
+      fillColor: surface,
+      hintStyle: TextStyle(color: muted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE3ECE9)),
+        borderSide: BorderSide(color: line),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE3ECE9)),
+        borderSide: BorderSide(color: line),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -81,14 +101,14 @@ ThemeData buildAppTheme() {
     ),
     segmentedButtonTheme: SegmentedButtonThemeData(
       style: SegmentedButton.styleFrom(
-        backgroundColor: Colors.white,
-        selectedBackgroundColor: AppColors.mint,
-        selectedForegroundColor: AppColors.deep,
-        side: const BorderSide(color: Color(0xFFE3ECE9)),
+        backgroundColor: surface,
+        selectedBackgroundColor: mint,
+        selectedForegroundColor: dark ? const Color(0xFFBFE8DC) : AppColors.deep,
+        side: BorderSide(color: line),
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
     ),
-    dividerTheme: const DividerThemeData(color: Color(0xFFE9EFEC), space: 1),
+    dividerTheme: DividerThemeData(color: line, space: 1),
     // Всплывающие уведомления в фирменном стиле: тёмно-зелёная плашка с золотой каймой.
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
@@ -104,9 +124,12 @@ ThemeData buildAppTheme() {
   );
 }
 
-/// Белая карточка с мягкой тенью.
+/// Тёмная тема (тот же стиль, что и светлая).
+ThemeData buildDarkTheme() => buildAppTheme(dark: true);
+
+/// Карточка с мягкой тенью (белая в светлой теме, тёмно-зелёная в тёмной).
 BoxDecoration cardDecoration({double radius = 20}) => BoxDecoration(
-      color: Colors.white,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(radius),
       boxShadow: [
         BoxShadow(

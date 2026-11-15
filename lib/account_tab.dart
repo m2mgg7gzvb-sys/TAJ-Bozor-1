@@ -19,6 +19,7 @@ import 'theme.dart';
 import 'user_profile_screen.dart';
 import 'wallet_sheet.dart';
 import 'promo_sheet.dart';
+import 'theme_store.dart';
 import 'welcome_screen.dart';
 import 'green_button.dart';
 
@@ -193,6 +194,17 @@ class _ProfilePageState extends State<_ProfilePage> {
                       icon: Icons.confirmation_number_outlined,
                       title: tr('Активировать промокод', 'Фаъолсозии промокод'),
                       onTap: () => showPromoSheet(context),
+                    ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: darkMode,
+                      builder: (_, dark, __) => SwitchListTile(
+                        secondary: const Icon(Icons.dark_mode_outlined, color: AppColors.primary),
+                        title: Text(tr('Тёмная тема', 'Мавзӯи торик'),
+                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                        value: dark,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (v) => setThemeMode(dark: v),
+                      ),
                     ),
                     _MenuTile(
                       icon: Icons.favorite_border_rounded,
