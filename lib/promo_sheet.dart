@@ -69,9 +69,11 @@ class _PromoSheetState extends State<_PromoSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Отступ снизу равен высоте клавиатуры: поле ввода и кнопка остаются над ней.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, 4, 20, 16 + keyboard),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
