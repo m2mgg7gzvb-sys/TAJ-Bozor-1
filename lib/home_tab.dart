@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'all_categories_screen.dart';
 import 'city_store.dart';
+import 'fade_route.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'lang_store.dart';
@@ -100,9 +101,7 @@ class _HomeTabState extends State<HomeTab> {
 
   void _openCategory(int id, String name, {bool carFilter = false}) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ListingsScreen(categoryId: id, title: name, carFilter: carFilter),
-      ),
+      fadeRoute(ListingsScreen(categoryId: id, title: name, carFilter: carFilter)),
     );
   }
 
