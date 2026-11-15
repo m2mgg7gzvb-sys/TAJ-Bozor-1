@@ -21,6 +21,16 @@ external JSPromise<JSBoolean> _jsLeave();
 @JS('agoraIsConnected')
 external JSBoolean _jsIsConnected();
 
+@JS('agoraPrepareAudio')
+external void _jsPrepareAudio();
+
+// Гудки у звонящего (web/agora.js).
+@JS('agoraBackStart')
+external void _jsBackStart();
+
+@JS('agoraBackStop')
+external void _jsBackStop();
+
 @JS('agoraLevel')
 external JSNumber _jsLevel();
 
@@ -89,6 +99,10 @@ class _CallScreenState extends State<CallScreen> {
   void initState() {
     super.initState();
     activeCallChannel = widget.channel;
+    // Звук разрешаем сразу, пока действие пользователя ещё «живое» (иначе iPhone заглушит гудки).
+    try {
+      _jsPrepareAudio();
+    } catch (_) {}
     _start();
   }
 
@@ -105,6 +119,7 @@ class _CallScreenState extends State<CallScreen> {
       ).toDart;
       if (!mounted) return;
       setState(() => _joined = true);
+      _startBack();
       _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
       _levelTimer = Timer.periodic(const Duration(milliseconds: 120), _sampleLevel);
     } catch (e) {
@@ -113,6 +128,27 @@ class _CallScreenState extends State<CallScreen> {
       setState(() => _error =
           '${tr('Не удалось подключиться', 'Пайваст нашуд')}\n${reason.length > 160 ? reason.substring(0, 160) : reason}');
     }
+  }
+
+  bool _backOn = false;
+
+  /// Гудки звучат, пока собеседник не ответил, не отклонил или звонок не закончился.
+  void _startBack() {
+    if (_backOn) return;
+    _backOn = true;
+    try {
+      _jsBackStart();
+    } catch (_) {
+      // Звук недоступен: звонок работает без гудков.
+    }
+  }
+
+  void _stopBack() {
+    if (!_backOn) return;
+    _backOn = false;
+    try {
+      _jsBackStop();
+    } catch (_) {}
   }
 
   /// Громкость для анимации золотых линий (часто, без перерисовки всего экрана).
@@ -135,7 +171,9 @@ class _CallScreenState extends State<CallScreen> {
     if (!mounted || !_joined) return;
     if (_connectedAt == null && _jsIsConnected().toDart) {
       _connectedAt = DateTime.now();
+      _stopBack();
     }
+    if (_peer == 'declined') _stopBack();
     if (_connectedAt == null && _peer != 'declined' && !_polling) {
       _polling = true;
       try {
@@ -197,6 +235,7 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _hangUp() async {
+    _stopBack();
     _cancelIfUnanswered();
     _saveHistory().ignore();
     _ticker?.cancel();
@@ -211,6 +250,7 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
+    _stopBack();
     _cancelIfUnanswered();
     _saveHistory().ignore();
     _ticker?.cancel();

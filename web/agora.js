@@ -76,6 +76,53 @@
   window.agoraRingStart = ringStart;
   window.agoraRingStop = ringStop;
 
+  // Гудки у звонящего: пока собеседник не ответил. Тон 425 Гц — 1 сек звучит, 3 сек тишина.
+  let backTimer = null;
+
+  function playBackTone() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = 425;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.05);
+    gain.gain.setValueAtTime(0.18, now + 0.95);
+    gain.gain.linearRampToValueAtTime(0, now + 1.0);
+    osc.start(now);
+    osc.stop(now + 1.0);
+  }
+
+  function backStart() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {
+      return;
+    }
+    playBackTone();
+    if (!backTimer) backTimer = setInterval(playBackTone, 4000);
+  }
+
+  function backStop() {
+    if (backTimer) {
+      clearInterval(backTimer);
+      backTimer = null;
+    }
+  }
+
+  // Вызывается сразу при нажатии «Позвонить» (в момент касания), чтобы браузер разрешил звук.
+  window.agoraPrepareAudio = function () {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {}
+  };
+  window.agoraBackStart = backStart;
+  window.agoraBackStop = backStop;
+
   function ensureClient() {
     if (!client) {
       client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
