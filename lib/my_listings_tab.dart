@@ -268,7 +268,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
             ],
           ),
           child: SizedBox(
-            height: 54,
+            height: 46,
             child: GreenButton.icon(
               onPressed: _create,
               icon: const Icon(Icons.add_rounded),
