@@ -105,13 +105,26 @@
     await c.join(appId, channel, token, uid);
     micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await c.publish([micTrack]);
-    ringStart();
     return true;
   };
 
   // True, когда собеседник уже в разговоре (его аудио опубликовано).
   window.agoraIsConnected = function () {
     return remoteConnected;
+  };
+
+  // Громкость (0..1): самое громкое из нашего микрофона и голоса собеседника. Для анимации линий.
+  window.agoraLevel = function () {
+    let level = 0;
+    try {
+      if (micTrack) level = Math.max(level, micTrack.getVolumeLevel() || 0);
+      remoteAudio.forEach((u) => {
+        if (u.audioTrack) level = Math.max(level, u.audioTrack.getVolumeLevel() || 0);
+      });
+    } catch (e) {
+      // Трек ещё не готов: считаем тишиной.
+    }
+    return level;
   };
 
   window.agoraSetMic = async function (on) {
