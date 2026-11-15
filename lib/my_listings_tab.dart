@@ -140,6 +140,12 @@ class _MyListingsTabState extends State<MyListingsTab> {
                   title: (item['title'] as String?) ?? '',
                   onTop: () => showPromoteSheet(context, title: (item['title'] as String?) ?? ''),
                   onSold: () => _markSold(item),
+                  onEdit: () async {
+                    final saved = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(builder: (_) => CreateListingScreen(listing: item)),
+                    );
+                    if (saved == true) _reload();
+                  },
                 ),
               ),
             ),

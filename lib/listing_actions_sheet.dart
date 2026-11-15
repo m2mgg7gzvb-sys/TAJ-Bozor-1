@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'green_button.dart';
 import 'theme.dart';
 
 /// Окно действий объявления: большая кнопка TOP с переливом и красная кнопка «Отметить как продано».
@@ -8,6 +9,7 @@ Future<void> showListingActions(
   required String title,
   required VoidCallback onTop,
   required VoidCallback onSold,
+  required VoidCallback onEdit,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -33,6 +35,16 @@ Future<void> showListingActions(
                 Navigator.of(sheetCtx).pop();
                 onTop();
               },
+            ),
+            const SizedBox(height: 12),
+            GreenButton.icon(
+              height: 50,
+              onPressed: () {
+                Navigator.of(sheetCtx).pop();
+                onEdit();
+              },
+              icon: const Icon(Icons.edit_rounded, size: 20),
+              label: const Text('Редактировать'),
             ),
             const SizedBox(height: 12),
             FilledButton(
