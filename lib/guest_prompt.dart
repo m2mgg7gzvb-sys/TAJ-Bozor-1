@@ -49,7 +49,7 @@ class GuestPrompt extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: AppColors.muted, height: 1.4),
+              style: TextStyle(fontSize: 16, color: AppColors.muted, height: 1.4),
             ),
             if (showButton) ...[
               const SizedBox(height: 28),

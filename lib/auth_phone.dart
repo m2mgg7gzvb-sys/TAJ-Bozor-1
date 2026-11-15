@@ -103,7 +103,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               if (!_codeStep) ...[
                 const Text('Номер телефона', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
-                const Text('Пришлём код в SMS', style: TextStyle(color: AppColors.muted)),
+                Text('Пришлём код в SMS', style: TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -133,7 +133,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               ] else ...[
                 const Text('Введите код', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
-                Text('Код отправлен на +992$_digits', style: const TextStyle(color: AppColors.muted)),
+                Text('Код отправлен на +992$_digits', style: TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 24),
                 TextField(
                   controller: _codeCtrl,

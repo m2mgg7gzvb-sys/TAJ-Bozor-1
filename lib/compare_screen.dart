@@ -65,7 +65,7 @@ class CompareScreen extends StatelessWidget {
           child: Table(
             columnWidths: const {0: FixedColumnWidth(120)},
             defaultColumnWidth: const FixedColumnWidth(160),
-            border: const TableBorder(
+            border: TableBorder(
               horizontalInside: BorderSide(color: AppColors.mint),
             ),
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
@@ -83,7 +83,7 @@ class CompareScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                       child: Text(
                         r.$1,
-                        style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                        style: TextStyle(color: AppColors.muted, fontSize: 13),
                       ),
                     ),
                     for (final v in r.$2)

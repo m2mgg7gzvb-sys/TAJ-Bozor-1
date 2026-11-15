@@ -453,11 +453,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.visibility_outlined, size: 20, color: AppColors.muted),
+                          Icon(Icons.visibility_outlined, size: 20, color: AppColors.muted),
                           const SizedBox(width: 4),
                           Text(
                             '$_views',
-                            style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -494,7 +494,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         ),
                       ),
                     if (_date().isNotEmpty)
-                      Text(_date(), style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                      Text(_date(), style: TextStyle(color: AppColors.muted, fontSize: 13)),
                   ],
                 ),
 
@@ -639,7 +639,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(r.key, style: const TextStyle(color: AppColors.muted)),
+                                  child: Text(r.key, style: TextStyle(color: AppColors.muted)),
                                 ),
                                 Text(r.value, style: const TextStyle(fontWeight: FontWeight.w600)),
                               ],
@@ -965,11 +965,11 @@ class _VariantTile extends StatelessWidget {
                   children: [
                     Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                    Text(subtitle, style: TextStyle(color: AppColors.muted, fontSize: 13)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+              Icon(Icons.chevron_right_rounded, color: AppColors.muted),
             ],
           ),
         ),

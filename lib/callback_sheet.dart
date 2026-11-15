@@ -69,7 +69,7 @@ class _CallbackFormState extends State<_CallbackForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_done) ...[
-            const Center(
+            Center(
               child: CircleAvatar(
                 radius: 30,
                 backgroundColor: AppColors.mint,
@@ -81,7 +81,7 @@ class _CallbackFormState extends State<_CallbackForm> {
               child: Text('Заявка отправлена', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
             ),
             const SizedBox(height: 8),
-            const Center(
+            Center(
               child: Text(
                 'Менеджер TAJ Bozor свяжется с вами по номеру, который вы указали',
                 textAlign: TextAlign.center,
@@ -102,13 +102,13 @@ class _CallbackFormState extends State<_CallbackForm> {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(color: AppColors.mint, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: AppColors.mint, shape: BoxShape.circle),
                   child: const Icon(Icons.call_rounded, color: AppColors.primary),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Менеджер TAJ Bozor поможет разобраться с предложением и проконсультирует по продавцу и деталям.',
               style: TextStyle(color: AppColors.muted, height: 1.35),
             ),

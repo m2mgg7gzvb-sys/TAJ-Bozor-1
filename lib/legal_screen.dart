@@ -20,7 +20,7 @@ class LegalPage extends StatelessWidget {
         children: [
           Text(
             tr('Дата последнего изменения: $updated', 'Санаи охирин тағйирёбӣ: $updated'),
-            style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           const SizedBox(height: 16),
           for (final (heading, body) in sections) ...[

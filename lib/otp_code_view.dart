@@ -163,7 +163,7 @@ class _OtpCodeViewState extends State<OtpCodeView> with TickerProviderStateMixin
                   : (error ? 'Код не подошёл' : 'Подтвердите, что это вы'),
               key: ValueKey('t$success$error'),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink),
             ),
           ),
           const SizedBox(height: 8),
@@ -194,11 +194,11 @@ class _OtpCodeViewState extends State<OtpCodeView> with TickerProviderStateMixin
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Не пришёл код? ', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+              Text('Не пришёл код? ', style: TextStyle(color: AppColors.muted, fontSize: 13)),
               if (_cooldown > 0)
                 Text(
                   'отправить снова через $_mm',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
                 )
               else
                 TextButton(
@@ -210,7 +210,7 @@ class _OtpCodeViewState extends State<OtpCodeView> with TickerProviderStateMixin
           ),
           TextButton(
             onPressed: widget.onChangeEmail,
-            child: const Text('Изменить почту', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+            child: Text('Изменить почту', style: TextStyle(color: AppColors.muted, fontSize: 13)),
           ),
         ],
       ),

@@ -212,7 +212,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   }
                   final list = snap.data ?? [];
                   if (list.isEmpty) {
-                    return const Padding(
+                    return Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text('Объявлений пока нет', style: TextStyle(color: AppColors.muted)),
                     );
@@ -261,7 +261,7 @@ class _Tile extends StatelessWidget {
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   height: 1.2,

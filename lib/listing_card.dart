@@ -185,7 +185,7 @@ class ListingCard extends StatelessWidget {
                           priceText(item),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.ink,
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
@@ -200,7 +200,7 @@ class ListingCard extends StatelessWidget {
                       _facts(item),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                      style: TextStyle(fontSize: 13, color: AppColors.muted),
                     ),
                   ],
                   if (city != null && city.isNotEmpty) ...[
@@ -209,7 +209,7 @@ class ListingCard extends StatelessWidget {
                       city,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13, color: AppColors.muted),
+                      style: TextStyle(fontSize: 13, color: AppColors.muted),
                     ),
                   ],
                 ],

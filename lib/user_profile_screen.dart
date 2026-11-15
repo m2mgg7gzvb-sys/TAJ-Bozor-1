@@ -259,7 +259,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             children: [
               Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary)),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              Text(label, style: TextStyle(color: AppColors.muted, fontSize: 12)),
             ],
           ),
         ),
@@ -358,7 +358,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               ],
                             ),
                             if (city != null && city.isNotEmpty)
-                              Text(city, style: const TextStyle(color: AppColors.muted)),
+                              Text(city, style: TextStyle(color: AppColors.muted)),
                             if (d.profile['public_id'] != null)
                               CopyIdLine(label: 'ID профиля:', id: '${d.profile['public_id']}'),
                           ],
@@ -415,7 +415,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 const Text('Объявления', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 if (d.activeCount == 0)
-                  const Text('Активных объявлений нет', style: TextStyle(color: AppColors.muted))
+                  Text('Активных объявлений нет', style: TextStyle(color: AppColors.muted))
                 else
                   GridView.count(
                     shrinkWrap: true,
@@ -439,7 +439,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
                 const SizedBox(height: 6),
                 if (d.reviews.isEmpty)
-                  const Text('Отзывов пока нет', style: TextStyle(color: AppColors.muted))
+                  Text('Отзывов пока нет', style: TextStyle(color: AppColors.muted))
                 else
                   for (final r in d.reviews) ...[
                     Container(

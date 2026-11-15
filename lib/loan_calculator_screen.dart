@@ -77,7 +77,7 @@ class _LoanCalculatorScreenState extends State<LoanCalculatorScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Ежемесячный платёж', style: TextStyle(color: AppColors.muted)),
+                Text('Ежемесячный платёж', style: TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 4),
                 Text(
                   price <= 0 ? '—' : _fmt(monthly),
@@ -91,7 +91,7 @@ class _LoanCalculatorScreenState extends State<LoanCalculatorScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Расчёт ориентировочный. Условия рассрочки у продавца или банка могут отличаться.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
@@ -119,7 +119,7 @@ class _LoanCalculatorScreenState extends State<LoanCalculatorScreen> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            Expanded(child: Text(a, style: const TextStyle(color: AppColors.muted))),
+            Expanded(child: Text(a, style: TextStyle(color: AppColors.muted))),
             Text(b, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),

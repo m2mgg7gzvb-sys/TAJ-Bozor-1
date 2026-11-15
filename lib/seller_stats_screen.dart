@@ -86,7 +86,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+            Text(label, style: TextStyle(color: AppColors.muted, fontSize: 12)),
           ],
         ),
       );

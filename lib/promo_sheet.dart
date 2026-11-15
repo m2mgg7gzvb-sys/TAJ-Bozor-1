@@ -81,7 +81,7 @@ class _PromoSheetState extends State<_PromoSheet> {
             const Text('Активировать промокод',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
-            const Text('Введите код, чтобы получить бонус на баланс.',
+            Text('Введите код, чтобы получить бонус на баланс.',
                 style: TextStyle(color: AppColors.muted)),
             const SizedBox(height: 16),
             TextField(

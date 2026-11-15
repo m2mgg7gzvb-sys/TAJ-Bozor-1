@@ -83,7 +83,7 @@ class _Stat extends StatelessWidget {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color),
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.muted)),
         ],
       ),
     );

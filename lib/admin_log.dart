@@ -164,7 +164,7 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
           }
           final items = snap.data ?? const [];
           if (items.isEmpty) {
-            return const Center(child: Text('Действий пока нет', style: TextStyle(color: AppColors.muted)));
+            return Center(child: Text('Действий пока нет', style: TextStyle(color: AppColors.muted)));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -192,10 +192,10 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
                     Text(adminActionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
                     if (listingId != null)
                       Text('ID: ${e['no'] ?? '—'}',
-                          style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                          style: TextStyle(color: AppColors.muted, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
                       Text(action == 'message' ? note : 'Причина: $note', style: const TextStyle(fontSize: 13)),
-                    Text(date, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                    Text(date, style: TextStyle(color: AppColors.muted, fontSize: 12)),
                   ],
                 ),
                 ),

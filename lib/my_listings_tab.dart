@@ -135,7 +135,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
               shape: const CircleBorder(),
               child: IconButton(
                 tooltip: 'Действия',
-                icon: const Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.ink),
+                icon: Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.ink),
                 onPressed: () => showListingActions(
                   context,
                   title: (item['title'] as String?) ?? '',
@@ -237,11 +237,11 @@ class _MyListingsTabState extends State<MyListingsTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.post_add_rounded, size: 64, color: AppColors.muted),
+            Icon(Icons.post_add_rounded, size: 64, color: AppColors.muted),
             const SizedBox(height: 16),
             Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted)),
+            Text(text, textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
           ],
         ),
       ),
