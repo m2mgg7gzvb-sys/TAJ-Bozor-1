@@ -18,6 +18,7 @@ import 'push.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 import 'wallet_sheet.dart';
+import 'promo_sheet.dart';
 import 'welcome_screen.dart';
 import 'green_button.dart';
 
@@ -187,6 +188,11 @@ class _ProfilePageState extends State<_ProfilePage> {
                       icon: Icons.account_balance_wallet_outlined,
                       title: tr('Баланс и пополнение', 'Баланс ва пуркунӣ'),
                       onTap: () => showWalletSheet(context),
+                    ),
+                    _MenuTile(
+                      icon: Icons.confirmation_number_outlined,
+                      title: tr('Активировать промокод', 'Фаъолсозии промокод'),
+                      onTap: () => showPromoSheet(context),
                     ),
                     _MenuTile(
                       icon: Icons.favorite_border_rounded,
