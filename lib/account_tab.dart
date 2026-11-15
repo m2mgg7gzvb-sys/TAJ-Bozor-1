@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'auth_screen.dart';
+import 'copy_id.dart';
 import 'glass_widgets.dart';
 import 'favorites_store.dart';
 import 'seller_stats_screen.dart';
@@ -40,8 +41,10 @@ class _ProfileData {
     this.listingsCount = 0,
     this.isAdmin = false,
     this.avatarUrl,
+    this.publicId,
   });
 
+  final String? publicId;
   final String? name;
   final String? city;
   final String? phone;
@@ -69,7 +72,7 @@ class _ProfilePageState extends State<_ProfilePage> {
     final uid = widget.user.id;
     final profile = await db
         .from('profiles')
-        .select('name, city, phone, is_admin, avatar_url')
+        .select('name, city, phone, is_admin, avatar_url, public_id')
         .eq('id', uid)
         .maybeSingle();
     final listings = await db.from('listings').select('id').eq('user_id', uid);
@@ -80,6 +83,7 @@ class _ProfilePageState extends State<_ProfilePage> {
       listingsCount: listings.length,
       isAdmin: profile?['is_admin'] == true,
       avatarUrl: profile?['avatar_url'] as String?,
+      publicId: profile?['public_id'] as String?,
     );
   }
 
@@ -141,6 +145,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                   isAdmin: d.isAdmin,
                   avatarUrl: d.avatarUrl,
                   city: d.city,
+                  publicId: d.publicId,
                   phone: d.phone,
                   email: widget.user.email,
                   onEdit: isGuest ? null : () => _edit(d),
@@ -259,6 +264,7 @@ class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.name,
     required this.city,
+    this.publicId,
     required this.phone,
     required this.email,
     this.avatarUrl,
@@ -268,6 +274,7 @@ class _ProfileHeader extends StatelessWidget {
 
   final String name;
   final String? city;
+  final String? publicId;
   final String? phone;
   final String? email;
   final String? avatarUrl;
@@ -301,6 +308,10 @@ class _ProfileHeader extends StatelessWidget {
                         ],
                       ],
                     ),
+                    if (publicId != null) ...[
+                      CopyIdLine(label: 'ID профиля:', id: publicId!),
+                      const SizedBox(height: 4),
+                    ],
                     if (city != null && city!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(city!, style: const TextStyle(color: AppColors.muted)),

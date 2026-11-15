@@ -366,6 +366,57 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
     setState(() => _searching = true);
     try {
       final code = id.toUpperCase();
+      if (code.startsWith('CH-')) {
+        // Переписка: переписку админ не читает (приватность), но видит участников и открывает их профили.
+        final conv = await _db
+            .from('conversations')
+            .select('id, kind, buyer_id, seller_id, listing_id')
+            .eq('public_id', code)
+            .maybeSingle();
+        if (!mounted) return;
+        if (conv == null) {
+          messenger.showSnackBar(const SnackBar(content: Text('Чат с таким ID не найден')));
+          return;
+        }
+        final ids = [conv['buyer_id'], conv['seller_id']].whereType<String>().toList();
+        final profs = ids.isEmpty
+            ? <Map<String, dynamic>>[]
+            : List<Map<String, dynamic>>.from(
+                await _db.from('profiles').select('id, name, public_id').inFilter('id', ids));
+        final byId = {for (final p in profs) p['id'] as String: p};
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Чат $code'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Тип: ${conv['kind'] ?? '—'}', style: const TextStyle(color: AppColors.muted)),
+                const SizedBox(height: 12),
+                for (final entry in [('Покупатель', conv['buyer_id']), ('Продавец', conv['seller_id'])])
+                  if (entry.$2 is String && byId[entry.$2 as String] != null)
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => UserProfileScreen(userId: entry.$2 as String),
+                        ));
+                      },
+                      child: Text(
+                        '${entry.$1}: ${byId[entry.$2 as String]!['name'] ?? '—'} · ${byId[entry.$2 as String]!['public_id'] ?? ''}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+              ],
+            ),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Закрыть'))],
+          ),
+        );
+        _idCtrl.clear();
+        return;
+      }
       if (code.startsWith('PR-')) {
         // Аккаунт пользователя: открываем его профиль.
         final prof = await _db.from('profiles').select('id').eq('public_id', code).maybeSingle();
@@ -423,7 +474,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _search(),
                   decoration: InputDecoration(
-                    hintText: 'Например OB-1A2B3C4D или PR-1A2B3C4D',
+                    hintText: 'Например OB-1A2B3C4D, PR-1A2B3C4D или CH-1A2B3C4D',
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: const Color(0xFFE6ECEA),
