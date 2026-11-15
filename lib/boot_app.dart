@@ -8,6 +8,7 @@ import 'config.dart';
 import 'connection_screens.dart';
 import 'lang_store.dart';
 import 'notify_store.dart';
+import 'presence.dart';
 import 'splash_screen.dart';
 import 'theme.dart';
 import 'viewed_store.dart';
@@ -27,6 +28,7 @@ Future<void> bootstrap() async {
   await ViewedStore.load();
   await loadLang();
   startNotifications();
+  startPresence();
 }
 
 /// Похоже ли, что ошибка из-за сети (нет интернета или сервер не ответил).
