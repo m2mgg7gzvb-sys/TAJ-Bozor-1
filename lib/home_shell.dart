@@ -18,6 +18,7 @@ import 'frosted_glass.dart';
 import 'theme.dart';
 import 'wave_background.dart';
 import 'green_button.dart';
+import 'slide_up_in.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок.
 class HomeShell extends StatefulWidget {
@@ -109,7 +110,8 @@ class _HomeShellState extends State<HomeShell> {
           ],
         ),
       ),
-      bottomNavigationBar: _GlassTabBar(
+      bottomNavigationBar: SlideUpIn(
+        child: _GlassTabBar(
         index: _index,
         onChanged: (i) => tabIndex.value = i,
         items: [
@@ -136,6 +138,7 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ],
       ),
+        ),
     );
   }
 }
