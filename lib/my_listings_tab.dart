@@ -139,7 +139,11 @@ class _MyListingsTabState extends State<MyListingsTab> {
                 onPressed: () => showListingActions(
                   context,
                   title: (item['title'] as String?) ?? '',
-                  onTop: () => showPromoteSheet(context, title: (item['title'] as String?) ?? ''),
+                  onTop: () => showPromoteSheet(
+                    context,
+                    listingId: item['id'] as String,
+                    title: (item['title'] as String?) ?? '',
+                  ),
                   onSold: () => _markSold(item),
                   onEdit: () async {
                     final saved = await Navigator.of(context).push<bool>(
