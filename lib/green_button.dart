@@ -56,10 +56,10 @@ class _GreenButtonState extends State<GreenButton> with SingleTickerProviderStat
     final enabled = widget.onPressed != null;
     return AnimatedScale(
       scale: _pressed ? 0.97 : 1,
-      duration: const Duration(milliseconds: 120),
+      duration: const Duration.zero,
       child: AnimatedOpacity(
         opacity: enabled ? 1 : 0.5,
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration.zero,
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: widget.height, minWidth: 64),
           child: Material(
