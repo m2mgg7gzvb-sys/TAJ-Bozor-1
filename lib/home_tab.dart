@@ -295,7 +295,7 @@ class _HomeTabState extends State<HomeTab> {
   Widget _homeHeader(double t) {
     final shown = 1 - t;
     return DecoratedBox(
-      decoration: BoxDecoration(color: const Color(0xFFF2F7F5).withValues(alpha: t)),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Stack(
         children: [
           Positioned(
