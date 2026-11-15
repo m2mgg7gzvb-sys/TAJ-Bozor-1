@@ -369,7 +369,7 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Center(
+                Center(
                   child: Text(
                     'На балансе: $_balance TJS. Пополнить баланс можно в профиле, в разделе «Баланс и пополнение».',
                     textAlign: TextAlign.center,
