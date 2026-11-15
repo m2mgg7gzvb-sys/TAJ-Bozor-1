@@ -18,6 +18,7 @@ import 'glass_widgets.dart';
 import 'favorites_store.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
+import 'listings_screen.dart';
 import 'nav_state.dart';
 import 'loan_calculator_screen.dart';
 import 'price_history_card.dart';
@@ -704,6 +705,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ),
                 ),
 
+                _MoreVariants(item: _item),
+
                 // Похожие объявления
                 const SizedBox(height: 24),
                 _Strip(future: _similar),
@@ -839,6 +842,146 @@ class _PriceHint extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// «Найти больше вариантов»: три готовые выборки с уже выставленными фильтрами.
+class _MoreVariants extends StatelessWidget {
+  const _MoreVariants({required this.item});
+
+  final Map<String, dynamic> item;
+
+  @override
+  Widget build(BuildContext context) {
+    final price = num.tryParse('${item['price']}');
+    if (price == null) return const SizedBox.shrink();
+    final details = (item['details'] as Map?) ?? const {};
+    final brand = '${details['brand'] ?? ''}'.trim();
+    final model = '${details['model'] ?? ''}'.trim();
+    final generation = '${details['generation'] ?? ''}'.trim();
+    final cats = item['categories'];
+    final slug = cats is Map
+        ? cats['slug'] as String?
+        : (cats is List && cats.isNotEmpty ? (cats.first as Map)['slug'] as String? : null);
+    final isCar = slug == 'auto';
+    final categoryId = item['category_id'] as int?;
+    final subcategoryId = item['subcategory_id'] as int?;
+    final id = item['id'] as String?;
+    final maxPrice = '${price.round()}';
+
+    void open(ListingsScreen screen) =>
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+
+    final options = <Widget>[
+      if (isCar && brand.isNotEmpty && model.isNotEmpty)
+        _VariantTile(
+          icon: Icons.directions_car_outlined,
+          title: generation.isNotEmpty ? 'Это поколение' : 'Эта модель',
+          subtitle: '$brand $model${generation.isNotEmpty ? ' · $generation' : ''}',
+          onTap: () => open(ListingsScreen(
+            categoryId: categoryId,
+            subcategoryId: subcategoryId,
+            title: '$brand $model',
+            carFilter: true,
+            excludeId: id,
+            savedFilters: {
+              'sel': {
+                'brand': brand,
+                'model': model,
+                if (generation.isNotEmpty) 'generation': generation,
+              },
+              'txt': <String, String>{},
+            },
+          )),
+        ),
+      _VariantTile(
+        icon: Icons.payments_outlined,
+        title: 'До такой же цены',
+        subtitle: 'До ${groupDigits(price)} TJS',
+        onTap: () => open(ListingsScreen(
+          categoryId: categoryId,
+          subcategoryId: subcategoryId,
+          title: 'До ${groupDigits(price)} TJS',
+          carFilter: isCar,
+          excludeId: id,
+          savedFilters: {
+            'sel': <String, dynamic>{},
+            'txt': {'priceMax': maxPrice},
+          },
+        )),
+      ),
+      if (isCar && brand.isNotEmpty)
+        _VariantTile(
+          icon: Icons.swap_horiz_rounded,
+          title: 'Другие марки и модели',
+          subtitle: 'Кроме $brand, до ${groupDigits(price)} TJS',
+          onTap: () => open(ListingsScreen(
+            categoryId: categoryId,
+            subcategoryId: subcategoryId,
+            title: 'Другие марки',
+            carFilter: true,
+            excludeBrand: brand,
+            excludeId: id,
+            savedFilters: {
+              'sel': <String, dynamic>{},
+              'txt': {'priceMax': maxPrice},
+            },
+          )),
+        ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Найти больше вариантов', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 10),
+          for (final o in options) Padding(padding: const EdgeInsets.only(bottom: 8), child: o),
+        ],
+      ),
+    );
+  }
+}
+
+class _VariantTile extends StatelessWidget {
+  const _VariantTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
