@@ -123,7 +123,7 @@ class _PromoteSheetState extends State<_PromoteSheet> {
             const SizedBox(height: 8),
             const Center(
               child: Text(
-                'Онлайн-оплата пока не подключена. Скоро здесь можно будет оплатить продвижение.',
+                'Заявка сохранится. Онлайн-оплата пока не подключена, продвижение включим после оплаты.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
@@ -157,6 +157,8 @@ class _TopPickSheetState extends State<_TopPickSheet> {
   // id объявления -> индекс в promotePlans (срок продвижения для этого объявления)
   final Map<String, int> _picks = {};
 
+  bool _submitting = false;
+
   Future<List<Map<String, dynamic>>> _load() async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
     if (uid == null) return [];
@@ -166,7 +168,44 @@ class _TopPickSheetState extends State<_TopPickSheet> {
         .eq('user_id', uid)
         .eq('status', 'active')
         .order('created_at', ascending: false);
+    // Восстанавливаем выбор, который уже сохранён и ещё не оплачен.
+    try {
+      final pending = await Supabase.instance.client
+          .from('top_orders')
+          .select('listing_id, days')
+          .eq('status', 'pending');
+      for (final o in pending as List) {
+        final idx = promotePlans.indexWhere((p) => p.days == o['days']);
+        if (idx >= 0) _picks[o['listing_id'] as String] = idx;
+      }
+    } catch (_) {
+      // Без сохранённого выбора просто начинаем с пустого.
+    }
     return List<Map<String, dynamic>>.from(rows);
+  }
+
+  /// Сохраняет заявку на TOP. Оплата пока не подключена, поэтому заявка ждёт оплаты.
+  Future<void> _submit() async {
+    if (_picks.isEmpty || _submitting) return;
+    setState(() => _submitting = true);
+    try {
+      await Supabase.instance.client.rpc('request_top_orders', params: {
+        'p_items': [
+          for (final e in _picks.entries) {'listing_id': e.key, 'plan': e.value},
+        ],
+      });
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+        content: Text('Заявка сохранена. Оплата продвижения скоро появится.'),
+      ));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+        content: Text('Не удалось сохранить заявку. Попробуйте ещё раз.'),
+      ));
+    }
   }
 
   int get _total => _picks.values.fold(0, (sum, i) => sum + promotePlans[i].price);
@@ -322,10 +361,12 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                 SizedBox(
                   width: double.infinity,
                   child: GreenButton(
-                    onPressed: null,
+                    onPressed: _picks.isEmpty || _submitting ? null : _submit,
                     child: Text(_picks.isEmpty
                         ? 'Выберите объявления'
-                        : 'Оплатить $_total TJS · скоро'),
+                        : _submitting
+                            ? 'Сохраняем…'
+                            : 'Оформить заявку · $_total TJS'),
                   ),
                 ),
                 const SizedBox(height: 8),

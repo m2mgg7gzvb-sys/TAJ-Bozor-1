@@ -162,25 +162,43 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   /// Записывает звонок в переписку: статус и время разговора (один раз).
-  void _saveHistory() {
-    final convId = widget.conversationId;
+  /// Если звонок открыт без переписки (например, принят из баннера), беседу ищем по собеседнику.
+  Future<void> _saveHistory() async {
     final me = Supabase.instance.client.auth.currentUser?.id;
-    if (_recorded || convId == null || me == null) return;
+    if (_recorded || me == null) return;
     _recorded = true;
     final connected = _connectedAt;
     final status = connected != null ? 'answered' : (_peer == 'declined' ? 'declined' : 'missed');
     final secs = connected == null ? 0 : DateTime.now().difference(connected).inSeconds;
-    Supabase.instance.client.from('messages').insert({
-      'conversation_id': convId,
-      'sender_id': me,
-      'body': 'Звонок',
-      'attachment_kind': 'call',
-      'attachment_url': '$status|$secs',
-    }).catchError((_) {});
+    try {
+      final convId = widget.conversationId ??
+          await Supabase.instance.client
+              .rpc('call_conversation_id', params: {'p_channel': widget.channel}) as String?;
+      if (convId == null) return;
+      await Supabase.instance.client.from('messages').insert({
+        'conversation_id': convId,
+        'sender_id': me,
+        'body': 'Звонок',
+        'attachment_kind': 'call',
+        'attachment_url': '$status|$secs',
+      });
+    } catch (_) {
+      // Историю не записали: сам звонок от этого не меняется.
+    }
+  }
+
+  /// Звонящий сбросил вызов до ответа: собеседнику убираем банер.
+  void _cancelIfUnanswered() {
+    if (!_joined || _connectedAt != null) return;
+    if (_peer == 'declined' || _peer == 'answered') return;
+    Supabase.instance.client
+        .rpc('cancel_call', params: {'p_channel': widget.channel})
+        .catchError((_) {});
   }
 
   Future<void> _hangUp() async {
-    _saveHistory();
+    _cancelIfUnanswered();
+    _saveHistory().ignore();
     _ticker?.cancel();
     _levelTimer?.cancel();
     if (_joined) {
@@ -193,7 +211,8 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
-    _saveHistory();
+    _cancelIfUnanswered();
+    _saveHistory().ignore();
     _ticker?.cancel();
     _levelTimer?.cancel();
     _level.dispose();
