@@ -339,7 +339,7 @@ class _OtpCodeViewState extends State<OtpCodeView> with TickerProviderStateMixin
             ? AppColors.primary
             : focused
                 ? AppColors.primary
-                : const Color(0xFFE3ECE9);
+                : AppColors.line;
     final fill = error
         ? AppColors.ruby.withValues(alpha: 0.08)
         : success

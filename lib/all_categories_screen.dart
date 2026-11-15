@@ -175,9 +175,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F7F5),
+        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,

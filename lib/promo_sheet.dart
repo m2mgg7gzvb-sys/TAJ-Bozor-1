@@ -94,7 +94,7 @@ class _PromoSheetState extends State<_PromoSheet> {
               decoration: InputDecoration(
                 hintText: 'Промокод',
                 filled: true,
-                fillColor: const Color(0xFFF2F7F5),
+                fillColor: AppColors.background,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),

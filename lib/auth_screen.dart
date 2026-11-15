@@ -117,9 +117,9 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     if (_codeStep) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF2F7F5),
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF2F7F5),
+          backgroundColor: AppColors.background,
           elevation: 0,
           scrolledUnderElevation: 0,
         ),
@@ -140,7 +140,7 @@ class _AuthScreenState extends State<AuthScreen> {
       );
     }
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),

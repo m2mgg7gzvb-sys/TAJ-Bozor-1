@@ -83,9 +83,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F7F5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F7F5),
+        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -112,7 +112,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE3ECE9)),
+                        border: Border.all(color: AppColors.line),
                       ),
                       child: const Text('+992', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),

@@ -1206,9 +1206,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             return Scaffold(
-              backgroundColor: const Color(0xFFF2F7F5),
+              backgroundColor: AppColors.background,
               appBar: AppBar(
-                backgroundColor: const Color(0xFFF2F7F5),
+                backgroundColor: AppColors.background,
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
@@ -1373,9 +1373,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             return Scaffold(
-              backgroundColor: const Color(0xFFF2F7F5),
+              backgroundColor: AppColors.background,
               appBar: AppBar(
-                backgroundColor: const Color(0xFFF2F7F5),
+                backgroundColor: AppColors.background,
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
@@ -1568,9 +1568,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             return Scaffold(
-              backgroundColor: const Color(0xFFF2F7F5),
+              backgroundColor: AppColors.background,
               appBar: AppBar(
-                backgroundColor: const Color(0xFFF2F7F5),
+                backgroundColor: AppColors.background,
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
@@ -1878,7 +1878,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F4F3),
+            color: AppColors.background,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -1978,9 +1978,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 : <String>[];
 
             return Scaffold(
-              backgroundColor: const Color(0xFFF2F7F5),
+              backgroundColor: AppColors.background,
               appBar: AppBar(
-                backgroundColor: const Color(0xFFF2F7F5),
+                backgroundColor: AppColors.background,
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
