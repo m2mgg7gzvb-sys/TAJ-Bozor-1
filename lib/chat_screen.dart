@@ -49,12 +49,26 @@ Future<String> findOrCreateConversation({required String kind, String? listingId
 
 /// Экран переписки: сообщения в реальном времени и поле ввода.
 /// Время сообщения по Таджикистану (Душанбе, UTC+5, без летнего времени).
-String _tajikTime(String? iso) {
-  if (iso == null) return '';
+DateTime? _tajikLocal(String? iso) {
+  if (iso == null) return null;
   final utc = DateTime.tryParse(iso)?.toUtc();
-  if (utc == null) return '';
-  final t = utc.add(const Duration(hours: 5));
-  return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  return utc?.add(const Duration(hours: 5));
+}
+
+String _two(int v) => v.toString().padLeft(2, '0');
+
+/// Дата и время сообщения по Таджикистану: «15.11.2026 13:19».
+String _tajikTime(String? iso) {
+  final t = _tajikLocal(iso);
+  if (t == null) return '';
+  return '${_two(t.day)}.${_two(t.month)}.${t.year} ${_two(t.hour)}:${_two(t.minute)}';
+}
+
+/// Только дата по Таджикистану, для разделителя между днями.
+String _tajikDay(String? iso) {
+  final t = _tajikLocal(iso);
+  if (t == null) return '';
+  return '${_two(t.day)}.${_two(t.month)}.${t.year}';
 }
 
 class ChatScreen extends StatefulWidget {
@@ -870,7 +884,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         ],
                       ),
                     );
-                    return _Appear(
+                    final day = _tajikDay(m['created_at'] as String?);
+                    final prevDay = items.length - 1 - i > 0
+                        ? _tajikDay(items[items.length - 2 - i]['created_at'] as String?)
+                        : null;
+                    final showDay = day.isNotEmpty && day != prevDay;
+                    final row = _Appear(
                       key: ValueKey(m['id'] ?? i),
                       child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -909,6 +928,23 @@ class _ChatScreenState extends State<ChatScreen> {
                         ],
                       ),
                     ),
+                    );
+                    if (!showDay) return row;
+                    return Column(
+                      children: [
+                        Center(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(day, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                          ),
+                        ),
+                        row,
+                      ],
                     );
                   },
                 );
