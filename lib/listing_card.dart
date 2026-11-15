@@ -6,6 +6,7 @@ import 'listing_detail_screen.dart';
 import 'lang_store.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
+import 'top_tag.dart';
 import 'viewed_store.dart';
 
 /// Карточка объявления: большое фото, метка «Просмотрено», название и сердечко,
@@ -120,7 +121,7 @@ class ListingCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if (_isTop(item)) _badge('TOP', const Color(0xFFD9A022)),
+                        if (_isTop(item)) const TopTag(),
                         if (_isTop(item)) const SizedBox(height: 4),
                         if (_isNew(item)) _badge('Новое', const Color(0xFF2E7D5B)),
                         if (item['good_deal'] == true) ...[

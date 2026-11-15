@@ -89,6 +89,18 @@ ThemeData buildAppTheme() {
       ),
     ),
     dividerTheme: const DividerThemeData(color: Color(0xFFE9EFEC), space: 1),
+    // Всплывающие уведомления в фирменном стиле: тёмно-зелёная плашка с золотой каймой.
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.deep,
+      elevation: 0,
+      contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+      actionTextColor: const Color(0xFFFFE08A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0x88E0A526)),
+      ),
+    ),
   );
 }
 
