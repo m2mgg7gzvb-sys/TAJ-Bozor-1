@@ -39,7 +39,6 @@ class ListingsScreen extends StatefulWidget {
     this.carFilter = false,
     this.subcategoryId,
     this.savedFilters,
-    this.excludeBrand,
     this.excludeId,
   });
 
@@ -51,9 +50,6 @@ class ListingsScreen extends StatefulWidget {
 
   /// Фильтры из сохранённого поиска (см. _snapshot).
   final Map<String, dynamic>? savedFilters;
-
-  /// Исключить марку (для «Другие марки и модели»).
-  final String? excludeBrand;
 
   /// Исключить одно объявление (обычно то, с которого открыли выборку).
   final String? excludeId;
@@ -212,9 +208,6 @@ class _ListingsScreenState extends State<ListingsScreen> {
         rank[ids[i]] = i;
       }
       query = query.inFilter('id', ids);
-    }
-    if (widget.excludeBrand != null) {
-      query = query.neq('details->>brand', widget.excludeBrand!);
     }
     if (widget.excludeId != null) {
       query = query.neq('id', widget.excludeId!);

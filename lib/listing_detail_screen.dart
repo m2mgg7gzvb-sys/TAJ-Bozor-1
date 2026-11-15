@@ -873,11 +873,16 @@ class _MoreVariants extends StatelessWidget {
     void open(ListingsScreen screen) =>
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
+    final modelSel = <String, dynamic>{
+      'brand': brand,
+      'model': model,
+      if (generation.isNotEmpty) 'generation': generation,
+    };
     final options = <Widget>[
       if (isCar && brand.isNotEmpty && model.isNotEmpty)
         _VariantTile(
           icon: Icons.directions_car_outlined,
-          title: generation.isNotEmpty ? 'Это поколение' : 'Эта модель',
+          title: 'Эта модель',
           subtitle: '$brand $model${generation.isNotEmpty ? ' · $generation' : ''}',
           onTap: () => open(ListingsScreen(
             categoryId: categoryId,
@@ -885,48 +890,35 @@ class _MoreVariants extends StatelessWidget {
             title: '$brand $model',
             carFilter: true,
             excludeId: id,
-            savedFilters: {
-              'sel': {
-                'brand': brand,
-                'model': model,
-                if (generation.isNotEmpty) 'generation': generation,
-              },
-              'txt': <String, String>{},
-            },
+            savedFilters: {'sel': modelSel, 'txt': <String, String>{}},
           )),
         ),
-      _VariantTile(
-        icon: Icons.payments_outlined,
-        title: 'До такой же цены',
-        subtitle: 'До ${groupDigits(price)} TJS',
-        onTap: () => open(ListingsScreen(
-          categoryId: categoryId,
-          subcategoryId: subcategoryId,
-          title: 'До ${groupDigits(price)} TJS',
-          carFilter: isCar,
-          excludeId: id,
-          savedFilters: {
-            'sel': <String, dynamic>{},
-            'txt': {'priceMax': maxPrice},
-          },
-        )),
-      ),
-      if (isCar && brand.isNotEmpty)
+      if (isCar && brand.isNotEmpty && model.isNotEmpty)
         _VariantTile(
-          icon: Icons.swap_horiz_rounded,
-          title: 'Другие марки и модели',
-          subtitle: 'Кроме $brand, до ${groupDigits(price)} TJS',
+          icon: Icons.payments_outlined,
+          title: 'Такая же модель до такой цены',
+          subtitle: 'До ${groupDigits(price)} TJS',
           onTap: () => open(ListingsScreen(
             categoryId: categoryId,
             subcategoryId: subcategoryId,
-            title: 'Другие марки',
+            title: '$brand $model до ${groupDigits(price)} TJS',
             carFilter: true,
-            excludeBrand: brand,
             excludeId: id,
-            savedFilters: {
-              'sel': <String, dynamic>{},
-              'txt': {'priceMax': maxPrice},
-            },
+            savedFilters: {'sel': modelSel, 'txt': {'priceMax': maxPrice}},
+          )),
+        ),
+      if (isCar)
+        _VariantTile(
+          icon: Icons.swap_horiz_rounded,
+          title: 'Другие марки и модели',
+          subtitle: 'Все марки, до ${groupDigits(price)} TJS',
+          onTap: () => open(ListingsScreen(
+            categoryId: categoryId,
+            subcategoryId: subcategoryId,
+            title: 'До ${groupDigits(price)} TJS',
+            carFilter: true,
+            excludeId: id,
+            savedFilters: {'sel': <String, dynamic>{}, 'txt': {'priceMax': maxPrice}},
           )),
         ),
     ];
