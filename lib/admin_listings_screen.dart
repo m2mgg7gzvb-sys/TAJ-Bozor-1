@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'admin_log.dart';
+import 'admin_daily_stats.dart';
 import 'confirm_delete.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
@@ -82,6 +83,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
         titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Все объявления')),
       body: Column(
         children: [
+          const AdminDailyStats(),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),

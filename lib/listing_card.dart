@@ -54,6 +54,12 @@ class ListingCard extends StatelessWidget {
     return DateTime.now().toUtc().difference(created.toUtc()) < const Duration(hours: 24);
   }
 
+  /// Есть действующий TOP (срок ещё не истёк).
+  static bool _isTop(Map<String, dynamic> item) {
+    final until = DateTime.tryParse('${item['top_until'] ?? ''}');
+    return until != null && until.toUtc().isAfter(DateTime.now().toUtc());
+  }
+
   static Widget _badge(String text, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
@@ -114,6 +120,8 @@ class ListingCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+                        if (_isTop(item)) _badge('TOP', const Color(0xFFD9A022)),
+                        if (_isTop(item)) const SizedBox(height: 4),
                         if (_isNew(item)) _badge('Новое', const Color(0xFF2E7D5B)),
                         if (item['good_deal'] == true) ...[
                           const SizedBox(height: 4),
