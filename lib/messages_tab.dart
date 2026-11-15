@@ -5,6 +5,7 @@ import 'chat_screen.dart';
 import 'listing_utils.dart';
 import 'admin_listings_screen.dart';
 import 'admin_log.dart';
+import 'admin_broadcast_screen.dart';
 import 'admin_threads.dart';
 import 'listing_reports.dart';
 import 'moderation_screen.dart';
@@ -245,6 +246,15 @@ class _MessagesTabState extends State<MessagesTab> {
                     subtitle: 'Кто и что менял у объявлений',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AdminLogScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.campaign_rounded,
+                    title: 'Рассылка',
+                    subtitle: 'Уведомление всем пользователям',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AdminBroadcastScreen()),
                     ),
                   ),
                   const SizedBox(height: 10),
