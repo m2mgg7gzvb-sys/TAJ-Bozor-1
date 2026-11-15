@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'theme.dart';
 import 'green_button.dart';
+import 'wallet_sheet.dart';
 
 /// Варианты продвижения (TOP): срок в днях и цена в TJS.
 const promotePlans = [
@@ -123,7 +124,7 @@ class _PromoteSheetState extends State<_PromoteSheet> {
             const SizedBox(height: 8),
             const Center(
               child: Text(
-                'Заявка сохранится. Онлайн-оплата пока не подключена, продвижение включим после оплаты.',
+                'Онлайн-оплата пока не подключена. Скоро здесь можно будет оплатить продвижение.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
@@ -158,6 +159,7 @@ class _TopPickSheetState extends State<_TopPickSheet> {
   final Map<String, int> _picks = {};
 
   bool _submitting = false;
+  int _balance = 0;
 
   Future<List<Map<String, dynamic>>> _load() async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
@@ -168,18 +170,10 @@ class _TopPickSheetState extends State<_TopPickSheet> {
         .eq('user_id', uid)
         .eq('status', 'active')
         .order('created_at', ascending: false);
-    // Восстанавливаем выбор, который уже сохранён и ещё не оплачен.
     try {
-      final pending = await Supabase.instance.client
-          .from('top_orders')
-          .select('listing_id, days')
-          .eq('status', 'pending');
-      for (final o in pending as List) {
-        final idx = promotePlans.indexWhere((p) => p.days == o['days']);
-        if (idx >= 0) _picks[o['listing_id'] as String] = idx;
-      }
+      _balance = await Supabase.instance.client.rpc('get_balance') as int? ?? 0;
     } catch (_) {
-      // Без сохранённого выбора просто начинаем с пустого.
+      _balance = 0;
     }
     return List<Map<String, dynamic>>.from(rows);
   }
@@ -197,13 +191,16 @@ class _TopPickSheetState extends State<_TopPickSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
-        content: Text('Заявка сохранена. Оплата продвижения скоро появится.'),
+        content: Text('TOP включён. Деньги списаны с баланса.'),
       ));
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
-        content: Text('Не удалось сохранить заявку. Попробуйте ещё раз.'),
+      final insufficient = e.toString().contains('insufficient balance');
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(insufficient
+            ? 'Не хватает денег на балансе. Пополните баланс в профиле.'
+            : 'Не удалось включить TOP. Попробуйте ещё раз.'),
       ));
     }
   }
@@ -361,18 +358,20 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                 SizedBox(
                   width: double.infinity,
                   child: GreenButton(
-                    onPressed: _picks.isEmpty || _submitting ? null : _submit,
+                    onPressed: _picks.isEmpty || _submitting || _total > _balance ? null : _submit,
                     child: Text(_picks.isEmpty
                         ? 'Выберите объявления'
                         : _submitting
-                            ? 'Сохраняем…'
-                            : 'Оформить заявку · $_total TJS'),
+                            ? 'Включаем…'
+                            : _total > _balance
+                                ? 'Не хватает ${_total - _balance} TJS'
+                                : 'Оплатить с баланса · $_total TJS'),
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Center(
                   child: Text(
-                    'Онлайн-оплата пока не подключена. Скоро здесь можно будет оплатить продвижение.',
+                    'На балансе: $_balance TJS. Пополнить баланс можно в профиле, в разделе «Баланс и пополнение».',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
