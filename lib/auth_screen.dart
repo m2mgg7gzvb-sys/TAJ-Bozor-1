@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'otp_code_view.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Регистрация и вход по почте.
 /// Шаг 1: почта (и имя при регистрации) → Supabase присылает 6-значный код.

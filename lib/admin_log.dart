@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_threads.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 const adminActionNames = <String, String>{
   'approve': 'Опубликовано',
