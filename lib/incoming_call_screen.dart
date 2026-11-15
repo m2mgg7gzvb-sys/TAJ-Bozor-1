@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 import 'dart:math' as math;
 
@@ -48,6 +49,8 @@ class _IncomingCallBanner extends StatefulWidget {
 
 class _IncomingCallBannerState extends State<_IncomingCallBanner> with SingleTickerProviderStateMixin {
   bool _done = false;
+  bool _checking = false;
+  Timer? _poll;
   late final AnimationController _pulse =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))..repeat();
 
@@ -61,16 +64,39 @@ class _IncomingCallBannerState extends State<_IncomingCallBanner> with SingleTic
     }
     // Сообщаем звонящему, что приглашение дошло и звонит у нас.
     _setStatus('ringing');
+    // Звонящий мог уже сбросить вызов: сразу проверяем и потом каждые 2 секунды.
+    _checkCancelled();
+    _poll = Timer.periodic(const Duration(seconds: 2), (_) => _checkCancelled());
+  }
+
+  /// Если звонящий сбросил вызов, банер и мелодию убираем.
+  Future<void> _checkCancelled() async {
+    if (_done || _checking) return;
+    _checking = true;
+    try {
+      final res = await Supabase.instance.client
+          .rpc('call_peer_status', params: {'p_channel': widget.channel});
+      if (mounted && !_done && res == 'cancelled') {
+        _stopRing();
+        widget.close();
+      }
+    } catch (_) {
+      // Нет связи: баннер остаётся, пока человек сам не ответит.
+    } finally {
+      _checking = false;
+    }
   }
 
   @override
   void dispose() {
+    _poll?.cancel();
     _stopRing();
     _pulse.dispose();
     super.dispose();
   }
 
   void _stopRing() {
+    _poll?.cancel();
     if (_done) return;
     _done = true;
     try {
