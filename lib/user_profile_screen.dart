@@ -41,11 +41,19 @@ class UserAvatar extends StatelessWidget {
 }
 
 class _UserData {
-  const _UserData({required this.profile, required this.listings, required this.reviews});
+  const _UserData({
+    required this.profile,
+    required this.listings,
+    required this.reviews,
+    this.viewerIsAdmin = false,
+    this.viewerIsSuper = false,
+  });
 
   final Map<String, dynamic> profile;
   final List<Map<String, dynamic>> listings;
   final List<Map<String, dynamic>> reviews;
+  final bool viewerIsAdmin;
+  final bool viewerIsSuper;
 
   int get activeCount => listings.where((l) => l['status'] == 'active').length;
   int get closedCount => listings.where((l) => l['status'] != 'active').length;
@@ -81,9 +89,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<_UserData> _load() async {
     final profile = await _db
         .from('profiles')
-        .select('name, city, avatar_url, public_id, is_admin')
+        .select('name, city, avatar_url, public_id, is_admin, is_verified, is_blocked')
         .eq('id', widget.userId)
         .maybeSingle();
+    var viewerIsAdmin = false;
+    var viewerIsSuper = false;
+    if (_me.isNotEmpty) {
+      final me = await _db.from('profiles').select('is_admin, is_super_admin').eq('id', _me).maybeSingle();
+      viewerIsAdmin = me?['is_admin'] == true;
+      viewerIsSuper = me?['is_super_admin'] == true;
+    }
     final listings = List<Map<String, dynamic>>.from(await _db
         .from('listings')
         .select('$listingSelect, status')
@@ -94,7 +109,103 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         .select('rating, body, created_at')
         .eq('reviewed_id', widget.userId)
         .order('created_at', ascending: false));
-    return _UserData(profile: profile ?? {}, listings: listings, reviews: reviews);
+    return _UserData(
+      profile: profile ?? {},
+      listings: listings,
+      reviews: reviews,
+      viewerIsAdmin: viewerIsAdmin,
+      viewerIsSuper: viewerIsSuper,
+    );
+  }
+
+  /// Действие админа через защищённую функцию в базе; после — перечитываем профиль.
+  Future<void> _adminCall(String fn, Map<String, dynamic> params, String ok) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await _db.rpc(fn, params: params);
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(res is int ? '$ok: $res' : ok),
+      ));
+      setState(() => _future = _load());
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(const SnackBar(content: Text('Действие не выполнено')));
+    }
+  }
+
+  Widget _adminPanel(_UserData d) {
+    final uid = widget.userId;
+    final blocked = d.profile['is_blocked'] == true;
+    final verified = d.profile['is_verified'] == true;
+    final admin = d.profile['is_admin'] == true;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Управление (админ)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          const SizedBox(height: 10),
+          GreenButton.icon(
+            height: 46,
+            onPressed: () => _adminCall(
+              'admin_set_blocked',
+              {'p_user': uid, 'p_blocked': !blocked},
+              blocked ? 'Разблокирован' : 'Заблокирован',
+            ),
+            icon: Icon(blocked ? Icons.lock_open_rounded : Icons.block_rounded, size: 18),
+            label: Text(blocked ? 'Разблокировать' : 'Заблокировать'),
+          ),
+          const SizedBox(height: 8),
+          GreenButton.icon(
+            height: 46,
+            onPressed: d.viewerIsSuper
+                ? () => _adminCall(
+                      'admin_set_admin',
+                      {'p_user': uid, 'p_admin': !admin},
+                      admin ? 'Права админа сняты' : 'Выдан админ',
+                    )
+                : null,
+            icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+            label: Text(admin ? 'Снять админа' : 'Дать админа'),
+          ),
+          const SizedBox(height: 8),
+          GreenButton.icon(
+            height: 46,
+            onPressed: () => _adminCall(
+              'admin_set_verified',
+              {'p_user': uid, 'p_verified': !verified},
+              verified ? 'Бейдж снят' : 'Бейдж выдан',
+            ),
+            icon: const Icon(Icons.verified_outlined, size: 18),
+            label: Text(verified ? 'Снять бейдж «Проверено»' : 'Выдать бейдж «Проверено»'),
+          ),
+          const SizedBox(height: 8),
+          GreenButton.icon(
+            height: 46,
+            onPressed: () async {
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Скрыть все объявления?'),
+                  content: const Text('Все активные объявления этого пользователя станут скрытыми.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Скрыть')),
+                  ],
+                ),
+              );
+              if (ok == true) {
+                await _adminCall('admin_hide_user_listings', {'p_user': uid}, 'Скрыто объявлений');
+              }
+            },
+            icon: const Icon(Icons.visibility_off_outlined, size: 18),
+            label: const Text('Скрыть все объявления'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Открывает личную переписку с этим пользователем.
@@ -208,6 +319,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                   const SizedBox(width: 6),
                                   Image.asset('assets/admin_badge.png', height: 56),
                                 ],
+                                if (d.profile['is_verified'] == true) ...[
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.verified_rounded, color: AppColors.primary, size: 22),
+                                ],
                               ],
                             ),
                             if (city != null && city.isNotEmpty)
@@ -245,6 +360,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     _stat(avg == null ? '—' : avg.toStringAsFixed(1), 'Средняя оценка'),
                   ],
                 ),
+                if (d.viewerIsAdmin && widget.userId != _me) ...[
+                  const SizedBox(height: 16),
+                  _adminPanel(d),
+                ],
                 const SizedBox(height: 22),
                 const Text('Объявления', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
