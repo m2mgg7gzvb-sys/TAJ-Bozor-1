@@ -13,6 +13,7 @@ import 'listing_draft.dart';
 import 'tech_catalog.dart';
 import 'phone_catalog.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 const _bodyTypes = ['Седан', 'Хэтчбек', 'Универсал', 'Кроссовер', 'Внедорожник', 'Купе', 'Кабриолет', 'Минивэн', 'Пикап'];
 const _fuels = ['Бензин', 'Дизель', 'Гибрид', 'Электро', 'Газ/бензин'];
