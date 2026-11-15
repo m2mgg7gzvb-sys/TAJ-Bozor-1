@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -880,7 +879,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset('assets/logo.svg', width: 84, height: 84),
+          Image.asset('assets/logo.png', width: 84, height: 84),
           const SizedBox(height: 14),
           const Text(
             'TAJ Bozor',

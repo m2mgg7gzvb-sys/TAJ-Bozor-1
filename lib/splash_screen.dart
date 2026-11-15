@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
+import 'intro_logo.dart';
 import 'root_gate.dart';
 
 /// Вход в приложение: фон с фото памятника и движущимися волнами, логотип в светлой рамке,
@@ -146,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             child: child,
                           );
                         },
-                        child: SvgPicture.asset('assets/logo.svg', width: 104, height: 104),
+                        child: IntroLogo(size: 104),
                       ),
                     ),
                   ),
