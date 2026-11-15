@@ -16,6 +16,7 @@ import 'notify_store.dart';
 import 'push.dart';
 import 'theme.dart';
 import 'wave_background.dart';
+import 'green_button.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок.
 class HomeShell extends StatefulWidget {
@@ -63,7 +64,7 @@ class _HomeShellState extends State<HomeShell> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Не сейчас'),
           ),
-          FilledButton(
+          GreenButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Включить'),
           ),

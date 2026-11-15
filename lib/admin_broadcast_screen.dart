@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Рассылка всем пользователям: каждому приходит уведомление (и пуш).
 class AdminBroadcastScreen extends StatefulWidget {
@@ -38,7 +39,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
         content: Text('«$title» получат все пользователи. Отменить будет нельзя.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Отправить')),
+          GreenButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Отправить')),
         ],
       ),
     );
@@ -105,7 +106,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
+          GreenButton.icon(
             onPressed: _sending ? null : _send,
             icon: _sending
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))

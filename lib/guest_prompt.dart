@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'nav_state.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Большой экран для гостя: иконка, заголовок, текст и кнопка входа.
 class GuestPrompt extends StatelessWidget {
@@ -52,7 +53,7 @@ class GuestPrompt extends StatelessWidget {
             ),
             if (showButton) ...[
               const SizedBox(height: 28),
-              FilledButton(
+              GreenButton(
                 onPressed: () => tabIndex.value = loginTabIndex,
                 child: const Text('Войти в профиль'),
               ),

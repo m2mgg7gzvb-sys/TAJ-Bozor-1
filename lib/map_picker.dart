@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'theme.dart';
 import 'yandex_map_view.dart';
+import 'green_button.dart';
 
 /// Центры городов из списка tajCities. Для неизвестного города открываем Душанбе.
 const _cityCenters = <String, LatLng>{
@@ -216,7 +217,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 14),
-                FilledButton(
+                GreenButton(
                   onPressed: () => Navigator.of(context).pop(_center),
                   child: const Text('Готово'),
                 ),

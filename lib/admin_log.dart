@@ -100,11 +100,9 @@ Future<String?> askReason(BuildContext context, String title) async {
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Отмена', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(50),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          ),
+        GreenButton(
+height: 50,
+
           onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
           child: const Text('Далее', style: TextStyle(fontWeight: FontWeight.w700)),
         ),

@@ -8,6 +8,7 @@ import 'listing_utils.dart';
 import 'user_profile_screen.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 const _statusNames = <String, String>{
   'active': 'Активно',
@@ -130,7 +131,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
         );
       }
       return filled
-          ? FilledButton(onPressed: onTap, child: Text(label))
+          ? GreenButton(onPressed: onTap, child: Text(label))
           : OutlinedButton(onPressed: onTap, child: Text(label));
     }
 
@@ -434,7 +435,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                FilledButton(
+                GreenButton(
                   onPressed: _searching ? null : _search,
                   child: const Text('Найти'),
                 ),

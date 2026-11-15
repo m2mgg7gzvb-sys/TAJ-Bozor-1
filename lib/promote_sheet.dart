@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Варианты продвижения (TOP): срок в днях и цена в TJS.
 const promotePlans = [
@@ -114,7 +115,7 @@ class _PromoteSheetState extends State<_PromoteSheet> {
                 ),
               ),
             const SizedBox(height: 10),
-            FilledButton(
+            GreenButton(
               onPressed: null,
               child: Text('Оплатить ${plan.price} TJS · скоро'),
             ),

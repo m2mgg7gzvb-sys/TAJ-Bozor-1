@@ -1067,12 +1067,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           ),
           child: SizedBox(
             height: 54,
-            child: FilledButton(
+            child: GreenButton(
               onPressed: _saving ? null : _submit,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
               child: _saving
                   ? const SizedBox(
                       height: 22,

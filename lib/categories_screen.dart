@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listings_screen.dart';
+import 'green_button.dart';
 
 /// Категории из таблицы categories. Первая проверка связи с базой.
 class CategoriesScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     const SizedBox(height: 8),
                     Text('${snapshot.error}', style: const TextStyle(color: Colors.black54)),
                     const SizedBox(height: 12),
-                    FilledButton(
+                    GreenButton(
                       onPressed: () => setState(() => _future = _load()),
                       child: const Text('Повторить'),
                     ),

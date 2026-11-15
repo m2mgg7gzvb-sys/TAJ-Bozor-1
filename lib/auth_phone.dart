@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Вход по номеру +992: сначала номер, потом код из SMS.
 /// Работает, когда в Supabase подключён SMS-провайдер (см. инструкцию).
@@ -149,7 +150,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 Text(_error!, style: const TextStyle(color: AppColors.ruby)),
               ],
               const Spacer(),
-              FilledButton(
+              GreenButton(
                 onPressed: _loading ? null : (_codeStep ? _verify : _sendCode),
                 child: _loading
                     ? const SizedBox(

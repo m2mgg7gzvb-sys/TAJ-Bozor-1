@@ -19,6 +19,7 @@ import 'search_terms.dart';
 import 'glass_widgets.dart';
 import 'wave_background.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Проверка числа из details (хранится текстом) по диапазону «от / до».
 bool _inNumRange(Map d, String key, num? lo, num? hi) {
@@ -993,8 +994,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
         ),
       );
 
-  Widget _sheetButton(String text, VoidCallback onTap) => FilledButton(
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+  Widget _sheetButton(String text, VoidCallback onTap) => GreenButton(
+        height: 52,
         onPressed: onTap,
         child: Text(text),
       );
@@ -1290,8 +1291,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
               bottomNavigationBar: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                  child: GreenButton(
+                    height: 52,
                     onPressed: () {
                       Navigator.pop(ctx);
                       _reload();
@@ -1484,8 +1485,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
               bottomNavigationBar: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                  child: GreenButton(
+                    height: 52,
                     onPressed: () {
                       Navigator.pop(ctx);
                       _reload();
@@ -1646,8 +1647,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
               bottomNavigationBar: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                  child: GreenButton(
+                    height: 52,
                     onPressed: () {
                       Navigator.pop(ctx);
                       _reload();
@@ -2195,8 +2196,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
               bottomNavigationBar: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                  child: GreenButton(
+                    height: 52,
                     onPressed: () {
                       Navigator.pop(ctx);
                       _reload();
@@ -2410,7 +2411,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                       children: [
                         const Text('Не удалось загрузить объявления'),
                         const SizedBox(height: 12),
-                        FilledButton(onPressed: _reload, child: const Text('Повторить')),
+                        GreenButton(onPressed: _reload, child: const Text('Повторить')),
                       ],
                     ),
                   );

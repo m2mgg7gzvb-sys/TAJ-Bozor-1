@@ -11,6 +11,7 @@ import 'listings_screen.dart';
 import 'saved_searches_store.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Вкладка «Избранное»: сохранённые объявления и сохранённые поиски.
 class FavoritesScreen extends StatefulWidget {
@@ -104,11 +105,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Отмена', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            ),
+          GreenButton(
+height: 50,
+
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
             child: const Text('Сохранить', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
@@ -204,7 +203,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         }
         if (snapshot.hasError) {
           return Center(
-            child: FilledButton(
+            child: GreenButton(
               onPressed: () => setState(() => _future = _load()),
               child: const Text('Повторить'),
             ),
@@ -341,12 +340,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: SizedBox(
                   height: 54,
-                  child: FilledButton(
+                  child: GreenButton(
                     onPressed: _picked.length >= 2 ? _openCompare : null,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
                     child: Text('Сравнить (${_picked.length} из $_maxCompare)'),
                   ),
                 ),

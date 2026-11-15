@@ -8,6 +8,7 @@ import 'copy_id.dart';
 import 'block_store.dart';
 import 'follow_button.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 /// Кружок с буквой имени или фото пользователя.
 class UserAvatar extends StatelessWidget {
@@ -221,11 +222,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
                 if (canReview) ...[
                   const SizedBox(height: 12),
-                  FilledButton.icon(
+                  GreenButton.icon(
                     onPressed: () => _write(displayName),
                     icon: const Icon(Icons.chat_bubble_outline_rounded),
                     label: const Text('Написать'),
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+                    height: 50,
                   ),
                 ],
                 const SizedBox(height: 12),

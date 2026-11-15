@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'green_button.dart';
 
 /// Кнопка «Подписаться» на продавца: подписчик получает уведомления о его новых объявлениях.
 class FollowButton extends StatefulWidget {
@@ -71,7 +72,7 @@ class _FollowButtonState extends State<FollowButton> {
             icon: const Icon(Icons.notifications_active_rounded),
             label: const Text('Вы подписаны'),
           )
-        : FilledButton.icon(
+        : GreenButton.icon(
             onPressed: _busy ? null : _toggle,
             icon: const Icon(Icons.notifications_none_rounded),
             label: const Text('Подписаться на продавца'),

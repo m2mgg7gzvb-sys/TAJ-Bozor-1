@@ -7,6 +7,7 @@ import 'glass_widgets.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 import 'theme.dart';
+import 'green_button.dart';
 
 const _reportReasons = ['Мошенничество', 'Запрещённый товар', 'Неверная информация', 'Другое'];
 
@@ -236,7 +237,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           spacing: 8,
                           children: [
                             OutlinedButton(onPressed: () => _viewListing(r), child: const Text('Просмотреть объявление')),
-                            FilledButton(onPressed: () => _blockListing(r), child: const Text('Заблокировать')),
+                            GreenButton(onPressed: () => _blockListing(r), child: const Text('Заблокировать')),
                             OutlinedButton(onPressed: () => _writeReporter(r), child: const Text('Написать заявителю')),
                             OutlinedButton(onPressed: () => _dismiss(r), child: const Text('Закрыть жалобу')),
                           ],
