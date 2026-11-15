@@ -12,6 +12,7 @@ import 'listing_utils.dart';
 import 'lang_store.dart';
 import 'listings_screen.dart';
 import 'nav_state.dart';
+import 'promote_sheet.dart';
 import 'glass_widgets.dart';
 import 'theme.dart';
 import 'green_button.dart';
@@ -99,64 +100,8 @@ class _HomeTabState extends State<HomeTab> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen()));
   }
 
-  /// Нажали на значок TOP: окно с продвижением и редактированием.
-  void _openTopSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (sheetCtx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.muted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Поднять объявление',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.ink)),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.saffron,
-                    foregroundColor: AppColors.ink,
-                  ),
-                  onPressed: () {
-                    Navigator.of(sheetCtx).pop();
-                    tabIndex.value = 2;
-                  },
-                  child: const Text('Продвинуть в TOP', style: TextStyle(fontWeight: FontWeight.w800)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: GreenButton.icon(
-                  height: 50,
-                  icon: const Icon(Icons.edit_rounded, size: 20),
-                  label: const Text('Редактировать'),
-                  onPressed: () {
-                    Navigator.of(sheetCtx).pop();
-                    tabIndex.value = 2;
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  /// Нажали на значок TOP: одно окно с выбором объявления и срока продвижения.
+  void _openTopSheet() => showTopPickSheet(context);
 
   void _openCategory(int id, String name, {bool carFilter = false}) {
     Navigator.of(context).push(
