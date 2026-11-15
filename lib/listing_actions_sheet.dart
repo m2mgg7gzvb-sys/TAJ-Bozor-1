@@ -37,14 +37,17 @@ Future<void> showListingActions(
               },
             ),
             const SizedBox(height: 12),
-            GreenButton.icon(
-              height: 50,
-              onPressed: () {
-                Navigator.of(sheetCtx).pop();
-                onEdit();
-              },
-              icon: const Icon(Icons.edit_rounded, size: 20),
-              label: const Text('Редактировать'),
+            SizedBox(
+              width: double.infinity,
+              child: GreenButton.icon(
+                height: 50,
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  onEdit();
+                },
+                icon: const Icon(Icons.edit_rounded, size: 20),
+                label: const Text('Редактировать'),
+              ),
             ),
             const SizedBox(height: 12),
             FilledButton(
