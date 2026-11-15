@@ -195,7 +195,8 @@ class _MessagesTabState extends State<MessagesTab> {
           builder: (context, snap) {
             final chats = snap.data ?? const <Map<String, dynamic>>[];
             return ListView(
-              padding: const EdgeInsets.all(16),
+              // Низ отступаем под плавающую нижнюю панель, чтобы последний чат не перекрывался.
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 120 + MediaQuery.paddingOf(context).bottom),
               children: [
                 // Закреплённые разделы сверху
                 _Tile(

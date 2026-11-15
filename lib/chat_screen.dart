@@ -29,9 +29,18 @@ Future<String> findOrCreateConversation({required String kind, String? listingId
   final db = Supabase.instance.client;
   final me = db.auth.currentUser!.id;
 
-  var query = db.from('conversations').select('id').eq('kind', kind).eq('buyer_id', me);
-  if (listingId != null) query = query.eq('listing_id', listingId);
-  if (sellerId != null) query = query.eq('seller_id', sellerId);
+  var query = db.from('conversations').select('id').eq('kind', kind);
+  if (listingId != null) {
+    query = query.eq('buyer_id', me).eq('listing_id', listingId);
+    if (sellerId != null) query = query.eq('seller_id', sellerId);
+  } else if (sellerId != null) {
+    // Личная переписка одна на пару: ищем её в обе стороны (кто первым написал).
+    query = query.or(
+      'and(buyer_id.eq.$me,seller_id.eq.$sellerId),and(buyer_id.eq.$sellerId,seller_id.eq.$me)',
+    );
+  } else {
+    query = query.eq('buyer_id', me);
+  }
 
   final found = await query.limit(1);
   if (found.isNotEmpty) return found.first['id'] as String;
