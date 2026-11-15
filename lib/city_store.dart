@@ -116,7 +116,7 @@ Future<void> showCityPicker(BuildContext context) {
                           ),
                           trailing: AnimatedScale(
                             scale: selected ? 1 : 0,
-                            duration: const Duration(milliseconds: 200),
+                            duration: Duration.zero,
                             curve: Curves.easeOutBack,
                             child: Container(
                               width: 26,

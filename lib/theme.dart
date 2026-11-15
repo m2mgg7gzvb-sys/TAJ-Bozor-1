@@ -22,6 +22,8 @@ ThemeData buildAppTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: AppColors.background,
+    // Без волны-подсветки при нажатии: реакция кнопок мгновенная.
+    splashFactory: NoSplash.splashFactory,
   );
   return base.copyWith(
     appBarTheme: const AppBarTheme(
