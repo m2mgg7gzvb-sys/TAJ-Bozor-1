@@ -615,6 +615,37 @@ class _ListingsScreenState extends State<ListingsScreen> {
         filters: _snapshot(),
       );
 
+  /// Подписка на рассылку по текущим фильтрам: новые объявления этого поиска присылают уведомление.
+  Widget _subscribeBar() {
+    return ValueListenableBuilder<List<SavedSearch>>(
+      valueListenable: SavedSearchesStore.items,
+      builder: (context, _, __) {
+        final on = SavedSearchesStore.contains(_currentSaved());
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final signedIn = Supabase.instance.client.auth.currentUser != null;
+                await SavedSearchesStore.toggle(_currentSaved());
+                if (!mounted) return;
+                setState(() {});
+                if (!on && !signedIn) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Войдите в аккаунт, чтобы получать уведомления о новых объявлениях'),
+                  ));
+                }
+              },
+              icon: Icon(on ? Icons.notifications_active_rounded : Icons.notifications_none_rounded),
+              label: Text(on ? 'Вы подписаны на рассылку' : 'Подписаться на рассылку'),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   /// Звёздочка: сохраняет текущие фильтры в «Избранное» → «Сохранённые поиски».
   Widget _saveStar(VoidCallback onChanged) {
     final on = SavedSearchesStore.contains(_currentSaved());
@@ -2359,6 +2390,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
               ),
             ),
           ),
+          if (_savedTitle() != widget.title) _subscribeBar(),
           _subcatRow(),
           if (_carMode) _carChipsRow(),
           if (_isPhones) _phoneChipsRow(),
