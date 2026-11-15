@@ -17,6 +17,7 @@ import 'nav_state.dart';
 import 'push.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
+import 'wallet_sheet.dart';
 import 'welcome_screen.dart';
 import 'green_button.dart';
 
@@ -181,6 +182,11 @@ class _ProfilePageState extends State<_ProfilePage> {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const SellerStatsScreen()),
                       ),
+                    ),
+                    _MenuTile(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: tr('Баланс и пополнение', 'Баланс ва пуркунӣ'),
+                      onTap: () => showWalletSheet(context),
                     ),
                     _MenuTile(
                       icon: Icons.favorite_border_rounded,
