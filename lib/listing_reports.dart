@@ -207,7 +207,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             }
             final items = snap.data ?? const <Map<String, dynamic>>[];
             if (items.isEmpty) {
-              return ListView(children: const [
+              return ListView(children: [
                 Padding(padding: EdgeInsets.all(24), child: Text('Открытых жалоб нет', textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted))),
               ]);
             }
@@ -230,7 +230,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           'Заявитель: ${((r['reporter'] as Map?)?['name'] as String?)?.trim().isNotEmpty == true ? (r['reporter'] as Map)['name'] : 'неизвестно'}',
-                          style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                          style: TextStyle(color: AppColors.muted, fontSize: 13),
                         ),
                         const SizedBox(height: 10),
                         Wrap(

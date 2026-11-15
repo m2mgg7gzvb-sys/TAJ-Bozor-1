@@ -132,7 +132,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                         _listingTitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                        style: TextStyle(color: AppColors.muted, fontSize: 13),
                       ),
                   ],
                 ),

@@ -631,7 +631,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 20),
       const Text('Про телефон', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       const SizedBox(height: 4),
-      const Text(
+      Text(
         'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
@@ -670,7 +670,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 20),
       const Text('Характеристики', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       const SizedBox(height: 4),
-      const Text(
+      Text(
         'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
@@ -692,7 +692,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 20),
       const Text('Про ноутбук', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       const SizedBox(height: 4),
-      const Text(
+      Text(
         'Чем подробнее характеристики, тем лучше объявление находят через фильтры. Всё необязательно.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
@@ -747,7 +747,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 20),
       const Text('Про автомобиль', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       const SizedBox(height: 4),
-      const Text(
+      Text(
         'Марка и модель обязательны, название объявления соберётся из них. Остальное можно не заполнять.',
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
@@ -783,7 +783,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       const SizedBox(height: 12),
       Text(
         'Название: ${_autoTitle()}',
-        style: const TextStyle(color: AppColors.muted, fontSize: 13),
+        style: TextStyle(color: AppColors.muted, fontSize: 13),
       ),
       const SizedBox(height: 12),
       _field(_mileageCtrl, 'Пробег, км', type: TextInputType.number),
@@ -1014,7 +1014,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             label: '$_days',
             onChanged: (v) => setState(() => _days = v.round()),
           ),
-          const Text(
+          Text(
             'От 7 до 30 дней. По истечении срока объявление снимается с публикации.',
             style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),

@@ -79,7 +79,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           }
           final items = snapshot.data ?? [];
           if (items.isEmpty) {
-            return const Center(
+            return Center(
               child: Text('Пока новых уведомлений нет', style: TextStyle(color: AppColors.muted)),
             );
           }
@@ -132,7 +132,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 6),
                     Text(
                       _when(n['created_at'] as String?),
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                   ],
                 ),

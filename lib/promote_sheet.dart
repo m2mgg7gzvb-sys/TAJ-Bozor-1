@@ -100,7 +100,7 @@ class _PromoteSheetState extends State<_PromoteSheet> {
                     color: AppColors.saffron,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
+                  child: Text(
                     'TOP',
                     style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                   ),
@@ -116,10 +116,10 @@ class _PromoteSheetState extends State<_PromoteSheet> {
               widget.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Объявление попадёт в начало списка и будет отмечено как продвигаемое.',
               style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
             ),
@@ -311,7 +311,7 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: AppColors.saffron, borderRadius: BorderRadius.circular(8)),
-                      child: const Text('TOP',
+                      child: Text('TOP',
                           style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                     ),
                     const SizedBox(width: 10),
@@ -331,7 +331,7 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                 ),
                 const SizedBox(height: 8),
                 if (items.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text('Нет активных объявлений', style: TextStyle(color: AppColors.muted)),
                   )
@@ -398,7 +398,7 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    const Text('Итого', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
+                    Text('Итого', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
                     const Spacer(),
                     Text('$_total TJS',
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
@@ -465,7 +465,7 @@ class _DaysPicker extends StatelessWidget {
             Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
             const SizedBox(height: 4),
-            const Text('Сколько дней поднимать в TOP', style: TextStyle(color: AppColors.muted)),
+            Text('Сколько дней поднимать в TOP', style: TextStyle(color: AppColors.muted)),
             const SizedBox(height: 14),
             for (var i = 0; i < promotePlans.length; i++)
               Padding(

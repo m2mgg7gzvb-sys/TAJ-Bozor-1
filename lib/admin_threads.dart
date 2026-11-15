@@ -231,17 +231,17 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                             Text(priceText(listing),
                                 style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
                             Text('Статус: ${_statusNames[status] ?? status}',
-                                style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                                style: TextStyle(color: AppColors.muted, fontSize: 13)),
                           ],
                           const SizedBox(height: 6),
                           Text('ID: ${listing?['public_id'] ?? '—'}',
-                              style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                              style: TextStyle(color: AppColors.muted, fontSize: 12)),
                         ],
                       ),
                     ),
                     const SizedBox(height: 14),
                     if (data.logs.isEmpty)
-                      const Text('Записей пока нет', style: TextStyle(color: AppColors.muted)),
+                      Text('Записей пока нет', style: TextStyle(color: AppColors.muted)),
                     for (final e in data.logs) ...[
                       _Bubble(
                         action: (e['action'] as String?) ?? '',
@@ -333,7 +333,7 @@ class _Bubble extends StatelessWidget {
             Text(isMessage ? note! : 'Причина: $note', style: const TextStyle(fontSize: 14)),
           ],
           const SizedBox(height: 4),
-          Text(date, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+          Text(date, style: TextStyle(color: AppColors.muted, fontSize: 12)),
         ],
       ),
     );
@@ -393,7 +393,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Тип: ${conv['kind'] ?? '—'}', style: const TextStyle(color: AppColors.muted)),
+                Text('Тип: ${conv['kind'] ?? '—'}', style: TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 12),
                 for (final entry in [('Покупатель', conv['buyer_id']), ('Продавец', conv['seller_id'])])
                   if (entry.$2 is String && byId[entry.$2 as String] != null)
@@ -497,7 +497,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.shield_outlined, size: 72, color: AppColors.primary),
                   SizedBox(height: 16),
                   Text(

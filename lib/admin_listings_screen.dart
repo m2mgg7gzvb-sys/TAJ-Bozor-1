@@ -127,7 +127,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snap.hasError) {
-                    return ListView(children: const [
+                    return ListView(children: [
                       Padding(
                         padding: EdgeInsets.all(24),
                         child: Text('Не удалось загрузить объявления',
@@ -142,7 +142,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                           .where((i) => ((i['title'] as String?) ?? '').toLowerCase().contains(query))
                           .toList();
                   if (items.isEmpty) {
-                    return ListView(children: const [
+                    return ListView(children: [
                       Padding(
                         padding: EdgeInsets.all(24),
                         child: Text('Ничего не найдено',
@@ -273,7 +273,7 @@ class _AdminTile extends StatelessWidget {
                       Text(priceText(item),
                           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
                       if (city.isNotEmpty)
-                        Text(city, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                        Text(city, style: TextStyle(color: AppColors.muted, fontSize: 13)),
                     ],
                   ),
                 ),

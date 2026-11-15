@@ -21,7 +21,7 @@ class TopTag extends StatelessWidget {
           BoxShadow(color: const Color(0xFFE0A526).withValues(alpha: 0.45), blurRadius: 10, spreadRadius: 0.5),
         ],
       ),
-      child: const Text(
+      child: Text(
         'TOP',
         style: TextStyle(color: AppColors.ink, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),

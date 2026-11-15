@@ -110,7 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 6, 4, 2),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Вы искали',
                         style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.muted),

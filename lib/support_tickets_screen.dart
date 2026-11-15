@@ -108,14 +108,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
+              Text(
                 'Зелёный — ждёт ответа, жёлтый — на помощи, красный — завершено. '
                 'Завершённые обращения открывает только главный сотрудник.',
                 style: TextStyle(color: AppColors.muted, fontSize: 13),
               ),
               const SizedBox(height: 12),
               if (items.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(20),
                   child: Text('Обращений пока нет', style: TextStyle(color: AppColors.muted)),
                 )
@@ -162,7 +162,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             ),
             subtitle: Text(
               _statusLabel[status] ?? status,
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: AppColors.muted),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,

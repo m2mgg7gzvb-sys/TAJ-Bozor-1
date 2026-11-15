@@ -210,7 +210,7 @@ class _MapPickerPageState extends State<_MapPickerPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                Text('Адрес', style: TextStyle(color: AppColors.muted, fontSize: 13)),
                 const SizedBox(height: 4),
                 Text(
                   _address.isEmpty ? 'Передвигайте карту, чтобы поставить точку' : _address,

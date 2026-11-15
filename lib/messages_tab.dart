@@ -286,9 +286,9 @@ class _MessagesTabState extends State<MessagesTab> {
                     child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()),
                   )
                 else if (snap.hasError)
-                  const Text('Не удалось загрузить переписки', style: TextStyle(color: AppColors.muted))
+                  Text('Не удалось загрузить переписки', style: TextStyle(color: AppColors.muted))
                 else if (chats.where((c) => c['kind'] != 'support').isEmpty)
-                  const Text(
+                  Text(
                     'Здесь появятся переписки с продавцами и покупателями',
                     style: TextStyle(color: AppColors.muted),
                   )
@@ -388,7 +388,7 @@ class _ChatTile extends StatelessWidget {
           listing == null ? 'Личная переписка' : listingTitle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: AppColors.muted),
+          style: TextStyle(color: AppColors.muted),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -437,7 +437,7 @@ class _Tile extends StatelessWidget {
           child: Icon(icon, color: AppColors.primary),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle, style: const TextStyle(color: AppColors.muted)),
+        subtitle: Text(subtitle, style: TextStyle(color: AppColors.muted)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

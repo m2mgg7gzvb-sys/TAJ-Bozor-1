@@ -178,7 +178,7 @@ class _ChatScreenState extends State<ChatScreen> {
             const Text('Вы ещё не в этом чате',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Присоединитесь, чтобы видеть переписку и отвечать',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.muted),
@@ -882,7 +882,7 @@ class _ChatScreenState extends State<ChatScreen> {
               if (_statusWidget() != null) _statusWidget()!,
               if (_conv?['public_id'] != null)
                 Text('ID чата: ${_conv!['public_id']}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -980,7 +980,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   WidgetsBinding.instance.addPostFrameCallback((_) => _checkReview());
                 }
                 if (items.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text('Напишите первое сообщение', style: TextStyle(color: AppColors.muted)),
                   );
                 }
@@ -1062,7 +1062,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   padding: const EdgeInsets.only(top: 2, left: 4, right: 4),
                                   child: Text(
                                     _tajikTime(m['created_at'] as String?),
-                                    style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                                    style: TextStyle(color: AppColors.muted, fontSize: 11),
                                   ),
                                 ),
                                 ..._openChatButtons(m['body'] as String),
@@ -1084,7 +1084,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               color: Colors.white.withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(day, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                            child: Text(day, style: TextStyle(color: AppColors.muted, fontSize: 12)),
                           ),
                         ),
                         row,
@@ -1256,8 +1256,8 @@ class _GlowInputState extends State<_GlowInput> with SingleTickerProviderStateMi
           focusNode: _focus,
           minLines: 1,
           maxLines: 4,
-          style: const TextStyle(color: AppColors.ink, fontSize: 15),
-          decoration: const InputDecoration(
+          style: TextStyle(color: AppColors.ink, fontSize: 15),
+          decoration: InputDecoration(
             hintText: 'Сообщение',
             hintStyle: TextStyle(color: AppColors.muted),
             filled: false,
@@ -1294,7 +1294,7 @@ class _RecordingBar extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             '$m:$s',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.ink,
               fontWeight: FontWeight.w700,
               fontFeatures: [FontFeature.tabularFigures()],
@@ -1404,7 +1404,7 @@ class _PulseSendButtonState extends State<_PulseSendButton> with SingleTickerPro
                   BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
-              child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 26),
+              child: const Icon(Icons.arrow_upward_rounded, color: Color(0xFFD3DCD8), size: 26),
             ),
           ),
         ],
@@ -1465,9 +1465,9 @@ class _CallEntry extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(title,
-                  style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 14)),
+                  style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 14)),
               const SizedBox(height: 2),
-              Text(sub, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+              Text(sub, style: TextStyle(color: AppColors.muted, fontSize: 12)),
             ],
           ),
         ),

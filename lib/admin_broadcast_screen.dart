@@ -101,7 +101,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Уведомление получат все пользователи приложения.',
             style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),

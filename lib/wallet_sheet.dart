@@ -73,7 +73,7 @@ class _WalletSheetState extends State<_WalletSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Баланс', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
+                  Text('Баланс', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(
                     snap.connectionState == ConnectionState.waiting ? '…' : '$balance TJS',
@@ -94,7 +94,7 @@ class _WalletSheetState extends State<_WalletSheet> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Онлайн-оплата пока не подключена. Заявка появится в истории и пополнит баланс после подтверждения.',
                     style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
@@ -102,7 +102,7 @@ class _WalletSheetState extends State<_WalletSheet> {
                   const Text('История', style: TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
                   if (snap.connectionState != ConnectionState.waiting && rows.isEmpty)
-                    const Text('Операций пока нет', style: TextStyle(color: AppColors.muted)),
+                    Text('Операций пока нет', style: TextStyle(color: AppColors.muted)),
                   for (final r in rows)
                     ListTile(
                       contentPadding: EdgeInsets.zero,

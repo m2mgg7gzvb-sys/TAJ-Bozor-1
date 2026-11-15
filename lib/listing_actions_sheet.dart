@@ -27,7 +27,7 @@ Future<void> showListingActions(
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted, fontSize: 14, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.muted, fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 18),
             _ShimmerTopButton(
@@ -126,7 +126,7 @@ class _ShimmerTopButtonState extends State<_ShimmerTopButton> with SingleTickerP
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: widget.onPressed,
-              child: const SizedBox(
+              child: SizedBox(
                 height: 56,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -47,7 +47,7 @@ class SafetyTipsScreen extends StatelessWidget {
                     children: [
                       Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       const SizedBox(height: 4),
-                      Text(text, style: const TextStyle(color: AppColors.muted, height: 1.35)),
+                      Text(text, style: TextStyle(color: AppColors.muted, height: 1.35)),
                     ],
                   ),
                 ),

@@ -550,7 +550,7 @@ class _SearchFieldState extends State<_SearchField> {
                       tr('Найти ${_words[_i]}', 'Ёфтани ${_tgWords[_i]}'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.muted, fontSize: 16),
+                      style: TextStyle(color: AppColors.muted, fontSize: 16),
                     ),
                   ),
                 ),
@@ -673,7 +673,7 @@ class _CategoryChip extends StatelessWidget {
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   height: 1.25,
@@ -780,7 +780,7 @@ class _TopBadgeState extends State<_TopBadge> with SingleTickerProviderStateMixi
                   colors: const [Color(0xFFE0A526), Color(0xFFFFE08A), Color(0xFFE0A526)],
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'TOP',
                 style: TextStyle(
                   color: AppColors.ink,

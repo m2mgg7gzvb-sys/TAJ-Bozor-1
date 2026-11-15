@@ -75,7 +75,7 @@ class _ModerationScreenState extends State<ModerationScreen> {
                     child: Text(
                       'Не удалось загрузить объявления',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.muted),
+                      style: TextStyle(color: AppColors.muted),
                     ),
                   ),
                 ],
@@ -84,7 +84,7 @@ class _ModerationScreenState extends State<ModerationScreen> {
             final items = snap.data ?? const <Map<String, dynamic>>[];
             if (items.isEmpty) {
               return ListView(
-                children: const [
+                children: [
                   Padding(
                     padding: EdgeInsets.all(24),
                     child: Text(
@@ -177,7 +177,7 @@ class _ModerationTile extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(priceText(item), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
                       if (city.isNotEmpty)
-                        Text(city, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                        Text(city, style: TextStyle(color: AppColors.muted, fontSize: 13)),
                     ],
                   ),
                 ),

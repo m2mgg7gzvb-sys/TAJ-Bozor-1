@@ -338,16 +338,16 @@ class _ProfileHeader extends StatelessWidget {
                     ],
                     if (city != null && city!.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(city!, style: const TextStyle(color: AppColors.muted)),
+                      Text(city!, style: TextStyle(color: AppColors.muted)),
                     ],
                     if (phone != null && phone!.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(phone!, style: const TextStyle(color: AppColors.muted)),
+                      Text(phone!, style: TextStyle(color: AppColors.muted)),
                     ],
                     const SizedBox(height: 2),
                     Text(
                       email ?? 'Вход без почты',
-                      style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                      style: TextStyle(color: AppColors.muted, fontSize: 13),
                     ),
                   ],
                 ),
@@ -385,7 +385,7 @@ class _Stat extends StatelessWidget {
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary),
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+          Text(label, style: TextStyle(color: AppColors.muted, fontSize: 13)),
         ],
       ),
     );
@@ -521,7 +521,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
           ),
           const SizedBox(height: 4),
-          const Center(
+          Center(
             child: Text('Нажмите, чтобы сменить фото', style: TextStyle(color: AppColors.muted, fontSize: 12)),
           ),
           const SizedBox(height: 12),
@@ -580,7 +580,7 @@ class _GuestBanner extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Зарегистрируйтесь по почте, чтобы не потерять объявления и избранное.',
             style: TextStyle(color: AppColors.muted, height: 1.4),
           ),
@@ -708,7 +708,7 @@ Future<void> _confirmSignOut(BuildContext context) async {
                 'Шумо мутмаин ҳастед, ки аз ҳисоб баромадан мехоҳед?',
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: AppColors.muted),
+              style: TextStyle(fontSize: 15, color: AppColors.muted),
             ),
             const SizedBox(height: 22),
             Row(

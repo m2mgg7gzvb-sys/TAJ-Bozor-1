@@ -14,7 +14,7 @@ class CopyIdLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = style ?? const TextStyle(color: AppColors.muted, fontSize: 12);
+    final textStyle = style ?? TextStyle(color: AppColors.muted, fontSize: 12);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -29,7 +29,7 @@ class CopyIdLine extends StatelessWidget {
               const SnackBar(content: Text('ID скопирован'), duration: Duration(seconds: 2)),
             );
           },
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.all(4),
             child: Icon(Icons.copy_rounded, size: 14, color: AppColors.muted),
           ),

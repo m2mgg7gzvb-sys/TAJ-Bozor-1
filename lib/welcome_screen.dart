@@ -289,7 +289,7 @@ class _SheetState extends State<_Sheet> {
           const SizedBox(height: 18),
           Text(
             _register ? 'Создать аккаунт' : 'Войти',
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.ink),
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.ink),
           ),
           const SizedBox(height: 6),
           Text(
@@ -297,7 +297,7 @@ class _SheetState extends State<_Sheet> {
                 ? 'Аккаунт создастся автоматически при первом входе'
                 : 'Войдите, чтобы публиковать объявления и писать продавцам',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted, fontSize: 14),
+            style: TextStyle(color: AppColors.muted, fontSize: 14),
           ),
           const SizedBox(height: 12),
           // Тонкая зелёная линия-разделитель, как в макете.
@@ -347,7 +347,7 @@ class _SheetState extends State<_Sheet> {
               style: TextStyle(color: AppColors.primary, fontSize: 17, fontWeight: FontWeight.w700),
             ),
           ),
-          const Text(
+          Text(
             'Продолжая, вы принимаете условия использования\nи политику конфиденциальности TAJ Bozor',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.4),

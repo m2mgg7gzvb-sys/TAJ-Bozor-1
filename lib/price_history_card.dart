@@ -58,7 +58,7 @@ class PriceHistoryCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             _date(r['changed_at'] as String?),
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(color: AppColors.muted),
                           ),
                         ),
                         Text(
@@ -117,7 +117,7 @@ class OldPriceLine extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Text(
             '${groupDigits(old)} $currency',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.muted,
               fontSize: 16,
               fontWeight: FontWeight.w600,
