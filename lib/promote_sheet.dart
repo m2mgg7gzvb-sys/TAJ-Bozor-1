@@ -15,18 +15,19 @@ const promotePlans = [
 
 /// Окно «TOP»: выбор срока и кнопка оплаты.
 /// Онлайн-оплата ещё не подключена, поэтому кнопка пока неактивна.
-Future<void> showPromoteSheet(BuildContext context, {required String title}) {
+Future<void> showPromoteSheet(BuildContext context, {required String listingId, required String title}) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (_) => _PromoteSheet(title: title),
+    builder: (_) => _PromoteSheet(listingId: listingId, title: title),
   );
 }
 
 class _PromoteSheet extends StatefulWidget {
-  const _PromoteSheet({required this.title});
+  const _PromoteSheet({required this.listingId, required this.title});
 
+  final String listingId;
   final String title;
 
   @override
@@ -35,10 +36,55 @@ class _PromoteSheet extends StatefulWidget {
 
 class _PromoteSheetState extends State<_PromoteSheet> {
   int _selected = 1; // 7 дней по умолчанию
+  int _balance = 0;
+  bool _paying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBalance();
+  }
+
+  Future<void> _loadBalance() async {
+    try {
+      final b = await Supabase.instance.client.rpc('get_balance') as int? ?? 0;
+      if (mounted) setState(() => _balance = b);
+    } catch (_) {
+      // Баланс не загрузился: кнопка останется выключенной.
+    }
+  }
+
+  /// Списывает деньги с баланса и включает TOP для этого объявления.
+  Future<void> _pay() async {
+    if (_paying) return;
+    setState(() => _paying = true);
+    try {
+      await Supabase.instance.client.rpc('request_top_orders', params: {
+        'p_items': [
+          {'listing_id': widget.listingId, 'plan': _selected},
+        ],
+      });
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+        content: Text('TOP включён. Деньги списаны с баланса.'),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _paying = false);
+      final insufficient = e.toString().contains('insufficient balance');
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(insufficient
+            ? 'Не хватает денег на балансе. Пополните баланс в профиле.'
+            : 'Не удалось включить TOP. Попробуйте ещё раз.'),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final plan = promotePlans[_selected];
+    final enough = plan.price <= _balance;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
@@ -118,13 +164,17 @@ class _PromoteSheetState extends State<_PromoteSheet> {
               ),
             const SizedBox(height: 10),
             GreenButton(
-              onPressed: null,
-              child: Text('Оплатить ${plan.price} TJS · скоро'),
+              onPressed: enough && !_paying ? _pay : null,
+              child: Text(_paying
+                  ? 'Включаем…'
+                  : enough
+                      ? 'Оплатить ${plan.price} TJS с баланса'
+                      : 'Не хватает ${plan.price - _balance} TJS'),
             ),
             const SizedBox(height: 8),
-            const Center(
+            Center(
               child: Text(
-                'Онлайн-оплата пока не подключена. Скоро здесь можно будет оплатить продвижение.',
+                'На балансе: $_balance TJS. Пополнить баланс можно в профиле, в разделе «Баланс и пополнение».',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
