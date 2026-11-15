@@ -79,7 +79,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
           TextField(
             controller: _titleCtrl,
             maxLength: 100,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Заголовок',
               filled: true,
               fillColor: AppColors.surface,
@@ -92,7 +92,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             minLines: 4,
             maxLines: 8,
             maxLength: 1000,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Текст',
               alignLabelWithHint: true,
               filled: true,
