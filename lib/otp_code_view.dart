@@ -139,7 +139,7 @@ class _OtpCodeViewState extends State<OtpCodeView> with TickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.fromLTRB(22, 28, 22, 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(

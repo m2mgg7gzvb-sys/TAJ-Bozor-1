@@ -110,7 +110,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: const Color(0xFFE3ECE9)),
                       ),

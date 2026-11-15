@@ -255,12 +255,12 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
               ),
               if (listing != null)
                 Container(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                   child: Wrap(spacing: 8, runSpacing: 8, children: _actionButtons(status)),
                 ),
               Container(
-                color: Colors.white,
+                color: AppColors.surface,
                 padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 10),
                 child: Row(
                   children: [
@@ -312,7 +312,7 @@ class _Bubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isMessage ? AppColors.mint : Colors.white,
+        color: isMessage ? AppColors.mint : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

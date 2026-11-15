@@ -577,7 +577,7 @@ class _CityButton extends StatelessWidget {
         return Align(
           alignment: Alignment.centerLeft,
           child: Material(
-            color: Colors.white24,
+            color: AppColors.surface24,
             borderRadius: BorderRadius.circular(20),
             child: InkWell(
               borderRadius: BorderRadius.circular(20),

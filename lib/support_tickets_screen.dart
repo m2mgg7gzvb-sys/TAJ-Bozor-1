@@ -143,7 +143,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       builder: (_, unread, __) {
         final hasNew = unread.contains(id);
         return Material(
-          color: closed ? const Color(0xFFEDEFEE) : Colors.white,
+          color: closed ? const Color(0xFFEDEFEE) : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           child: ListTile(
             onTap: closed ? null : () => _open(id),

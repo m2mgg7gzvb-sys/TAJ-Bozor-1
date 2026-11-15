@@ -51,7 +51,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen> {
               return Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(

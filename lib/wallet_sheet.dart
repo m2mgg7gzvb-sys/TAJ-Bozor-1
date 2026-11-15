@@ -9,7 +9,7 @@ Future<void> showWalletSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.surface,
     builder: (_) => const _WalletSheet(),
   );
 }

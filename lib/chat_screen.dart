@@ -1404,12 +1404,7 @@ class _PulseSendButtonState extends State<_PulseSendButton> with SingleTickerPro
                   BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
                 ],
               ),
-              child: Icon(
-                Icons.arrow_upward_rounded,
-                // В тёмной теме иконка серая, чтобы не светилась; в светлой — белая.
-                color: darkMode.value ? const Color(0xFFC4CFCB) : Colors.white,
-                size: 26,
-              ),
+              child: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 26),
             ),
           ),
         ],
