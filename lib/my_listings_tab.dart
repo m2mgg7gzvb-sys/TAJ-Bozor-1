@@ -8,6 +8,7 @@ import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listing_actions_sheet.dart';
 import 'promote_sheet.dart';
+import 'slide_up_in.dart';
 import 'theme.dart';
 import 'green_button.dart';
 
@@ -273,14 +274,17 @@ class _MyListingsTabState extends State<MyListingsTab> {
               ),
             ],
           ),
-          child: SizedBox(
-            height: 46,
-            child: GreenButton.icon(
-              onPressed: _create,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                'Подать объявление',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          child: SlideUpIn(
+            delay: const Duration(milliseconds: 150),
+            child: SizedBox(
+              height: 46,
+              child: GreenButton.icon(
+                onPressed: _create,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text(
+                  'Подать объявление',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
               ),
             ),
           ),
