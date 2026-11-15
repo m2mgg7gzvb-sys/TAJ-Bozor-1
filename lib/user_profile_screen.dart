@@ -206,6 +206,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             icon: const Icon(Icons.visibility_off_outlined, size: 18),
             label: const Text('Скрыть все объявления'),
           ),
+          const SizedBox(height: 8),
+          GreenButton.icon(
+            height: 46,
+            onPressed: () => _adminCall(
+              'admin_unhide_user_listings',
+              {'p_user': uid},
+              'Возвращено объявлений',
+            ),
+            icon: const Icon(Icons.visibility_outlined, size: 18),
+            label: const Text('Вернуть скрытые объявления'),
+          ),
         ],
       ),
     );
