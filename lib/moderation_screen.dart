@@ -55,7 +55,7 @@ class _ModerationScreenState extends State<ModerationScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Проверка объявлений')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Проверка объявлений')),
       body: RefreshIndicator(
         onRefresh: () async {
           _reload();

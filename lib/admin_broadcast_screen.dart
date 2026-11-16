@@ -70,7 +70,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         title: const Text('Рассылка'),
       ),
       body: ListView(

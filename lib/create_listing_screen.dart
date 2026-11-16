@@ -870,7 +870,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         title: Text(widget.listing == null ? 'Подать объявление' : 'Редактировать объявление'),
         actions: [
           if (widget.listing == null)

@@ -80,7 +80,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Все объявления')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Все объявления')),
       body: Column(
         children: [
           const AdminDailyStats(),
@@ -109,7 +109,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                 hintText: 'Поиск по названию',
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,

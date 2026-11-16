@@ -131,7 +131,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
             top: 6,
             left: 6,
             child: Material(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: AppColors.surface.withValues(alpha: 0.92),
               shape: const CircleBorder(),
               child: IconButton(
                 tooltip: 'Действия',
@@ -225,7 +225,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
       centerTitle: true,
       title: const Text(
         'Объявления',
-        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
       ),
     );
   }
