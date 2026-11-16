@@ -12,10 +12,12 @@ class AppColors {
 
   static bool get _dark => darkMode.value;
 
-  static Color get ink => _dark ? const Color(0xFFE6F2EE) : const Color(0xFF0B1F1A);
+  static Color get ink => _dark ? Colors.white : const Color(0xFF0B1F1A);
+  /// Заголовки и акцентный текст: белый в тёмной теме, тёмно-зелёный в светлой.
+  static Color get title => _dark ? Colors.white : deep;
   static Color get background => _dark ? const Color(0xFF0C1513) : const Color(0xFFF4F7F6);
   static Color get mint => _dark ? const Color(0xFF16302A) : const Color(0xFFEAF2EF);
-  static Color get muted => _dark ? const Color(0xFF9AB3AC) : const Color(0xFF5C6F68);
+  static Color get muted => _dark ? const Color(0xFFD2E0DB) : const Color(0xFF5C6F68);
 
   /// Поверхность карточек и полей (белая в светлой теме).
   static Color get surface => _dark ? const Color(0xFF15221F) : Colors.white;
@@ -25,8 +27,8 @@ class AppColors {
 /// Светлая или тёмная тема в одной сборке. Вызывается при каждом построении MaterialApp.
 ThemeData buildAppTheme({bool dark = false}) {
   final bg = dark ? const Color(0xFF0C1513) : const Color(0xFFF4F7F6);
-  final ink = dark ? const Color(0xFFE6F2EE) : const Color(0xFF0B1F1A);
-  final muted = dark ? const Color(0xFF9AB3AC) : const Color(0xFF5C6F68);
+  final ink = dark ? Colors.white : const Color(0xFF0B1F1A);
+  final muted = dark ? const Color(0xFFD2E0DB) : const Color(0xFF5C6F68);
   final mint = dark ? const Color(0xFF16302A) : const Color(0xFFEAF2EF);
   final surface = dark ? const Color(0xFF15221F) : Colors.white;
   final line = dark ? const Color(0xFF26403A) : const Color(0xFFE3ECE9);

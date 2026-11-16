@@ -62,7 +62,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Уведомления')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Уведомления')),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _future,
         builder: (context, snapshot) {

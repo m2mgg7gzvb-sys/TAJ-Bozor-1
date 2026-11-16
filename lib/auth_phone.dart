@@ -91,7 +91,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         centerTitle: true,
         title: const Text(
           'Вход по номеру',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
       ),
       body: SafeArea(

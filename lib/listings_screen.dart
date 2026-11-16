@@ -2351,7 +2351,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         centerTitle: true,
         title: Text(
           widget.title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
         actions: [
           IconButton(
@@ -2382,7 +2382,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 hintText: 'Поиск по названию',
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,

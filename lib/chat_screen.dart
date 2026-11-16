@@ -1023,7 +1023,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           if (m['attachment_kind'] == null)
                             _bodyText(
                               m['body'] as String,
-                              TextStyle(color: mine ? AppColors.deep : AppColors.ink, height: 1.3, fontWeight: FontWeight.w500),
+                              TextStyle(color: mine ? AppColors.title : AppColors.ink, height: 1.3, fontWeight: FontWeight.w500),
                             ),
                         ],
                       ),

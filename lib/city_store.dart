@@ -92,7 +92,7 @@ Future<void> showCityPicker(BuildContext context) {
                     padding: EdgeInsets.fromLTRB(16, 4, 16, 14),
                     child: Text(
                       'Выберите город',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
                     ),
                   ),
                   Flexible(

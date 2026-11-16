@@ -115,7 +115,7 @@ class _ProfilePageState extends State<_ProfilePage> {
         centerTitle: true,
         title: Text(
           tr('Профиль', 'Профил'),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
       ),
       body: FutureBuilder<_ProfileData>(
@@ -672,7 +672,7 @@ Future<void> _confirmSignOut(BuildContext context) async {
       child: Container(
         padding: const EdgeInsets.fromLTRB(22, 26, 22, 18),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.96),
+          color: AppColors.surface.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
@@ -699,7 +699,7 @@ Future<void> _confirmSignOut(BuildContext context) async {
             Text(
               tr('Подтвердить выход?', 'Баромадани худро тасдиқ кунед?'),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
             ),
             const SizedBox(height: 8),
             Text(

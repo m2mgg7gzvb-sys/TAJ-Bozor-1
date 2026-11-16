@@ -275,7 +275,7 @@ class _TabCell extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: color,
+              color: selected && !darkMode.value ? AppColors.primary : AppColors.title,
             ),
             child: Text(item.label, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),

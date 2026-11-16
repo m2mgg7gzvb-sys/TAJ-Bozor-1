@@ -652,7 +652,7 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.82),
+      color: AppColors.surface.withValues(alpha: 0.82),
       // Зелёное свечение вокруг плитки и тонкая светящаяся рамка.
       elevation: 6,
       shadowColor: AppColors.primary.withValues(alpha: 0.45),

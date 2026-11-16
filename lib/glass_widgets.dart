@@ -41,7 +41,7 @@ class GlassTabs extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: AppColors.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(color: AppColors.deep.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
@@ -125,7 +125,7 @@ class GlassDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.97),
+          color: AppColors.surface.withValues(alpha: 0.97),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
@@ -143,7 +143,7 @@ class GlassDialog extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
               ),
               if (content != null) ...[const SizedBox(height: 14), content!],
               if (actions.isNotEmpty) ...[
@@ -176,7 +176,7 @@ class GlassSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.97),
+        color: AppColors.surface.withValues(alpha: 0.97),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
@@ -194,7 +194,7 @@ class GlassSheet extends StatelessWidget {
 
 /// Стеклянная карточка с мягким зелёным свечением (для профиля и подобных блоков).
 BoxDecoration glowDecoration({double radius = 20}) => BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.92),
+      color: AppColors.surface.withValues(alpha: 0.92),
       borderRadius: BorderRadius.circular(radius),
       boxShadow: [
         BoxShadow(
@@ -208,7 +208,7 @@ BoxDecoration glowDecoration({double radius = 20}) => BoxDecoration(
 
 /// Оформление нижнего окна (фильтры, выбор): белое стекло со скруглением сверху и зелёным свечением.
 BoxDecoration glassSheetDecoration() => BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.97),
+      color: AppColors.surface.withValues(alpha: 0.97),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       boxShadow: [
         BoxShadow(

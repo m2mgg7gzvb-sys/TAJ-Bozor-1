@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'theme.dart';
+
 /// Стекло как на iPhone: размытие того, что под ним, полупрозрачный белый и тонкий светлый край.
 class FrostedGlass extends StatelessWidget {
   const FrostedGlass({
@@ -31,7 +33,7 @@ class FrostedGlass extends StatelessWidget {
       child: ClipRRect(
         borderRadius: br,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
@@ -39,12 +41,20 @@ class FrostedGlass extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.78),
-                  Colors.white.withValues(alpha: 0.5),
-                ],
+                colors: darkMode.value
+                    ? [
+                        AppColors.surface.withValues(alpha: 0.32),
+                        AppColors.surface.withValues(alpha: 0.14),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.42),
+                        Colors.white.withValues(alpha: 0.18),
+                      ],
               ),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: darkMode.value ? 0.16 : 0.6),
+                width: 1,
+              ),
             ),
             child: child,
           ),

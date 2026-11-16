@@ -181,7 +181,7 @@ class _MessagesTabState extends State<MessagesTab> {
         centerTitle: true,
         title: const Text(
           'Сообщения',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
       ),
       body: RefreshIndicator(
@@ -350,7 +350,7 @@ class _ChatTile extends StatelessWidget {
     final photo = listing == null ? null : photoUrl(listing);
     final listingTitle = (listing?['title'] as String?) ?? 'Объявление удалено';
     return Material(
-      color: Colors.white.withValues(alpha: 0.94),
+      color: AppColors.surface.withValues(alpha: 0.94),
       elevation: 4,
       shadowColor: AppColors.primary.withValues(alpha: 0.35),
       borderRadius: BorderRadius.circular(18),
@@ -425,7 +425,7 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.94),
+      color: AppColors.surface.withValues(alpha: 0.94),
       elevation: 4,
       shadowColor: AppColors.primary.withValues(alpha: 0.35),
       borderRadius: BorderRadius.circular(18),

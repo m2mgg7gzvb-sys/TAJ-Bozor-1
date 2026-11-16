@@ -188,7 +188,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         title: const Text('Объявление'),
         actions: [
           IconButton(
@@ -461,7 +461,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),title: const Text('Поиск по ID')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Поиск по ID')),
       body: Column(
         children: [
           Padding(

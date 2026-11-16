@@ -339,7 +339,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         centerTitle: true,
         title: Text(
           tr('Объявление', 'Эълон'),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
         actions: [
           if (!_isOwner && Supabase.instance.client.auth.currentUser != null)

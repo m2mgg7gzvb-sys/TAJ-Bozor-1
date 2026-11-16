@@ -152,7 +152,7 @@ height: 50,
           top: 6,
           left: 6,
           child: Material(
-            color: Colors.white.withValues(alpha: 0.92),
+            color: AppColors.surface.withValues(alpha: 0.92),
             shape: const CircleBorder(),
             child: IconButton(
               tooltip: hasNote ? 'Заметка: ${_notes[id]}' : 'Добавить заметку',
@@ -324,7 +324,7 @@ height: 50,
         centerTitle: true,
         title: const Text(
           'Избранное',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.deep),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
         actions: [
           if (showCompare)
