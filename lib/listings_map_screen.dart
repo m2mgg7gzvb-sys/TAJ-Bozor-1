@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'city_store.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
 
@@ -25,7 +26,15 @@ class ListingsMapScreen extends StatelessWidget {
       body: placed.isEmpty
           ? const Center(child: Text('Нет объявлений с координатами на карте'))
           : FlutterMap(
-              options: MapOptions(initialCenter: center, initialZoom: 12),
+              options: selectedCity.value == null
+                  // Город не выбран: показываем всю территорию Таджикистана.
+                  ? MapOptions(
+                      initialCameraFit: CameraFit.bounds(
+                        bounds: LatLngBounds(const LatLng(36.67, 67.33), const LatLng(41.05, 75.15)),
+                        padding: const EdgeInsets.all(24),
+                      ),
+                    )
+                  : MapOptions(initialCenter: center, initialZoom: 12),
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
