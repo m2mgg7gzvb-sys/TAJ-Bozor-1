@@ -50,7 +50,7 @@ class ListingsMapScreen extends StatelessWidget {
                       holePointsList: [
                         [for (final p in tajikistanOutline) LatLng(p[1], p[0])],
                       ],
-                      color: Colors.white,
+                      color: AppColors.background,
                       borderColor: Colors.transparent,
                       borderStrokeWidth: 0,
                     ),
