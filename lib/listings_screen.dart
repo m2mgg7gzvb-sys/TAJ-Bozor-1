@@ -809,12 +809,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
     final name = s['name_ru'] as String;
     final selected = _subcatId == id;
     final img = _subcatImage(name);
-    final iconSize = wide ? 44.0 : 40.0;
+    final iconSize = 40.0;
     // Стиль как у плиток категорий на главном экране: стеклянная карточка, свечение и иконка справа внизу.
     final icon = img != null
         ? SizedBox(
             width: 58,
-            height: 50,
+            height: 44,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -859,7 +859,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
           ),
         ),
         child: SizedBox(
-          height: 72,
+          height: 96,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
             child: Column(
