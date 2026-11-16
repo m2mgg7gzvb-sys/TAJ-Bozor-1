@@ -89,7 +89,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Вход по номеру',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
         ),
