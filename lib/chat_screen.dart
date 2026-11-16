@@ -12,6 +12,7 @@ import 'lang_store.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'browser_theme_color.dart';
 import 'call_options_sheet.dart';
 import 'call_screen.dart';
 import 'chat_attachments.dart';
@@ -368,6 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    setBrowserThemeColor(darkMode.value ? '#0C1513' : '#E7EEEB');
     markChatRead(widget.conversationId);
     if (widget.initialText != null) _ctrl.text = widget.initialText!;
     if (!widget.joinMode) _startStream();
@@ -380,6 +382,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    setBrowserThemeColor(darkMode.value ? '#0C1513' : '#F4F7F6');
     // Вышли из переписки, а отзыв ещё не оставлен: напоминаем баннером сверху
     if (_showReview) {
       final id = widget.conversationId;
