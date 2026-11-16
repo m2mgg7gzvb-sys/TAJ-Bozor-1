@@ -1087,7 +1087,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               color: Colors.white.withValues(alpha: 0.8),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(day, style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                            child: Text(day, style: const TextStyle(color: Colors.black, fontSize: 12)),
                           ),
                         ),
                         row,

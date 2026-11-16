@@ -150,9 +150,13 @@ class _ChatAudioTileState extends State<ChatAudioTile> {
                                     height: 4 + 20 * _bars[i],
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(2),
-                                      color: (i / _barCount) <= progress
-                                          ? accent
-                                          : accent.withValues(alpha: 0.28),
+                                      color: darkMode.value
+                                          ? ((i / _barCount) <= progress
+                                              ? Colors.white
+                                              : Colors.white.withValues(alpha: 0.35))
+                                          : ((i / _barCount) <= progress
+                                              ? accent
+                                              : accent.withValues(alpha: 0.28)),
                                     ),
                                   ),
                                 ),
@@ -167,7 +171,7 @@ class _ChatAudioTileState extends State<ChatAudioTile> {
                 Text(
                   _fmt(shown),
                   style: TextStyle(
-                    color: accent.withValues(alpha: 0.85),
+                    color: darkMode.value ? Colors.white : accent.withValues(alpha: 0.85),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     fontFeatures: const [FontFeature.tabularFigures()],
