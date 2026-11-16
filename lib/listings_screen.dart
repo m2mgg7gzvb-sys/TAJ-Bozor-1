@@ -838,7 +838,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     height: 1.2,
-                    color: selected ? Colors.white : AppColors.ink,
+                    color: selected ? Colors.white : Colors.black,
                   ),
                 ),
               ),
