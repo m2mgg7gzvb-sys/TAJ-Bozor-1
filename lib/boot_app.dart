@@ -150,10 +150,24 @@ class TajBozorApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: buildAppTheme(dark: dark),
           // При смене темы весь экран пересоздаётся, чтобы все цвета обновились сразу.
-          builder: (context, child) => KeyedSubtree(
-            key: ValueKey<bool>(dark),
-            child: child ?? const SizedBox.shrink(),
-          ),
+          builder: (context, child) {
+            // На широком экране (планшет, компьютер) приложение остаётся в колонке телефона по центру.
+            final size = MediaQuery.sizeOf(context);
+            final width = size.width < 520 ? size.width : 480.0;
+            return KeyedSubtree(
+              key: ValueKey<bool>(dark),
+              child: ColoredBox(
+                color: AppColors.background,
+                child: Center(
+                  child: SizedBox(
+                    width: width,
+                    height: size.height,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            );
+          },
           home: const SplashScreen(),
         ),
       ),
