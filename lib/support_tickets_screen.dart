@@ -158,7 +158,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             ),
             title: Text(
               'Обращение · $short${buyer == _me ? ' (вы)' : ''}',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(fontWeight: FontWeight.w700, color: closed ? AppColors.onLight : null),
             ),
             subtitle: Text(
               _statusLabel[status] ?? status,
