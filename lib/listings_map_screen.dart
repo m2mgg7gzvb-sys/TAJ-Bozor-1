@@ -3,8 +3,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'city_store.dart';
+import 'tajikistan_outline.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
+import 'theme.dart';
 
 /// Объявления из текущего списка на карте. Нажатие на метку открывает объявление.
 class ListingsMapScreen extends StatelessWidget {
@@ -39,6 +41,26 @@ class ListingsMapScreen extends StatelessWidget {
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.tajbozor.app',
+                ),
+                // Белый фон за пределами Таджикистана, территория страны остаётся картой.
+                PolygonLayer(
+                  polygons: [
+                    Polygon(
+                      points: const [LatLng(-85, -180), LatLng(85, -180), LatLng(85, 180), LatLng(-85, 180)],
+                      holePointsList: [
+                        [for (final p in tajikistanOutline) LatLng(p[1], p[0])],
+                      ],
+                      color: Colors.white,
+                      borderColor: Colors.transparent,
+                      borderStrokeWidth: 0,
+                    ),
+                    Polygon(
+                      points: [for (final p in tajikistanOutline) LatLng(p[1], p[0])],
+                      color: Colors.transparent,
+                      borderColor: AppColors.primary,
+                      borderStrokeWidth: 1.5,
+                    ),
+                  ],
                 ),
                 MarkerLayer(
                   markers: [
