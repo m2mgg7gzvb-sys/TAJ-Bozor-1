@@ -1006,10 +1006,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
   Widget _sheetField(TextEditingController c, String hint) => TextField(
         controller: c,
         keyboardType: TextInputType.number,
+        style: const TextStyle(color: AppColors.onLight),
         decoration: InputDecoration(
           hintText: hint,
           filled: true,
-          fillColor: const Color(0xFFF1F1F1),
+          fillColor: AppColors.lightFill,
+          hintStyle: const TextStyle(color: AppColors.hintOnLight),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -1655,10 +1657,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
                   _fLabel('Слова в описании'),
                   TextField(
                     controller: _techWordsCtrl,
+                    style: const TextStyle(color: AppColors.onLight),
                     decoration: InputDecoration(
                       hintText: 'Что-то важное для вас',
                       filled: true,
-                      fillColor: const Color(0xFFF1F1F1),
+                      fillColor: AppColors.lightFill,
+                      hintStyle: const TextStyle(color: AppColors.hintOnLight),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -1731,7 +1735,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     final rooms = fields['rooms']!;
 
     final cityRow = Material(
-      color: const Color(0xFFF1F1F1),
+      color: AppColors.lightFill,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -1743,13 +1747,13 @@ class _ListingsScreenState extends State<ListingsScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.location_on_outlined, size: 18),
+              const Icon(Icons.location_on_outlined, size: 18, color: AppColors.onLight),
               const SizedBox(width: 4),
               Text(
                 selectedCity.value ?? 'Все города',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.onLight),
               ),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppColors.onLight),
             ],
           ),
         ),
@@ -1759,7 +1763,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     final dealTabs = Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F1F1),
+        color: AppColors.lightFill,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -1784,6 +1788,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: d == deal ? FontWeight.w700 : FontWeight.w400,
+                      color: d == deal ? AppColors.ink : AppColors.onLight,
                     ),
                   ),
                 ),
@@ -1820,7 +1825,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
 
     final filterBtn = Material(
-      color: const Color(0xFFF1F1F1),
+      color: AppColors.lightFill,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -1828,7 +1833,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         child: const SizedBox(
           width: 52,
           height: 52,
-          child: Icon(Icons.tune_rounded),
+          child: Icon(Icons.tune_rounded, color: AppColors.onLight),
         ),
       ),
     );
@@ -1963,10 +1968,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
         children: [
           TextField(
             controller: ctrl,
+            style: const TextStyle(color: AppColors.onLight),
             decoration: InputDecoration(
               hintText: 'Например, белый',
               filled: true,
-              fillColor: const Color(0xFFF1F1F1),
+              fillColor: AppColors.lightFill,
+              hintStyle: const TextStyle(color: AppColors.hintOnLight),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
@@ -2286,7 +2293,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
         height: 52,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F1F1),
+          color: AppColors.lightFill,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -2317,10 +2324,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
     Widget box(TextEditingController c, String hint) => TextField(
           controller: c,
           keyboardType: kb,
+          style: const TextStyle(color: AppColors.onLight),
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: const Color(0xFFF1F1F1),
+            fillColor: AppColors.lightFill,
+            hintStyle: const TextStyle(color: AppColors.hintOnLight),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -2350,14 +2359,14 @@ class _ListingsScreenState extends State<ListingsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: i == selected ? AppColors.surface : const Color(0xFFF1F1F1),
+                color: i == selected ? AppColors.surface : AppColors.lightFill,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: i == selected ? Colors.black : Colors.transparent,
                   width: 2,
                 ),
               ),
-              child: Text(i, style: const TextStyle(fontSize: 15)),
+              child: Text(i, style: TextStyle(fontSize: 15, color: i == selected ? AppColors.ink : AppColors.onLight)),
             ),
           ),
       ],
@@ -2590,11 +2599,13 @@ class _PickerSheetState extends State<_PickerSheet> {
                 child: TextField(
                   controller: _query,
                   onChanged: (_) => setState(() {}),
+                  style: const TextStyle(color: AppColors.onLight),
                   decoration: InputDecoration(
                     hintText: 'Поиск',
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
-                    fillColor: const Color(0xFFF1F1F1),
+                    fillColor: AppColors.lightFill,
+                    hintStyle: const TextStyle(color: AppColors.hintOnLight),
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),

@@ -21,6 +21,10 @@ class AppColors {
 
   /// Поверхность карточек и полей (белая в светлой теме).
   static Color get surface => _dark ? const Color(0xFF15221F) : Colors.white;
+  /// Светлые плитки и поля (остаются светлыми в тёмной теме): текст на них тёмно-серый.
+  static const Color lightFill = Color(0xFFF1F1F1);
+  static const Color onLight = Color(0xFF3A403D);
+  static const Color hintOnLight = Color(0xFF7A827F);
   static Color get line => _dark ? const Color(0xFF26403A) : const Color(0xFFE3ECE9);
 }
 

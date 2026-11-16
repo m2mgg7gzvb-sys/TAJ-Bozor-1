@@ -119,7 +119,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           Expanded(
                             child: Text(
                               (n['title'] as String?) ?? '',
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: unread ? AppColors.onLight : null),
                             ),
                           ),
                         ],

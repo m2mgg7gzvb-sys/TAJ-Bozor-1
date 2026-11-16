@@ -473,11 +473,13 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   controller: _idCtrl,
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _search(),
+                  style: const TextStyle(color: AppColors.onLight),
                   decoration: InputDecoration(
                     hintText: 'Например OB-1A2B3C4D, PR-1A2B3C4D или CH-1A2B3C4D',
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: const Color(0xFFE6ECEA),
+                    hintStyle: const TextStyle(color: AppColors.hintOnLight),
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),

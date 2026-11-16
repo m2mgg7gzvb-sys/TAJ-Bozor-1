@@ -265,7 +265,7 @@ class _Tile extends StatelessWidget {
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   height: 1.2,
-                  color: AppColors.ink,
+                  color: AppColors.onLight,
                 ),
               ),
             ),
