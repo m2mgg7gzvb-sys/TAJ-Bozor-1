@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -108,9 +110,10 @@ class _OutsideBackgroundPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final taj = Path();
+    final taj = ui.Path();
     for (var i = 0; i < outline.length; i++) {
-      final o = camera.latLngToScreenOffset(LatLng(outline[i][1], outline[i][0]));
+      final p = camera.latLngToScreenPoint(LatLng(outline[i][1], outline[i][0]));
+      final o = Offset(p.x.toDouble(), p.y.toDouble());
       if (i == 0) {
         taj.moveTo(o.dx, o.dy);
       } else {
@@ -118,8 +121,8 @@ class _OutsideBackgroundPainter extends CustomPainter {
       }
     }
     taj.close();
-    final full = Path()..addRect(Offset.zero & size);
-    final outside = Path.combine(PathOperation.difference, full, taj);
+    final full = ui.Path()..addRect(Offset.zero & size);
+    final outside = ui.Path.combine(ui.PathOperation.difference, full, taj);
     final colors = dark
         ? const [Color(0xFF16302A), Color(0xFF0A1412)]
         : const [Color(0xFFF7FAF9), Color(0xFFD4E6DF)];
