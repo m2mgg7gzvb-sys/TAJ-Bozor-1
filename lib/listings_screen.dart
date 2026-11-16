@@ -808,11 +808,45 @@ class _ListingsScreenState extends State<ListingsScreen> {
     final id = s['id'] as int;
     final name = s['name_ru'] as String;
     final selected = _subcatId == id;
+    final img = _subcatImage(name);
+    final iconSize = wide ? 44.0 : 40.0;
+    // Стиль как у плиток категорий на главном экране: стеклянная карточка, свечение и иконка справа внизу.
+    final icon = img != null
+        ? SizedBox(
+            width: 58,
+            height: 50,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [AppColors.primary.withValues(alpha: 0.45), AppColors.primary.withValues(alpha: 0)],
+                    ),
+                  ),
+                ),
+                Image.asset(img, width: iconSize, height: iconSize, fit: BoxFit.contain),
+              ],
+            ),
+          )
+        : Icon(
+            _subcatIcon(name),
+            size: wide ? 40 : 36,
+            color: selected ? Colors.white.withValues(alpha: 0.7) : AppColors.primary.withValues(alpha: 0.35),
+          );
     return Material(
-      color: selected ? AppColors.primary : const Color(0xFFF2F4F3),
-      borderRadius: BorderRadius.circular(16),
+      color: selected ? AppColors.primary : AppColors.surface.withValues(alpha: 0.82),
+      elevation: selected ? 0 : 6,
+      shadowColor: AppColors.primary.withValues(alpha: 0.45),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.primary.withValues(alpha: selected ? 0 : 0.28)),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -825,37 +859,27 @@ class _ListingsScreenState extends State<ListingsScreen> {
           ),
         ),
         child: SizedBox(
-          height: 64,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                child: Text(
+          height: 72,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     height: 1.2,
-                    color: selected ? Colors.white : Colors.black,
+                    color: selected ? Colors.white : AppColors.ink,
                   ),
                 ),
-              ),
-              Positioned(
-                right: 6,
-                bottom: 4,
-                child: _subcatImage(name) != null
-                    ? Image.asset(_subcatImage(name)!, width: wide ? 44 : 40, height: wide ? 44 : 40, fit: BoxFit.contain)
-                    : Icon(
-                        _subcatIcon(name),
-                        size: wide ? 40 : 36,
-                        color: selected
-                            ? Colors.white.withValues(alpha: 0.7)
-                            : AppColors.primary.withValues(alpha: 0.35),
-                      ),
-              ),
-            ],
+                const Spacer(),
+                Align(alignment: Alignment.bottomRight, child: icon),
+              ],
+            ),
           ),
         ),
       ),
