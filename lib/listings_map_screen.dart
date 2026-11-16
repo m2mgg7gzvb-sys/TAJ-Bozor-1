@@ -43,17 +43,16 @@ class ListingsMapScreen extends StatelessWidget {
                   userAgentPackageName: 'com.tajbozor.app',
                 ),
                 // Белый фон за пределами Таджикистана, территория страны остаётся картой.
+                // Красивый фон за пределами Таджикистана (градиент в стиле приложения).
+                Positioned.fill(
+                  child: Builder(
+                    builder: (context) => CustomPaint(
+                      painter: _OutsideBackgroundPainter(MapCamera.of(context), tajikistanOutline, darkMode.value),
+                    ),
+                  ),
+                ),
                 PolygonLayer(
                   polygons: [
-                    Polygon(
-                      points: const [LatLng(-85, -180), LatLng(85, -180), LatLng(85, 180), LatLng(-85, 180)],
-                      holePointsList: [
-                        [for (final p in tajikistanOutline) LatLng(p[1], p[0])],
-                      ],
-                      color: AppColors.background,
-                      borderColor: Colors.transparent,
-                      borderStrokeWidth: 0,
-                    ),
                     Polygon(
                       points: [for (final p in tajikistanOutline) LatLng(p[1], p[0])],
                       color: Colors.transparent,
@@ -96,4 +95,44 @@ class ListingsMapScreen extends StatelessWidget {
             ),
     );
   }
+}
+
+
+/// Рисует градиентный фон на всей карте, кроме территории Таджикистана.
+class _OutsideBackgroundPainter extends CustomPainter {
+  _OutsideBackgroundPainter(this.camera, this.outline, this.dark);
+
+  final MapCamera camera;
+  final List<List<double>> outline;
+  final bool dark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final taj = Path();
+    for (var i = 0; i < outline.length; i++) {
+      final o = camera.latLngToScreenOffset(LatLng(outline[i][1], outline[i][0]));
+      if (i == 0) {
+        taj.moveTo(o.dx, o.dy);
+      } else {
+        taj.lineTo(o.dx, o.dy);
+      }
+    }
+    taj.close();
+    final full = Path()..addRect(Offset.zero & size);
+    final outside = Path.combine(PathOperation.difference, full, taj);
+    final colors = dark
+        ? const [Color(0xFF16302A), Color(0xFF0A1412)]
+        : const [Color(0xFFF7FAF9), Color(0xFFD4E6DF)];
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: colors,
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(outside, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _OutsideBackgroundPainter old) =>
+      old.camera != camera || old.dark != dark;
 }
