@@ -88,7 +88,7 @@ Future<void> showCityPicker(BuildContext context) {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(16, 4, 16, 14),
                     child: Text(
                       'Выберите город',
