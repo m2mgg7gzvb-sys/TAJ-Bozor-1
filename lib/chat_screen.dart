@@ -261,9 +261,18 @@ class _ChatScreenState extends State<ChatScreen> {
     if (mounted) setState(() => _peerContacts = c);
   }
 
-  Future<void> _openMessenger(Uri? uri, String name) async {
+  /// Открывает мессенджер: сначала приложение (appUri), если не получилось — обычная ссылка (uri).
+  Future<void> _openMessenger(Uri? uri, String name, {Uri? appUri}) async {
     if (uri == null) return;
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    var ok = false;
+    if (appUri != null) {
+      try {
+        ok = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        ok = false;
+      }
+    }
+    if (!ok) ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось открыть $name')),
@@ -923,7 +932,11 @@ class _ChatScreenState extends State<ChatScreen> {
             IconButton(
               tooltip: 'Написать в Telegram',
               icon: const Icon(Icons.send_rounded, color: Color(0xFF229ED9)),
-              onPressed: () => _openMessenger(_peerContacts!.telegramUri, 'Telegram'),
+              onPressed: () => _openMessenger(
+                _peerContacts!.telegramUri,
+                'Telegram',
+                appUri: _peerContacts!.telegramAppUri,
+              ),
             ),
           if (_conv != null && _conv!['kind'] != 'support')
             IconButton(

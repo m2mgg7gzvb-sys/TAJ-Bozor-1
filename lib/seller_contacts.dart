@@ -22,7 +22,14 @@ class SellerContacts {
     return Uri.parse('https://wa.me/${n.replaceAll('+', '')}');
   }
 
-  /// Ссылка открывает чат с продавцом в Telegram.
+  /// Ссылка открывает профиль продавца в Telegram-приложении сразу (запасной вариант — https).
+  Uri? get telegramAppUri {
+    final t = telegram;
+    if (t == null || t.isEmpty) return null;
+    return Uri(scheme: 'tg', host: 'resolve', queryParameters: {'domain': t});
+  }
+
+  /// Обычная ссылка на профиль: откроется в браузере или приложении, если tg:// не сработал.
   Uri? get telegramUri {
     final t = telegram;
     if (t == null || t.isEmpty) return null;
