@@ -81,11 +81,12 @@ Deno.serve(async (req) => {
     if (!tokenHash) return json({ error: 'link failed' }, 500);
 
     if (userId) {
-      // Номер подтверждён самим WhatsApp: сохраняем как прямой номер
-      await db
-        .from('profiles')
-        .update({ phone: '+' + waId, phone_verified: true })
-        .eq('id', userId);
+      // Номер подтверждён самим WhatsApp: сохраняем как номер WhatsApp в контактах продавца
+      // (прямой номер в профиле не трогаем; показ контактов по умолчанию выключен)
+      await db.from('seller_contacts').upsert(
+        { user_id: userId, whatsapp: '+' + waId, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' },
+      );
       // Имя из WhatsApp: только если в профиле имени ещё нет (или стоит заглушка)
       if (row.wa_name) {
         await db
