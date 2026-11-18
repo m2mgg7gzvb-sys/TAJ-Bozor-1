@@ -11,13 +11,6 @@ import 'glass_widgets.dart';
 import 'nav_state.dart';
 import 'theme.dart';
 
-/// Пока вход через мессенджеры не подключён: честно сообщаем, а не делаем вид, что работает.
-void _comingSoon(BuildContext context, String name) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Вход через $name скоро будет доступен')),
-  );
-}
-
 /// Адрес сайта, куда возвращается вход через Apple и Google.
 const _siteUrl = 'https://app.tajbozor.pro';
 
@@ -336,13 +329,13 @@ class _SheetState extends State<_Sheet> {
             filled: false,
             onPressed: () => onGoogle(_register),
           ),
-          // Вход через WhatsApp и Telegram: кнопки готовы, сам вход подключим после настройки бота и Meta
+          // Вход через WhatsApp и Telegram через бота: открывается чат, вход подтверждается сам
           const SizedBox(height: 12),
           _PillButton(
             label: _register ? 'Зарегистрироваться через WhatsApp' : 'Продолжить с WhatsApp',
             icon: Image.asset('assets/icons/whatsapp_logo.png', height: 24),
             filled: false,
-            onPressed: () => _comingSoon(context, 'WhatsApp'),
+            onPressed: () => startWhatsappLogin(context, register: _register),
           ),
           const SizedBox(height: 12),
           _PillButton(

@@ -7,32 +7,34 @@ import 'auth_intent.dart';
 import 'frosted_glass.dart';
 import 'theme.dart';
 
-const _pendingKey = 'tg_login_pending';
 const _pendingTtl = Duration(minutes: 10);
 var _polling = false;
 
+/// Два способа входа через мессенджеры: функция и ключ сохранённого запроса.
+const _tgFn = 'telegram-login';
+const _tgKey = 'tg_login_pending';
+const _waFn = 'whatsapp-login';
+const _waKey = 'wa_login_pending';
+
 /// Запоминаем запрос входа, чтобы продолжить ожидание, если страница перезагрузится.
-Future<void> _savePending(String nonce) async {
+Future<void> _savePending(String key, String nonce) async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _pendingKey,
-      '$nonce|${DateTime.now().millisecondsSinceEpoch}',
-    );
+    await prefs.setString(key, '$nonce|${DateTime.now().millisecondsSinceEpoch}');
   } catch (_) {}
 }
 
-Future<void> _clearPending() async {
+Future<void> _clearPending(String key) async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_pendingKey);
+    await prefs.remove(key);
   } catch (_) {}
 }
 
-Future<(String, DateTime)?> _loadPending() async {
+Future<(String, DateTime)?> _loadPending(String key) async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_pendingKey);
+    final raw = prefs.getString(key);
     if (raw == null) return null;
     final parts = raw.split('|');
     if (parts.length != 2) return null;
@@ -44,19 +46,20 @@ Future<(String, DateTime)?> _loadPending() async {
   }
 }
 
-/// Ждёт подтверждения в боте и входит. Возвращает текст ошибки или null при успехе.
-/// Возвращает 'cancelled' при отмене из диалога.
-Future<String?> _waitForLogin(String nonce, DateTime started, bool Function() cancelled) async {
+/// Ждёт подтверждения и входит. Возвращает null при успехе, 'cancelled', 'expired' или 'failed'.
+Future<String?> _waitForLogin(
+  String fn,
+  String nonce,
+  DateTime started,
+  bool Function() cancelled,
+) async {
   final client = Supabase.instance.client;
   final deadline = started.add(_pendingTtl);
   while (!cancelled() && DateTime.now().isBefore(deadline)) {
     await Future<void>.delayed(const Duration(seconds: 2));
     if (cancelled()) return 'cancelled';
     try {
-      final res = await client.functions.invoke(
-        'telegram-login',
-        body: {'action': 'check', 'nonce': nonce},
-      );
+      final res = await client.functions.invoke(fn, body: {'action': 'check', 'nonce': nonce});
       final tokenHash = (res.data as Map<String, dynamic>?)?['token_hash'] as String?;
       if (tokenHash != null) {
         await client.auth.verifyOTP(type: OtpType.magiclink, tokenHash: tokenHash);
@@ -74,55 +77,72 @@ Future<String?> _waitForLogin(String nonce, DateTime started, bool Function() ca
 /// Продолжает ожидание входа после перезагрузки страницы (если запрос ещё действует).
 Future<void> resumeTelegramLogin(BuildContext context) async {
   if (_polling) return;
-  final pending = await _loadPending();
-  if (pending == null) return;
-  final (nonce, started) = pending;
-  if (DateTime.now().difference(started) > _pendingTtl) {
-    await _clearPending();
-    return;
-  }
   if (Supabase.instance.client.auth.currentSession != null) {
-    await _clearPending();
+    await _clearPending(_tgKey);
+    await _clearPending(_waKey);
     return;
   }
-  _polling = true;
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  final error = await _waitForLogin(nonce, started, () => false);
-  _polling = false;
-  await _clearPending();
-  if (error != null && error != 'cancelled') {
-    messenger?.showSnackBar(const SnackBar(
-      content: Text('Ссылка устарела. Начните вход заново'),
-    ));
+  for (final (fn, key) in [(_tgFn, _tgKey), (_waFn, _waKey)]) {
+    final pending = await _loadPending(key);
+    if (pending == null) continue;
+    final (nonce, started) = pending;
+    if (DateTime.now().difference(started) > _pendingTtl) {
+      await _clearPending(key);
+      continue;
+    }
+    _polling = true;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final error = await _waitForLogin(fn, nonce, started, () => false);
+    _polling = false;
+    await _clearPending(key);
+    if (error == 'expired') {
+      messenger?.showSnackBar(const SnackBar(
+        content: Text('Ссылка устарела. Начните вход заново'),
+      ));
+    }
+    return;
   }
 }
 
-/// Вход и регистрация через бота: открываем бота в Telegram, человек вводит код,
-/// а сайт ждёт подтверждения и входит сам.
-Future<void> startTelegramLogin(BuildContext context, {required bool register}) async {
+/// Общий сценарий входа через мессенджер: запрос, открытие чата, стеклянное окно ожидания.
+Future<void> _startMessengerLogin(
+  BuildContext context, {
+  required bool register,
+  required String fn,
+  required String key,
+  required String dialogTitle,
+  required String dialogText,
+  required String buttonLabel,
+  required IconData icon,
+  required Uri Function(Map<String, dynamic> data, String nonce) linkFor,
+}) async {
   await rememberAuthIntent(register: register);
   final client = Supabase.instance.client;
   final messenger = ScaffoldMessenger.of(context);
 
   String nonce;
-  String bot;
+  Map<String, dynamic> data;
   try {
-    final res = await client.functions.invoke('telegram-login', body: {'action': 'start'});
-    final data = res.data as Map<String, dynamic>;
+    final res = await client.functions.invoke(fn, body: {'action': 'start'});
+    data = res.data as Map<String, dynamic>;
     nonce = data['nonce'] as String;
-    bot = data['bot'] as String;
+  } on FunctionException catch (e) {
+    messenger.showSnackBar(SnackBar(
+      content: Text(e.status == 503
+          ? 'Вход через WhatsApp скоро появится'
+          : 'Не удалось начать вход'),
+    ));
+    return;
   } catch (_) {
     messenger.showSnackBar(const SnackBar(content: Text('Не удалось начать вход')));
     return;
   }
 
   final started = DateTime.now();
-  await _savePending(nonce);
+  await _savePending(key, nonce);
 
-  await launchUrl(
-    Uri.parse('https://t.me/$bot?start=login_$nonce'),
-    mode: LaunchMode.externalApplication,
-  );
+  final link = linkFor(data, nonce);
+  await launchUrl(link, mode: LaunchMode.externalApplication);
   if (!context.mounted) return;
 
   var dialogOpen = true;
@@ -140,16 +160,16 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.send_rounded, size: 40, color: AppColors.primary),
+            Icon(icon, size: 40, color: AppColors.primary),
             const SizedBox(height: 12),
             Text(
-              'Подтвердите в Telegram',
+              dialogTitle,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
             ),
             const SizedBox(height: 10),
             Text(
-              'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
+              dialogText,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, height: 1.4, color: AppColors.muted),
             ),
@@ -157,11 +177,8 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () => launchUrl(
-                  Uri.parse('https://t.me/$bot?start=login_$nonce'),
-                  mode: LaunchMode.externalApplication,
-                ),
-                child: const Text('Открыть бота'),
+                onPressed: () => launchUrl(link, mode: LaunchMode.externalApplication),
+                child: Text(buttonLabel),
               ),
             ),
             const SizedBox(height: 4),
@@ -178,8 +195,8 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
     ),
   ).then((_) => dialogOpen = false);
 
-  final error = await _waitForLogin(nonce, started, () => cancelled);
-  await _clearPending();
+  final error = await _waitForLogin(fn, nonce, started, () => cancelled);
+  await _clearPending(key);
 
   if (dialogOpen && context.mounted) {
     Navigator.of(context, rootNavigator: true).pop();
@@ -190,4 +207,35 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
         ? 'Ссылка устарела. Начните вход заново'
         : 'Вход не подтверждён'),
   ));
+}
+
+/// Вход и регистрация через бота Telegram.
+Future<void> startTelegramLogin(BuildContext context, {required bool register}) {
+  return _startMessengerLogin(
+    context,
+    register: register,
+    fn: _tgFn,
+    key: _tgKey,
+    dialogTitle: 'Подтвердите в Telegram',
+    dialogText: 'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
+    buttonLabel: 'Открыть бота',
+    icon: Icons.send_rounded,
+    linkFor: (data, nonce) => Uri.parse('https://t.me/${data['bot']}?start=login_$nonce'),
+  );
+}
+
+/// Вход и регистрация через WhatsApp: открываем чат с нашим номером с готовым текстом.
+Future<void> startWhatsappLogin(BuildContext context, {required bool register}) {
+  return _startMessengerLogin(
+    context,
+    register: register,
+    fn: _waFn,
+    key: _waKey,
+    dialogTitle: 'Подтвердите в WhatsApp',
+    dialogText:
+        'Откройте чат и отправьте готовое сообщение. Потом вернитесь сюда: вход выполнится автоматически.',
+    buttonLabel: 'Открыть WhatsApp',
+    icon: Icons.chat_rounded,
+    linkFor: (data, nonce) => Uri.parse('https://wa.me/${data['number']}?text=login_$nonce'),
+  );
 }
