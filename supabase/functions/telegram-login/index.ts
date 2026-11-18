@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     if (userId) {
       // Имя из Telegram: только если в профиле имени ещё нет
       if (row.first_name) {
-        await db.from('profiles').update({ name: row.first_name }).eq('id', userId).eq('name', '');
+        await db.from('profiles').update({ name: row.first_name }).eq('id', userId).in('name', ['', 'Пользователь']);
       }
       // Ник Telegram сохраняем как контакт продавца (показывается только если включён показ контактов)
       if (row.username) {
