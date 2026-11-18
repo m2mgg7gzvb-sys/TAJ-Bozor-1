@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'account_tab.dart';
+import 'contacts_setup_sheet.dart';
 import 'favorites_screen.dart';
 import 'favorites_store.dart';
 import 'guest_prompt.dart';
@@ -42,9 +43,15 @@ class _HomeShellState extends State<HomeShell> {
     // Подпись последней вкладки меняется после входа и выхода: «Войти» → «Профиль».
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
       if (mounted) setState(() {});
-      if (state.event == AuthChangeEvent.signedIn) _askPush();
+      if (state.event == AuthChangeEvent.signedIn) {
+        _askPush();
+        if (mounted) maybeShowContactsSetup(context);
+      }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _askPush());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _askPush();
+      if (mounted) maybeShowContactsSetup(context);
+    });
   }
 
   /// Спрашивает про уведомления, если разрешение ещё не выбрано. За один запуск — один раз.
