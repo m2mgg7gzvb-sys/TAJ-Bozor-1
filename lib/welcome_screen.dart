@@ -80,6 +80,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   void initState() {
     super.initState();
     _c.forward();
+    // После перезагрузки страницы продолжаем ждать подтверждения из Telegram
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) resumeTelegramLogin(context);
+    });
     _sub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
       if (state.session != null && mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);

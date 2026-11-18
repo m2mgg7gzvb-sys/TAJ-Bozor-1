@@ -44,7 +44,6 @@ async function confirmLogin(chatId: number, nonce: string, from: { id: number; f
       telegram_id: from.id,
       first_name: from.first_name ?? null,
       username: from.username ?? null,
-      code: null,
     })
     .eq('nonce', nonce);
   await send(chatId, 'Готово, вход подтверждён. Вернитесь на сайт TAJ Bozor: вы уже вошли.', removeKeyboard);
@@ -106,14 +105,17 @@ Deno.serve(async (req) => {
   if (/^\d{6}$/.test(code)) {
     const { data: row } = await db
       .from('telegram_login_requests')
-      .select('nonce, created_at')
+      .select('nonce, created_at, telegram_id')
       .eq('code', code)
-      .is('telegram_id', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     if (!row || Date.now() - new Date(row.created_at).getTime() > TEN_MIN) {
       await send(chatId, 'Код неверный или устарел. Откройте вход на сайте заново: там появится новый код.');
+      return new Response('ok');
+    }
+    if (row.telegram_id) {
+      await send(chatId, 'Вход уже подтверждён. Вернитесь на сайт TAJ Bozor.', removeKeyboard);
       return new Response('ok');
     }
     await confirmLogin(chatId, row.nonce, from);
