@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       await db.from('telegram_login_requests').delete().eq('nonce', nonce);
       return json({ error: 'expired' }, 410);
     }
-    if (!row.telegram_id || !row.phone) return json({ pending: true });
+    if (!row.telegram_id) return json({ pending: true });
 
     // Запрос одноразовый: после выдачи входа удаляем его
     await db.from('telegram_login_requests').delete().eq('nonce', nonce);
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     if (!tokenHash) return json({ error: 'link failed' }, 500);
 
     // Номер из контакта Telegram подтверждён самим Telegram: сохраняем его как прямой номер
-    if (userId) {
+    if (userId && row.phone) {
       await db.from('profiles').update({ phone: row.phone, phone_verified: true }).eq('id', userId);
     }
     return json({ token_hash: tokenHash });
