@@ -29,11 +29,12 @@ class SellerContacts {
     return Uri.parse('https://t.me/$t');
   }
 
-  /// Приводит номер к виду +992XXXXXXXXX. Возвращает null, если формат неверный.
+  /// Приводит номер к виду +992XXXXXXXXX или +7XXXXXXXXXX. Возвращает null, если формат неверный.
   static String? normalizeWhatsapp(String raw) {
     final cleaned = raw.replaceAll(RegExp(r'[\s\-()]'), '');
     if (cleaned.isEmpty) return null;
-    return RegExp(r'^\+992\d{9}$').hasMatch(cleaned) ? cleaned : null;
+    final ok = RegExp(r'^\+992\d{9}$').hasMatch(cleaned) || RegExp(r'^\+7\d{10}$').hasMatch(cleaned);
+    return ok ? cleaned : null;
   }
 
   /// Принимает @ник, ник или ссылку t.me/ник. Возвращает ник без @ или null.

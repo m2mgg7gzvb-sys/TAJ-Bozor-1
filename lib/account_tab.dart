@@ -486,7 +486,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     final waRaw = _whatsapp.text.trim();
     final waNum = waRaw.isEmpty ? null : SellerContacts.normalizeWhatsapp(waRaw);
     if (waRaw.isNotEmpty && waNum == null) {
-      setState(() => _error = 'WhatsApp: номер в формате +992 и 9 цифр');
+      setState(() => _error = 'WhatsApp: номер в формате +992 (9 цифр) или +7 (10 цифр)');
       return;
     }
     final tgRaw = _telegram.text.trim();
@@ -588,7 +588,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
               labelText: 'WhatsApp (необязательно)',
-              hintText: '+992900000000',
+              hintText: '+992900000000 или +79001234567',
             ),
           ),
           const SizedBox(height: 12),
