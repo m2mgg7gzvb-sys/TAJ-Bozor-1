@@ -925,13 +925,13 @@ class _ChatScreenState extends State<ChatScreen> {
           if (_peerContacts?.whatsappUri != null)
             IconButton(
               tooltip: 'Написать в WhatsApp',
-              icon: const Icon(Icons.chat_rounded, color: Color(0xFF25D366)),
+              icon: Image.asset('assets/icons/whatsapp_logo.png', width: 26, height: 26),
               onPressed: () => _openMessenger(_peerContacts!.whatsappUri, 'WhatsApp'),
             ),
           if (_peerContacts?.telegramUri != null)
             IconButton(
               tooltip: 'Написать в Telegram',
-              icon: const Icon(Icons.send_rounded, color: Color(0xFF229ED9)),
+              icon: Image.asset('assets/icons/telegram_logo.png', width: 26, height: 26),
               onPressed: () => _openMessenger(
                 _peerContacts!.telegramUri,
                 'Telegram',
