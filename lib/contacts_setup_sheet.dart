@@ -18,13 +18,23 @@ Future<void> maybeShowContactsSetup(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('$_shownPrefix$uid') == true) return;
 
-    final own = await SellerContacts.own(uid);
-    if (!own.isEmpty) {
+    // Запись в seller_contacts есть, если окно уже показывали (сохранили или нажали «Позже»).
+    // Это хранится в базе, поэтому не повторяется и на другом устройстве.
+    final existing = await Supabase.instance.client
+        .from('seller_contacts')
+        .select('user_id')
+        .eq('user_id', uid)
+        .maybeSingle();
+    if (existing != null) {
       await prefs.setBool('$_shownPrefix$uid', true);
       return;
     }
     if (!context.mounted) return;
-    await showContactsEditor(context, uid);
+    final saved = await showContactsEditor(context, uid);
+    if (saved != true) {
+      // Закрыли без сохранения: запоминаем, что спрашивали, чтобы не показывать при каждом входе
+      await SellerContacts.save(uid, show: false);
+    }
     await prefs.setBool('$_shownPrefix$uid', true);
   } catch (_) {
     // Окно необязательное: при ошибке просто не показываем
