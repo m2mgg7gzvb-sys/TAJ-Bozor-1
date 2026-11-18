@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_phone.dart';
 import 'auth_intent.dart';
 import 'auth_screen.dart';
+import 'telegram_login.dart';
 import 'glass_widgets.dart';
 import 'nav_state.dart';
 import 'theme.dart';
@@ -344,7 +345,7 @@ class _SheetState extends State<_Sheet> {
             label: _register ? 'Зарегистрироваться через Telegram' : 'Продолжить с Telegram',
             icon: Image.asset('assets/icons/telegram_logo.png', height: 24),
             filled: false,
-            onPressed: () => _comingSoon(context, 'Telegram'),
+            onPressed: () => startTelegramLogin(context, register: _register),
           ),
           if (!_register) ...[
             const SizedBox(height: 12),
