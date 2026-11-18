@@ -1,7 +1,5 @@
 // Вебхук бота @tajbozor_tg_bot.
-// Вход на сайте подтверждается одним из способов:
-//  - пользователь вводит 6-значный код, который показан на сайте (основной способ);
-//  - пользователь открыл бота по ссылке /start login_<nonce> (запасной способ).
+// Вход на сайте подтверждается по ссылке /start login_<nonce>, которую сайт открывает в боте.
 // Контакт необязателен: если пользователь сам отправит свой контакт, номер сохранится как прямой.
 // Секрет: TELEGRAM_BOT_TOKEN. Заголовок secret_token проверяем производным секретом от токена.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -93,39 +91,17 @@ Deno.serve(async (req) => {
       .eq('nonce', m[1])
       .maybeSingle();
     if (!row || Date.now() - new Date(row.created_at).getTime() > TEN_MIN) {
-      await send(chatId, 'Ссылка устарела. Начните вход заново на сайте: там будет новый код.');
+      await send(chatId, 'Ссылка устарела. Начните вход заново на сайте.');
       return new Response('ok');
     }
     await confirmLogin(chatId, m[1], from);
     return new Response('ok');
   }
 
-  // Код с сайта: 6 цифр
-  const code = text.replace(/\s/g, '');
-  if (/^\d{6}$/.test(code)) {
-    const { data: row } = await db
-      .from('telegram_login_requests')
-      .select('nonce, created_at, telegram_id')
-      .eq('code', code)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!row || Date.now() - new Date(row.created_at).getTime() > TEN_MIN) {
-      await send(chatId, 'Код неверный или устарел. Откройте вход на сайте заново: там появится новый код.');
-      return new Response('ok');
-    }
-    if (row.telegram_id) {
-      await send(chatId, 'Вход уже подтверждён. Вернитесь на сайт TAJ Bozor.', removeKeyboard);
-      return new Response('ok');
-    }
-    await confirmLogin(chatId, row.nonce, from);
-    return new Response('ok');
-  }
-
   // Обычный /start или любой другой текст
   await send(
     chatId,
-    'Чтобы войти в TAJ Bozor, откройте сайт app.tajbozor.pro, нажмите «Продолжить с Telegram» и введите здесь 6-значный код, который появится на сайте.',
+    'Чтобы войти в TAJ Bozor, откройте сайт app.tajbozor.pro и нажмите «Продолжить с Telegram».',
   );
   return new Response('ok');
 });

@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'auth_intent.dart';
+import 'frosted_glass.dart';
+import 'theme.dart';
 
 const _pendingKey = 'tg_login_pending';
 const _pendingTtl = Duration(minutes: 10);
@@ -103,13 +105,11 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
   final messenger = ScaffoldMessenger.of(context);
 
   String nonce;
-  String code;
   String bot;
   try {
     final res = await client.functions.invoke('telegram-login', body: {'action': 'start'});
     final data = res.data as Map<String, dynamic>;
     nonce = data['nonce'] as String;
-    code = data['code'] as String;
     bot = data['bot'] as String;
   } catch (_) {
     messenger.showSnackBar(const SnackBar(content: Text('Не удалось начать вход')));
@@ -130,44 +130,51 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
   showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Подтвердите в Telegram'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Откройте бота и отправьте ему этот код. Потом вернитесь сюда: вход выполнится автоматически.',
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: SelectableText(
-              code,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: 6),
+    barrierColor: Colors.black.withValues(alpha: 0.35),
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: FrostedGlass(
+        radius: 28,
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.send_rounded, size: 40, color: AppColors.primary),
+            const SizedBox(height: 12),
+            Text(
+              'Подтвердите в Telegram',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
             ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: TextButton.icon(
-              onPressed: () => launchUrl(
-                Uri.parse('https://t.me/$bot?start=login_$nonce'),
-                mode: LaunchMode.externalApplication,
+            const SizedBox(height: 10),
+            Text(
+              'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, height: 1.4, color: AppColors.muted),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://t.me/$bot?start=login_$nonce'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text('Открыть бота'),
               ),
-              icon: const Icon(Icons.open_in_new, size: 18),
-              label: const Text('Открыть бота'),
             ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            cancelled = true;
-            Navigator.of(ctx).pop();
-          },
-          child: const Text('Отмена'),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () {
+                cancelled = true;
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('Отмена'),
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   ).then((_) => dialogOpen = false);
 
