@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       .from('telegram_login_requests')
       .update({ telegram_id: from.id, first_name: from.first_name ?? null, username: from.username ?? null })
       .eq('nonce', m[1]);
-    await send(chatId, 'Чтобы войти в TAJ Bozor, поделитесь своим контактом. Нажмите кнопку ниже.', shareKeyboard);
+    await send(chatId, 'Готово, вход подтверждён. Вернитесь на сайт TAJ Bozor: вы уже вошли.', removeKeyboard);
     return new Response('ok');
   }
 

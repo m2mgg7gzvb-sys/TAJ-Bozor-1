@@ -37,7 +37,7 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
     builder: (ctx) => AlertDialog(
       title: const Text('Подтвердите в Telegram'),
       content: const Text(
-        'Откройте бота, нажмите Start и поделитесь контактом. Потом вернитесь сюда: вход выполнится автоматически.',
+        'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
       ),
       actions: [
         TextButton(
