@@ -131,7 +131,8 @@ class _ProfilePageState extends State<_ProfilePage> {
               await _data;
             },
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              // Нижний отступ с запасом, чтобы кнопка «Выйти» не уходила под плавающую нижнюю панель
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
               children: [
                 ValueListenableBuilder<bool>(
                   valueListenable: tajikLang,
