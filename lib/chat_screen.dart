@@ -19,6 +19,7 @@ import 'chat_attachments.dart';
 import 'chat_image.dart';
 import 'notify_store.dart';
 import 'review_dialog.dart';
+import 'seller_contacts.dart';
 import 'theme.dart';
 import 'glass_widgets.dart';
 import 'user_profile_screen.dart';
@@ -250,6 +251,26 @@ class _ChatScreenState extends State<ChatScreen> {
   final Map<String, Map<String, dynamic>> _profiles = {};
   final Set<String> _requested = {};
 
+  /// Контакты собеседника, если он разрешил показ (иконки WhatsApp и Telegram в шапке).
+  SellerContacts? _peerContacts;
+
+  Future<void> _loadPeerContacts() async {
+    final id = _otherId;
+    if (id == null) return;
+    final c = await SellerContacts.peer(id);
+    if (mounted) setState(() => _peerContacts = c);
+  }
+
+  Future<void> _openMessenger(Uri? uri, String name) async {
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось открыть $name')),
+      );
+    }
+  }
+
   /// Отзыв продавцу: покупатель видит предложение, когда продавец ответил.
   Map<String, dynamic>? _conv;
   bool _showReview = false;
@@ -265,6 +286,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       setState(() => _conv = row);
       _loadPresence();
+      _loadPeerContacts();
       await _checkReview();
     } catch (_) {
       // Без этого просто не покажем предложение оставить отзыв
@@ -890,6 +912,19 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         actions: [
+          // Контакты собеседника в мессенджерах (только если он разрешил показ)
+          if (_peerContacts?.whatsappUri != null)
+            IconButton(
+              tooltip: 'Написать в WhatsApp',
+              icon: const Icon(Icons.chat_rounded, color: Color(0xFF25D366)),
+              onPressed: () => _openMessenger(_peerContacts!.whatsappUri, 'WhatsApp'),
+            ),
+          if (_peerContacts?.telegramUri != null)
+            IconButton(
+              tooltip: 'Написать в Telegram',
+              icon: const Icon(Icons.send_rounded, color: Color(0xFF229ED9)),
+              onPressed: () => _openMessenger(_peerContacts!.telegramUri, 'Telegram'),
+            ),
           if (_conv != null && _conv!['kind'] != 'support')
             IconButton(
               tooltip: 'Позвонить',
