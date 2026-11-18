@@ -1,11 +1,11 @@
-// Вход через Telegram Login Widget.
-// Клиент присылает данные, которые вернул Telegram (id, first_name, username, auth_date, hash).
-// Функция проверяет подпись бот-токеном, находит или создаёт пользователя и отдаёт token_hash
-// для обычного входа по magic link на клиенте.
-// Секрет (Supabase → Edge Functions → Secrets): TELEGRAM_BOT_TOKEN. SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY даёт сам Supabase.
+// Вход и регистрация через бота @tajbozor_tg_bot.
+// start: создаёт запрос и возвращает nonce. Сайт открывает бота с ?start=login_<nonce>.
+// check: когда пользователь поделился контактом в боте, создаёт или находит аккаунт и отдаёт token_hash.
+// Секрет (Supabase → Edge Functions → Secrets): TELEGRAM_BOT_TOKEN.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const BOT_USERNAME = 'tajbozor_tg_bot';
 const db = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -25,62 +25,82 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function toHex(buf: ArrayBuffer): string {
+function hex(buf: ArrayBuffer | Uint8Array): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/// Проверка подписи Telegram: secret = SHA256(токен), hash = HMAC_SHA256(secret, строка_проверки).
-async function verifyTelegram(data: Record<string, string>): Promise<boolean> {
-  const { hash, ...rest } = data;
-  if (!hash) return false;
-  const checkString = Object.keys(rest)
-    .sort()
-    .map((k) => `${k}=${rest[k]}`)
-    .join('\n');
-  const enc = new TextEncoder();
-  const secret = await crypto.subtle.digest('SHA-256', enc.encode(BOT_TOKEN));
-  const key = await crypto.subtle.importKey(
-    'raw', secret, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(checkString));
-  if (toHex(sig) !== hash) return false;
-  // Защита от старых данных: вход принимается только в течение суток
-  const authDate = Number(data.auth_date);
-  return Number.isFinite(authDate) && Date.now() / 1000 - authDate < 86400;
+/// Секрет для вебхука бота: производный от токена, отдельный секрет не нужен.
+async function webhookSecret(): Promise<string> {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(BOT_TOKEN));
+  return hex(d).slice(0, 32);
+}
+
+let webhookReady = false;
+/// Указываем Telegram, куда присылать сообщения бота (один раз на запуск функции).
+async function ensureWebhook() {
+  if (webhookReady) return;
+  const url = `${Deno.env.get('SUPABASE_URL')}/functions/v1/telegram-bot`;
+  const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url, secret_token: await webhookSecret(), allowed_updates: ['message'] }),
+  });
+  webhookReady = r.ok;
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: 'bad json' }, 400);
-  }
-  const data: Record<string, string> = {};
-  for (const [k, v] of Object.entries(body)) {
-    if (v !== null && v !== undefined) data[k] = String(v);
-  }
-  if (!data.id) return json({ error: 'no id' }, 400);
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
 
-  if (!(await verifyTelegram(data))) return json({ error: 'bad signature' }, 401);
-
-  // Пользователь Supabase привязан к Telegram-id через служебную почту
-  const email = `tg${data.id}@telegram.tajbozor.local`;
-  let linkRes = await db.auth.admin.generateLink({ type: 'magiclink', email });
-  if (linkRes.error || !linkRes.data?.properties?.hashed_token) {
-    const created = await db.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { telegram_id: data.id, name: data.first_name ?? '' },
-    });
-    if (created.error) return json({ error: 'create failed' }, 500);
-    linkRes = await db.auth.admin.generateLink({ type: 'magiclink', email });
+  if (body.action === 'start') {
+    const nonce = hex(crypto.getRandomValues(new Uint8Array(16)));
+    const { error } = await db.from('telegram_login_requests').insert({ nonce });
+    if (error) return json({ error: 'db' }, 500);
+    await ensureWebhook();
+    return json({ nonce, bot: BOT_USERNAME });
   }
-  const tokenHash = linkRes.data?.properties?.hashed_token;
-  if (!tokenHash) return json({ error: 'link failed' }, 500);
 
-  return json({ token_hash: tokenHash, email, username: data.username ?? null });
+  if (body.action === 'check') {
+    const nonce = String(body.nonce ?? '');
+    if (!/^[a-f0-9]{32}$/.test(nonce)) return json({ error: 'bad nonce' }, 400);
+    const { data: row } = await db
+      .from('telegram_login_requests')
+      .select('*')
+      .eq('nonce', nonce)
+      .maybeSingle();
+    if (!row) return json({ error: 'not found' }, 404);
+    if (Date.now() - new Date(row.created_at).getTime() > 10 * 60 * 1000) {
+      await db.from('telegram_login_requests').delete().eq('nonce', nonce);
+      return json({ error: 'expired' }, 410);
+    }
+    if (!row.telegram_id || !row.phone) return json({ pending: true });
+
+    // Запрос одноразовый: после выдачи входа удаляем его
+    await db.from('telegram_login_requests').delete().eq('nonce', nonce);
+
+    const email = `tg${row.telegram_id}@telegram.tajbozor.local`;
+    let link = await db.auth.admin.generateLink({ type: 'magiclink', email });
+    if (link.error || !link.data?.properties?.hashed_token) {
+      const created = await db.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { telegram_id: String(row.telegram_id), name: row.first_name ?? '' },
+      });
+      if (created.error) return json({ error: 'create failed' }, 500);
+      link = await db.auth.admin.generateLink({ type: 'magiclink', email });
+    }
+    const tokenHash = link.data?.properties?.hashed_token;
+    const userId = link.data?.user?.id;
+    if (!tokenHash) return json({ error: 'link failed' }, 500);
+
+    // Номер из контакта Telegram подтверждён самим Telegram: сохраняем его как прямой номер
+    if (userId) {
+      await db.from('profiles').update({ phone: row.phone, phone_verified: true }).eq('id', userId);
+    }
+    return json({ token_hash: tokenHash });
+  }
+
+  return json({ error: 'action' }, 400);
 });

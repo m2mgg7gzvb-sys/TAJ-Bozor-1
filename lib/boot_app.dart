@@ -15,7 +15,6 @@ import 'notify_store.dart';
 import 'presence.dart';
 import 'splash_screen.dart';
 import 'theme.dart';
-import 'telegram_login.dart';
 import 'viewed_store.dart';
 
 /// Подключение к серверу и настройки приложения. Бросает ошибку, если не получилось.
@@ -38,8 +37,6 @@ Future<void> bootstrap() async {
   await loadThemeMode();
   startNotifications();
   startPresence();
-  // Возврат со входа через Telegram (если пришли с его страницы)
-  finishTelegramLoginIfReturned();
 }
 
 /// Похоже ли, что ошибка из-за сети (нет интернета или сервер не ответил).
