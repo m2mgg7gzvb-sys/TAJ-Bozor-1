@@ -15,6 +15,7 @@ import 'legal_screen.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'push.dart';
+import 'seller_contacts.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 import 'wallet_sheet.dart';
@@ -407,10 +408,30 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final _name = TextEditingController(text: widget.data.name ?? '');
   late final _city = TextEditingController(text: widget.data.city ?? '');
   late final _phone = TextEditingController(text: widget.data.phone ?? '');
+  final _whatsapp = TextEditingController();
+  final _telegram = TextEditingController();
+  bool _showContacts = false;
   late String? _avatarUrl = widget.data.avatarUrl;
   bool _uploading = false;
   bool _saving = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContacts();
+  }
+
+  /// Подгружаем уже сохранённые WhatsApp и Telegram.
+  Future<void> _loadContacts() async {
+    final c = await SellerContacts.own(widget.user.id);
+    if (!mounted) return;
+    setState(() {
+      _whatsapp.text = c.whatsapp ?? '';
+      _telegram.text = c.telegram == null ? '' : '@${c.telegram}';
+      _showContacts = c.show;
+    });
+  }
 
   /// Выбор фото из галереи и загрузка в бакет avatars (путь: <id пользователя>/avatar.jpg).
   Future<void> _pickAvatar() async {
@@ -450,6 +471,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _name.dispose();
     _city.dispose();
     _phone.dispose();
+    _whatsapp.dispose();
+    _telegram.dispose();
     super.dispose();
   }
 
@@ -457,6 +480,19 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     final phone = _phone.text.replaceAll(RegExp(r'[\s\-()]'), '');
     if (phone.isNotEmpty && !RegExp(r'^\+992\d{9}$').hasMatch(phone)) {
       setState(() => _error = 'Телефон в формате +992 и 9 цифр');
+      return;
+    }
+    // Контакты необязательны; если заполнены, проверяем формат
+    final waRaw = _whatsapp.text.trim();
+    final waNum = waRaw.isEmpty ? null : SellerContacts.normalizeWhatsapp(waRaw);
+    if (waRaw.isNotEmpty && waNum == null) {
+      setState(() => _error = 'WhatsApp: номер в формате +992 и 9 цифр');
+      return;
+    }
+    final tgRaw = _telegram.text.trim();
+    final tgNick = tgRaw.isEmpty ? null : SellerContacts.normalizeTelegram(tgRaw);
+    if (tgRaw.isNotEmpty && tgNick == null) {
+      setState(() => _error = 'Telegram: ник от 5 символов, латиница, цифры и _');
       return;
     }
     setState(() {
@@ -471,6 +507,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         'phone': phone.isEmpty ? null : phone,
         'avatar_url': _avatarUrl,
       });
+      await SellerContacts.save(
+        widget.user.id,
+        whatsapp: waNum,
+        telegram: tgNick,
+        show: _showContacts,
+      );
       if (mounted) Navigator.of(context).pop(true);
     } on PostgrestException catch (e) {
       // Показываем причину из базы, чтобы её было видно и можно было исправить.
@@ -539,6 +581,33 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             controller: _phone,
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(labelText: 'Телефон', hintText: '+992900000000'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _whatsapp,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(
+              labelText: 'WhatsApp (необязательно)',
+              hintText: '+992900000000',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _telegram,
+            decoration: const InputDecoration(
+              labelText: 'Telegram (необязательно)',
+              hintText: '@ваш_ник',
+            ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _showContacts,
+            onChanged: (v) => setState(() => _showContacts = v),
+            title: const Text('Показывать покупателям в чате'),
+            subtitle: Text(
+              'Иконки WhatsApp и Telegram появятся в шапке чата с вами',
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
+            ),
           ),
           if (_error != null) ...[
             const SizedBox(height: 10),
