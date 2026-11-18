@@ -9,6 +9,7 @@ import 'auth_screen.dart';
 import 'copy_id.dart';
 import 'glass_widgets.dart';
 import 'favorites_store.dart';
+import 'contacts_setup_sheet.dart';
 import 'seller_stats_screen.dart';
 import 'lang_store.dart';
 import 'legal_screen.dart';
@@ -166,6 +167,9 @@ class _ProfilePageState extends State<_ProfilePage> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                if (!isGuest)
+                  ContactsQuickRow(uid: widget.user.id, phone: d.phone, onChanged: _reload),
                 const SizedBox(height: 16),
                 if (isGuest) ...[
                   const _GuestBanner(),

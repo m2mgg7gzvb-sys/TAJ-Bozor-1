@@ -24,13 +24,7 @@ Future<void> maybeShowContactsSetup(BuildContext context) async {
       return;
     }
     if (!context.mounted) return;
-    await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => _ContactsSetupSheet(uid: uid),
-    );
+    await showContactsEditor(context, uid);
     await prefs.setBool('$_shownPrefix$uid', true);
   } catch (_) {
     // Окно необязательное: при ошибке просто не показываем
@@ -212,6 +206,117 @@ class _ContactsSetupSheetState extends State<_ContactsSetupSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Редактор контактов: прямой номер, WhatsApp, Telegram. Тот же, что показывается после регистрации.
+Future<bool?> showContactsEditor(BuildContext context, String uid) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (_) => _ContactsSetupSheet(uid: uid),
+  );
+}
+
+/// Строка в профиле: трубка (прямой номер), WhatsApp и Telegram. По нажатию открывается редактор.
+class ContactsQuickRow extends StatefulWidget {
+  const ContactsQuickRow({super.key, required this.uid, required this.phone, this.onChanged});
+
+  final String uid;
+  final String? phone;
+  final VoidCallback? onChanged;
+
+  @override
+  State<ContactsQuickRow> createState() => _ContactsQuickRowState();
+}
+
+class _ContactsQuickRowState extends State<ContactsQuickRow> {
+  SellerContacts _contacts = const SellerContacts();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final c = await SellerContacts.own(widget.uid);
+    if (mounted) setState(() => _contacts = c);
+  }
+
+  Future<void> _edit() async {
+    await showContactsEditor(context, widget.uid);
+    await _load();
+    widget.onChanged?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhone = (widget.phone ?? '').isNotEmpty;
+    final hasWa = (_contacts.whatsapp ?? '').isNotEmpty;
+    final hasTg = (_contacts.telegram ?? '').isNotEmpty;
+    return Material(
+      color: AppColors.surface.withValues(alpha: 0.82),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: _edit,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 12, 14, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: _ContactItem(
+                  icon: Icon(Icons.phone_rounded, size: 26, color: AppColors.primary),
+                  label: 'Прямой номер',
+                  on: hasPhone,
+                ),
+              ),
+              Expanded(
+                child: _ContactItem(
+                  icon: Image.asset('assets/icons/whatsapp_logo.png', width: 26, height: 26),
+                  label: 'WhatsApp',
+                  on: hasWa,
+                ),
+              ),
+              Expanded(
+                child: _ContactItem(
+                  icon: Image.asset('assets/icons/telegram_logo.png', width: 26, height: 26),
+                  label: 'Telegram',
+                  on: hasTg,
+                ),
+              ),
+              Icon(Icons.edit_rounded, size: 18, color: AppColors.muted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactItem extends StatelessWidget {
+  const _ContactItem({required this.icon, required this.label, required this.on});
+
+  final Widget icon;
+  final String label;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: on ? 1 : 0.4,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }
