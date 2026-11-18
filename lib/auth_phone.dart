@@ -68,11 +68,23 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       _error = null;
     });
     try {
-      await Supabase.instance.client.auth.verifyOTP(
+      final res = await Supabase.instance.client.auth.verifyOTP(
         type: OtpType.sms,
         phone: '+992$_digits',
         token: _codeCtrl.text.trim(),
       );
+      // Номер подтверждён SMS: сохраняем его как прямой номер в профиле
+      final uid = res.user?.id;
+      if (uid != null) {
+        try {
+          await Supabase.instance.client
+              .from('profiles')
+              .update({'phone': '+992$_digits', 'phone_verified': true})
+              .eq('id', uid);
+        } catch (_) {
+          // Не мешаем входу: номер можно указать позже в окне «Контакты»
+        }
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'Неверный код. Попробуйте ещё раз');
     } finally {
