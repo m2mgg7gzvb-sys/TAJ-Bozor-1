@@ -12,11 +12,13 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
   final messenger = ScaffoldMessenger.of(context);
 
   String nonce;
+  String code;
   String bot;
   try {
     final res = await client.functions.invoke('telegram-login', body: {'action': 'start'});
     final data = res.data as Map<String, dynamic>;
     nonce = data['nonce'] as String;
+    code = data['code'] as String;
     bot = data['bot'] as String;
   } catch (_) {
     messenger.showSnackBar(const SnackBar(content: Text('Не удалось начать вход')));
@@ -36,8 +38,32 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
       title: const Text('Подтвердите в Telegram'),
-      content: const Text(
-        'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Откройте бота и отправьте ему этот код. Потом вернитесь сюда: вход выполнится автоматически.',
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: SelectableText(
+              code,
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: 6),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse('https://t.me/$bot?start=login_$nonce'),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 18),
+              label: const Text('Открыть бота'),
+            ),
+          ),
+        ],
       ),
       actions: [
         TextButton(

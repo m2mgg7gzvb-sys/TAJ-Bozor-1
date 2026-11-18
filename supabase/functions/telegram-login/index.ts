@@ -1,6 +1,6 @@
 // Вход и регистрация через бота @tajbozor_tg_bot.
-// start: создаёт запрос и возвращает nonce. Сайт открывает бота с ?start=login_<nonce>.
-// check: когда пользователь поделился контактом в боте, создаёт или находит аккаунт и отдаёт token_hash.
+// start: создаёт запрос, возвращает nonce и 6-значный код. Сайт показывает код и открывает бота.
+// check: когда пользователь подтвердил вход в боте (кодом или по ссылке), создаёт или находит аккаунт и отдаёт token_hash.
 // Секрет (Supabase → Edge Functions → Secrets): TELEGRAM_BOT_TOKEN.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -48,6 +48,12 @@ async function ensureWebhook() {
   webhookReady = r.ok;
 }
 
+/// Короткий код для ввода в боте: 6 цифр, криптостойкий генератор.
+function newCode(): string {
+  const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+  return String(n).padStart(6, '0');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
@@ -56,10 +62,17 @@ Deno.serve(async (req) => {
 
   if (body.action === 'start') {
     const nonce = hex(crypto.getRandomValues(new Uint8Array(16)));
-    const { error } = await db.from('telegram_login_requests').insert({ nonce });
-    if (error) return json({ error: 'db' }, 500);
+    // Код уникален среди активных запросов; при совпадении пробуем другой
+    let code = '';
+    let inserted = false;
+    for (let i = 0; i < 5 && !inserted; i++) {
+      code = newCode();
+      const { error } = await db.from('telegram_login_requests').insert({ nonce, code });
+      if (!error) inserted = true;
+    }
+    if (!inserted) return json({ error: 'db' }, 500);
     await ensureWebhook();
-    return json({ nonce, bot: BOT_USERNAME });
+    return json({ nonce, code, bot: BOT_USERNAME });
   }
 
   if (body.action === 'check') {
@@ -95,7 +108,7 @@ Deno.serve(async (req) => {
     const userId = link.data?.user?.id;
     if (!tokenHash) return json({ error: 'link failed' }, 500);
 
-    // Номер из контакта Telegram подтверждён самим Telegram: сохраняем его как прямой номер
+    // Номер из контакта Telegram подтверждён самим Telegram: сохраняем его как прямой номер, если он есть
     if (userId && row.phone) {
       await db.from('profiles').update({ phone: row.phone, phone_verified: true }).eq('id', userId);
     }
