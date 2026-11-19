@@ -126,7 +126,17 @@ class _CircleFramePainter extends CustomPainter {
       ..addRect(rect)
       ..addPath(circle, Offset.zero);
     outside.fillType = PathFillType.evenOdd;
-    canvas.drawPath(outside, Paint()..color = const Color(0x66000000));
+    canvas.drawPath(outside, Paint()..color = const Color(0xB3000000));
+    // Сетка как в системной обрезке: линии третей внутри квадрата
+    final grid = Paint()
+      ..strokeWidth = 1
+      ..color = const Color(0x80FFFFFF);
+    for (var i = 1; i < 3; i++) {
+      final x = size.width * i / 3;
+      final y = size.height * i / 3;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
+    }
     canvas.drawOval(
       rect.deflate(1),
       Paint()
