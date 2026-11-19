@@ -9,23 +9,33 @@ Future<void> showWalletSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
+    showDragHandle: false,
     backgroundColor: AppColors.surface,
     builder: (_) => const _WalletSheet(),
   );
 }
 
-/// Способы пополнения: название и иконка. Пока только для выбора; сам способ в заявке не сохраняется.
+/// Способы пополнения из макета. Пока только для выбора; сам способ в заявке не сохраняется.
 const _methods = [
+  ('Visa', 'assets/wallet/visa.png'),
+  ('Mastercard', 'assets/wallet/mastercard.png'),
   ('Душанбе Сити', 'assets/payment_icons/dushanbe_city.png'),
   ('Алиф Моби', 'assets/payment_icons/alif_mobi.png'),
   ('Эсхата Онлайн', 'assets/payment_icons/eskhata.png'),
-  ('МегаФон Лайф', 'assets/payment_icons/megafon_life.png'),
-  ('Хумо Онлайн', 'assets/payment_icons/humo.png'),
 ];
 
-const _gold = Color(0xFFF5C84B);
 const _green = Color(0xFF22C55E);
+
+/// Сумма с пробелами между разрядами и копейками: 1250 → «1 250.00».
+String _money(int v) {
+  final digits = v.abs().toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buf.write(' ');
+    buf.write(digits[i]);
+  }
+  return '${v < 0 ? '-' : ''}$buf.00';
+}
 
 class _WalletSheet extends StatefulWidget {
   const _WalletSheet();
@@ -38,6 +48,7 @@ class _WalletSheetState extends State<_WalletSheet> {
   static const _amounts = [50, 100, 200, 500];
   late Future<(int, List<Map<String, dynamic>>)> _data = _load();
   bool _busy = false;
+  bool _hidden = false;
   // Привязанные карты. Пока провайдер не подключён, список пуст: сохранение выключено.
   final List<_LinkedCard> _linked = [];
 
@@ -130,121 +141,143 @@ class _WalletSheetState extends State<_WalletSheet> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.85,
+      height: MediaQuery.sizeOf(context).height * 0.9,
       child: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-        child: FutureBuilder<(int, List<Map<String, dynamic>>)>(
-          future: _data,
-          builder: (context, snap) {
-            final loading = snap.connectionState == ConnectionState.waiting;
-            final balance = snap.data?.$1 ?? 0;
-            final rows = snap.data?.$2 ?? const [];
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _BalanceCard(balance: loading ? null : balance),
-                  const SizedBox(height: 22),
-                  const _SectionTitle('Пополнение'),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Выберите способ пополнения',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.muted, fontSize: 13),
+        bottom: false,
+        child: Stack(
+          children: [
+            // Фон снизу: волна и силуэт города из макета.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Image.asset(
+                    'assets/wallet/wallet_bg.png',
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 116,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      children: [
-                        for (final m in _methods)
-                          _MethodTile(
-                            name: m.$1,
-                            asset: m.$2,
-                            onTap: () => _openLink(m.$1),
-                          ),
-                        _MethodTile(
-                          name: 'Другой способ',
-                          asset: null,
-                          onTap: () => _openLink('Другой способ'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_linked.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 116,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        clipBehavior: Clip.none,
-                        children: [
-                          for (final c in _linked) ...[
-                            _MethodTile(
-                              name: c.provider,
-                              asset: _assetFor(c.provider),
-                              last4: c.last4,
-                              onTap: () => _openLink(c.provider),
-                            ),
-                            // Плитка «ещё такая же карта» рядом с привязанной.
-                            _MethodTile(
-                              name: c.provider,
-                              asset: null,
-                              onTap: () => _openLink(c.provider),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    'Онлайн-оплата пока не подключена. Заявка появится в истории и пополнит баланс после подтверждения.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.muted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 22),
-                  const _SectionTitle('История'),
-                  const SizedBox(height: 12),
-                  if (!loading && rows.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Операций пока нет',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.muted)),
-                    ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.mint,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < rows.length; i++) ...[
-                          _HistoryRow(row: rows[i]),
-                          if (i < rows.length - 1)
-                            Divider(height: 1, indent: 62, color: AppColors.line),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-          },
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: FutureBuilder<(int, List<Map<String, dynamic>>)>(
+                future: _data,
+                builder: (context, snap) {
+                  final loading = snap.connectionState == ConnectionState.waiting;
+                  final balance = snap.data?.$1 ?? 0;
+                  final rows = snap.data?.$2 ?? const [];
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Header(onBack: () => Navigator.pop(context)),
+                        const SizedBox(height: 18),
+                        _BalanceCard(
+                          balance: loading ? null : balance,
+                          hidden: _hidden,
+                          onToggle: () => setState(() => _hidden = !_hidden),
+                        ),
+                        const SizedBox(height: 26),
+                        const _SectionTitle('Пополнение'),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Выберите способ пополнения',
+                          style: TextStyle(color: AppColors.muted, fontSize: 13),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 96,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            clipBehavior: Clip.none,
+                            children: [
+                              for (final m in _methods)
+                                _MethodTile(
+                                  name: m.$1,
+                                  asset: m.$2,
+                                  onTap: () => _openLink(m.$1),
+                                ),
+                              _MethodTile(
+                                name: 'Другой',
+                                asset: null,
+                                onTap: () => _openLink('Другой способ'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_linked.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 96,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              clipBehavior: Clip.none,
+                              children: [
+                                for (final c in _linked) ...[
+                                  _MethodTile(
+                                    name: c.provider,
+                                    asset: _assetFor(c.provider),
+                                    last4: c.last4,
+                                    onTap: () => _openLink(c.provider),
+                                  ),
+                                  // Плитка «ещё такая же карта» рядом с привязанной.
+                                  _MethodTile(
+                                    name: 'Ещё карта',
+                                    asset: null,
+                                    onTap: () => _openLink(c.provider),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 10),
+                        Text(
+                          'Онлайн-оплата пока не подключена. Заявка появится в истории и пополнит баланс после подтверждения.',
+                          style: TextStyle(color: AppColors.muted, fontSize: 12),
+                        ),
+                        const SizedBox(height: 24),
+                        const _SectionTitle('История'),
+                        const SizedBox(height: 12),
+                        if (!loading && rows.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text('Операций пока нет',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.muted)),
+                          ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: AppColors.line),
+                          ),
+                          child: Column(
+                            children: [
+                              for (var i = 0; i < rows.length; i++) ...[
+                                _HistoryRow(row: rows[i]),
+                                if (i < rows.length - 1)
+                                  Divider(height: 1, indent: 62, color: AppColors.line),
+                              ],
+                            ],
+                          ),
+                        ),
+                        // Место под фоновую волну внизу.
+                        const SizedBox(height: 110),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
-    ),
     );
   }
 }
 
-/// Форма привязки карты. Пока сохранение выключено: сохранять номер карты в приложении
-/// нельзя, привязка пойдёт через платёжного провайдера.
 class _LinkedCard {
   const _LinkedCard(this.provider, this.last4);
 
@@ -339,58 +372,110 @@ class _LinkCardSheetState extends State<_LinkCardSheet> {
   }
 }
 
-class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({required this.balance});
+class _Header extends StatelessWidget {
+  const _Header({required this.onBack});
 
-  final int? balance;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.deep, AppColors.primary],
+    return Row(
+      children: [
+        InkWell(
+          onTap: onBack,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: AppColors.mint, shape: BoxShape.circle),
+            child: Icon(Icons.chevron_left_rounded, color: AppColors.title, size: 28),
+          ),
         ),
-        border: Border.all(color: _gold.withValues(alpha: 0.45)),
+        Expanded(
+          child: Text(
+            'Кошелёк',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.title),
+          ),
+        ),
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white),
+        ),
+      ],
+    );
+  }
+}
+
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({required this.balance, required this.hidden, required this.onToggle});
+
+  final int? balance;
+  final bool hidden;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = balance == null
+        ? '…'
+        : hidden
+            ? '•••••• TJS'
+            : '${_money(balance!)} TJS';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      decoration: BoxDecoration(
+        color: AppColors.mint,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.line),
       ),
       child: Row(
         children: [
-          const Icon(Icons.workspace_premium_rounded, size: 46, color: _gold),
+          Image.asset('assets/wallet/wallet_crown.png', width: 76, height: 76),
           Container(
             width: 1,
-            height: 52,
+            height: 56,
             margin: const EdgeInsets.symmetric(horizontal: 14),
-            color: Colors.white24,
+            color: AppColors.line,
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Баланс',
-                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
                 Text(
-                  balance == null ? '…' : '$balance TJS',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                  'Баланс',
+                  style: TextStyle(color: AppColors.primary, fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    text,
+                    style: TextStyle(color: AppColors.ink, fontSize: 28, fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.account_balance_wallet_rounded, color: _gold),
+          IconButton(
+            onPressed: onToggle,
+            icon: Icon(
+              hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              color: AppColors.primary,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+/// Заголовок раздела: зелёная полоска слева и название.
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
 
@@ -400,17 +485,19 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Divider(color: _gold.withValues(alpha: 0.6))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(text,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.title,
-              )),
+        Container(
+          width: 4,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
-        Expanded(child: Divider(color: _gold.withValues(alpha: 0.6))),
+        const SizedBox(width: 10),
+        Text(
+          text,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
+        ),
       ],
     );
   }
@@ -427,46 +514,40 @@ class _MethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.only(right: 12),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Container(
-          width: 104,
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+          width: 86,
+          padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
           decoration: BoxDecoration(
-            color: AppColors.mint,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _gold.withValues(alpha: 0.7), width: 1.2),
+            border: Border.all(color: AppColors.line),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: 44,
-                height: 44,
+                height: 40,
+                width: 64,
                 child: asset == null
-                    ? Icon(Icons.add_rounded, color: AppColors.title, size: 32)
+                    ? Icon(Icons.add_rounded, color: AppColors.primary, size: 30)
                     : Image.asset(asset!, fit: BoxFit.contain),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
-                name,
+                last4 != null ? '*$last4' : name,
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                  height: 1.2,
-                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  color: last4 != null ? AppColors.ink : AppColors.muted,
                 ),
               ),
-              if (last4 != null)
-                Text(
-                  '*$last4',
-                  style: TextStyle(color: AppColors.muted, fontSize: 11),
-                ),
             ],
           ),
         ),
@@ -526,7 +607,7 @@ class _HistoryRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${positive ? '+' : ''}$amount TJS',
+            '${positive ? '+ ' : '- '}${_money(amount.abs())} TJS',
             style: TextStyle(color: color, fontWeight: FontWeight.w800),
           ),
         ],
