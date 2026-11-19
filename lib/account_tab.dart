@@ -22,6 +22,7 @@ import 'seller_contacts.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 import 'wallet_sheet.dart';
+import 'phone_input.dart';
 import 'promo_sheet.dart';
 import 'theme_store.dart';
 import 'welcome_screen.dart';
@@ -595,12 +596,14 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           TextField(
             controller: _phone,
             keyboardType: TextInputType.phone,
+            inputFormatters: [PhoneLimitFormatter()],
             decoration: const InputDecoration(labelText: 'Телефон', hintText: '+992900000000'),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _whatsapp,
             keyboardType: TextInputType.phone,
+            inputFormatters: [PhoneLimitFormatter()],
             decoration: const InputDecoration(
               labelText: 'WhatsApp (необязательно)',
               hintText: '+992900000000 или +79001234567',

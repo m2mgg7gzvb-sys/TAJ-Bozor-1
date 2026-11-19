@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -128,7 +129,10 @@ class _CallbackFormState extends State<_CallbackForm> {
                   child: TextField(
                     controller: _ctrl,
                     keyboardType: TextInputType.phone,
-                    maxLength: 12,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(9),
+                    ],
                     decoration: InputDecoration(
                       counterText: '',
                       hintText: '90 123 45 67',
