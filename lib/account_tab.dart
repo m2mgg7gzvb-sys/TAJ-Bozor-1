@@ -418,7 +418,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final _phone = TextEditingController(text: widget.data.phone ?? '');
   final _whatsapp = TextEditingController();
   final _telegram = TextEditingController();
-  bool _showContacts = false;
   late String? _avatarUrl = widget.data.avatarUrl;
   bool _uploading = false;
   bool _saving = false;
@@ -437,7 +436,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     setState(() {
       _whatsapp.text = c.whatsapp ?? '';
       _telegram.text = c.telegram == null ? '' : '@${c.telegram}';
-      _showContacts = c.show;
     });
   }
 
@@ -527,7 +525,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         widget.user.id,
         whatsapp: waNum,
         telegram: tgNick,
-        show: _showContacts,
+        show: true,
       );
       if (mounted) Navigator.of(context).pop(true);
     } on PostgrestException catch (e) {
@@ -615,16 +613,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             decoration: const InputDecoration(
               labelText: 'Telegram (необязательно)',
               hintText: '@ваш_ник',
-            ),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _showContacts,
-            onChanged: (v) => setState(() => _showContacts = v),
-            title: const Text('Показывать покупателям в чате'),
-            subtitle: Text(
-              'Иконки WhatsApp и Telegram появятся в шапке чата с вами',
-              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
           ),
           if (_error != null) ...[
