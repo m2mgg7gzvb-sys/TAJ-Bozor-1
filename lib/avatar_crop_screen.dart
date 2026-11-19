@@ -66,6 +66,13 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
+                // Квадрат с шашечкой: там, где фото не закрывает квадрат, видно прозрачный фон
+                IgnorePointer(
+                  child: CustomPaint(
+                    size: Size(side, side),
+                    painter: const _CheckerPainter(),
+                  ),
+                ),
                 RepaintBoundary(
                   key: _boundaryKey,
                   child: ClipOval(
@@ -73,7 +80,7 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
                       width: side,
                       height: side,
                       child: InteractiveViewer(
-                        minScale: 1,
+                        minScale: 0.5,
                         maxScale: 4,
                         child: Image.memory(
                           widget.bytes,
@@ -109,4 +116,29 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
       ),
     );
   }
+}
+
+/// Шашечка для показа прозрачного фона.
+class _CheckerPainter extends CustomPainter {
+  const _CheckerPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const cell = 12.0;
+    final light = Paint()..color = const Color(0xFFFFFFFF);
+    final dark = Paint()..color = const Color(0xFFD9D9D9);
+    canvas.drawRect(Offset.zero & size, light);
+    final cols = (size.width / cell).ceil();
+    final rows = (size.height / cell).ceil();
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        if ((r + c).isOdd) {
+          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), dark);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
