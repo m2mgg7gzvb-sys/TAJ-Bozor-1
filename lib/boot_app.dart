@@ -1,8 +1,6 @@
-import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:web/web.dart' as web;
 
 import 'auth_intent.dart';
 import 'call_widgets.dart';
@@ -12,6 +10,7 @@ import 'lang_store.dart';
 import 'theme.dart';
 import 'theme_store.dart';
 import 'notify_store.dart';
+import 'platform_bridge.dart';
 import 'presence.dart';
 import 'splash_screen.dart';
 import 'theme.dart';
@@ -42,7 +41,7 @@ Future<void> bootstrap() async {
 /// Похоже ли, что ошибка из-за сети (нет интернета или сервер не ответил).
 bool _looksOffline(Object e) {
   final msg = e.toString();
-  return !web.window.navigator.onLine ||
+  return !isOnline() ||
       msg.contains('Failed to fetch') ||
       msg.contains('ClientException') ||
       msg.contains('SocketException') ||
@@ -63,23 +62,23 @@ class BootApp extends StatefulWidget {
 class _BootAppState extends State<BootApp> {
   _BootState _state = _BootState.loading;
   bool _starting = false;
-  late final JSFunction _onlineListener = _onOnlineEvent.toJS;
+  void Function()? _stopOnline;
 
   @override
   void initState() {
     super.initState();
     // Как только интернет вернулся, пробуем подключиться сами.
-    web.window.addEventListener('online', _onlineListener);
+    _stopOnline = listenOnline(_onOnlineEvent);
     _start();
   }
 
   @override
   void dispose() {
-    web.window.removeEventListener('online', _onlineListener);
+    _stopOnline?.call();
     super.dispose();
   }
 
-  void _onOnlineEvent(web.Event _) {
+  void _onOnlineEvent() {
     if (_state == _BootState.offline) _start();
   }
 
@@ -87,7 +86,7 @@ class _BootAppState extends State<BootApp> {
     if (_starting) return;
     _starting = true;
     if (mounted && _state != _BootState.loading) setState(() => _state = _BootState.loading);
-    if (!web.window.navigator.onLine) {
+    if (!isOnline()) {
       _starting = false;
       if (mounted) setState(() => _state = _BootState.offline);
       return;
