@@ -38,6 +38,15 @@ class _WalletSheetState extends State<_WalletSheet> {
   static const _amounts = [50, 100, 200, 500];
   late Future<(int, List<Map<String, dynamic>>)> _data = _load();
   bool _busy = false;
+  // Привязанные карты. Пока провайдер не подключён, список пуст: сохранение выключено.
+  final List<_LinkedCard> _linked = [];
+
+  String? _assetFor(String name) {
+    for (final m in _methods) {
+      if (m.$1 == name) return m.$2;
+    }
+    return null;
+  }
 
   Future<(int, List<Map<String, dynamic>>)> _load() async {
     final db = Supabase.instance.client;
@@ -56,7 +65,10 @@ class _WalletSheetState extends State<_WalletSheet> {
       isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: AppColors.surface,
-      builder: (_) => _LinkCardSheet(provider: provider),
+      builder: (_) => _LinkCardSheet(
+        provider: provider,
+        onLinked: (last4) => setState(() => _linked.add(_LinkedCard(provider, last4))),
+      ),
     );
   }
 
@@ -163,6 +175,32 @@ class _WalletSheetState extends State<_WalletSheet> {
                       ],
                     ),
                   ),
+                  if (_linked.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 116,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        children: [
+                          for (final c in _linked) ...[
+                            _MethodTile(
+                              name: c.provider,
+                              asset: _assetFor(c.provider),
+                              last4: c.last4,
+                              onTap: () => _openLink(c.provider),
+                            ),
+                            // Плитка «ещё такая же карта» рядом с привязанной.
+                            _MethodTile(
+                              name: c.provider,
+                              asset: null,
+                              onTap: () => _openLink(c.provider),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
                     'Онлайн-оплата пока не подключена. Заявка появится в истории и пополнит баланс после подтверждения.',
@@ -207,10 +245,19 @@ class _WalletSheetState extends State<_WalletSheet> {
 
 /// Форма привязки карты. Пока сохранение выключено: сохранять номер карты в приложении
 /// нельзя, привязка пойдёт через платёжного провайдера.
-class _LinkCardSheet extends StatefulWidget {
-  const _LinkCardSheet({required this.provider});
+class _LinkedCard {
+  const _LinkedCard(this.provider, this.last4);
 
   final String provider;
+  final String last4;
+}
+
+class _LinkCardSheet extends StatefulWidget {
+  const _LinkCardSheet({required this.provider, this.onLinked});
+
+  final String provider;
+  // Вызывается после успешной привязки с последними 4 цифрами карты.
+  final void Function(String last4)? onLinked;
 
   @override
   State<_LinkCardSheet> createState() => _LinkCardSheetState();
@@ -370,11 +417,12 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _MethodTile extends StatelessWidget {
-  const _MethodTile({required this.name, required this.asset, required this.onTap});
+  const _MethodTile({required this.name, required this.asset, required this.onTap, this.last4});
 
   final String name;
   final String? asset;
   final VoidCallback? onTap;
+  final String? last4;
 
   @override
   Widget build(BuildContext context) {
@@ -414,6 +462,11 @@ class _MethodTile extends StatelessWidget {
                   color: AppColors.ink,
                 ),
               ),
+              if (last4 != null)
+                Text(
+                  '*$last4',
+                  style: TextStyle(color: AppColors.muted, fontSize: 11),
+                ),
             ],
           ),
         ),
