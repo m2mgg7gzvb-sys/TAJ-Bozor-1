@@ -81,7 +81,9 @@ Future<String?> _waitForLogin(
         return null;
       }
     } on FunctionException catch (e) {
-      if (e.status == 404 || e.status == 410) return 'expired';
+      if (e.status == 410) return 'expired';
+      final tooLong = DateTime.now().difference(started) > const Duration(minutes: 1);
+      if (e.status == 404 && tooLong) return 'expired';
     } catch (_) {
       // Временная ошибка сети: продолжаем ждать
     }
@@ -107,7 +109,24 @@ Future<void> resumeTelegramLogin(BuildContext context) async {
     }
     _polling = true;
     final messenger = ScaffoldMessenger.maybeOf(context);
-    final error = await _waitForLogin(fn, nonce, started, () => false);
+    var cancelled = false;
+    var dialogOpen = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => _waitingDialog(
+        icon: fn == _tgFn ? Icons.send_rounded : Icons.chat_rounded,
+        onCancel: () {
+          cancelled = true;
+          Navigator.of(ctx).pop();
+        },
+      ),
+    ).then((_) => dialogOpen = false);
+    final error = await _waitForLogin(fn, nonce, started, () => cancelled);
+    if (dialogOpen && context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
     _polling = false;
     await _clearPending(key);
     if (error == 'expired') {
@@ -117,6 +136,34 @@ Future<void> resumeTelegramLogin(BuildContext context) async {
     }
     return;
   }
+}
+
+/// Окно «Ожидаем» с анимацией и отсчётом. Закрывается только кнопкой «Отмена» или по результату.
+Dialog _waitingDialog({required IconData icon, required VoidCallback onCancel}) {
+  return Dialog(
+    backgroundColor: Colors.transparent,
+    insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+    child: FrostedGlass(
+      radius: 28,
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 40, color: AppColors.primary),
+          const SizedBox(height: 12),
+          Text(
+            'Ожидаем',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
+          ),
+          const SizedBox(height: 10),
+          const _WaitingIndicator(),
+          const SizedBox(height: 4),
+          TextButton(onPressed: onCancel, child: const Text('Отмена')),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Анимация «• • •» и обратный отсчёт 15 → 0 в окне ожидания.
