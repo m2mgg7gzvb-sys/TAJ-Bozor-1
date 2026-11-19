@@ -107,7 +107,9 @@ class _WalletSheetState extends State<_WalletSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.85,
+      child: SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
         child: FutureBuilder<(int, List<Map<String, dynamic>>)>(
@@ -188,6 +190,7 @@ class _WalletSheetState extends State<_WalletSheet> {
           },
         ),
       ),
+    ),
     );
   }
 }
