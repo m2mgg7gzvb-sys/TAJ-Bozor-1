@@ -1,0 +1,51 @@
+name: Create upload key
+
+# Одноразово: создаёт ключ подписи для Android без компьютера.
+# Запуск: Actions → Create upload key → Run workflow.
+# Значения для секретов появятся в сводке запуска (Summary). После копирования удалите этот запуск.
+on:
+  workflow_dispatch:
+
+jobs:
+  key:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Создать ключ и вывести значения для секретов
+        run: |
+          STORE_PASS=$(openssl rand -hex 16)
+          KEY_PASS=$(openssl rand -hex 16)
+          ALIAS=tajbozor
+          keytool -genkeypair -v \
+            -keystore "$RUNNER_TEMP/tajbozor-upload.jks" \
+            -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+            -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=TAJ Bozor, O=TAJ Bozor, C=TJ"
+          B64=$(base64 -w0 "$RUNNER_TEMP/tajbozor-upload.jks")
+          cp "$RUNNER_TEMP/tajbozor-upload.jks" "$GITHUB_WORKSPACE/tajbozor-upload.jks"
+          {
+            echo "## Значения для секретов (скопируйте и удалите этот запуск)"
+            echo ""
+            echo "**ANDROID_KEYSTORE_BASE64**"
+            echo '```'
+            echo "$B64"
+            echo '```'
+            echo "**ANDROID_KEYSTORE_PASSWORD**"
+            echo '```'
+            echo "$STORE_PASS"
+            echo '```'
+            echo "**ANDROID_KEY_ALIAS**"
+            echo '```'
+            echo "$ALIAS"
+            echo '```'
+            echo "**ANDROID_KEY_PASSWORD**"
+            echo '```'
+            echo "$KEY_PASS"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upload-keystore-backup
+          path: tajbozor-upload.jks
+          retention-days: 90
