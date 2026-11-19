@@ -199,6 +199,9 @@ Future<void> _startMessengerLogin(
   required bool register,
   required String fn,
   required String key,
+  required String dialogTitle,
+  required String dialogText,
+  required String buttonLabel,
   required IconData icon,
   required Uri Function(Map<String, dynamic> data, String nonce) linkFor,
   Uri Function(Map<String, dynamic> data, String nonce)? fallbackFor,
@@ -230,9 +233,10 @@ Future<void> _startMessengerLogin(
 
   final link = linkFor(data, nonce);
   final fallback = fallbackFor?.call(data, nonce);
-  await _openMessenger(link, fallback);
   if (!context.mounted) return;
 
+  // Окно сначала показывает кнопку. После открытия мессенджера оно становится «Ожидаем».
+  final launched = ValueNotifier<bool>(false);
   var dialogOpen = true;
   var cancelled = false;
   showDialog<void>(
@@ -245,27 +249,49 @@ Future<void> _startMessengerLogin(
       child: FrostedGlass(
         radius: 28,
         padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: AppColors.primary),
-            const SizedBox(height: 12),
-            Text(
-              'Ожидаем',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
-            ),
-            const SizedBox(height: 14),
-            const _WaitingIndicator(),
-            const SizedBox(height: 4),
-            TextButton(
-              onPressed: () {
-                cancelled = true;
-                Navigator.of(ctx).pop();
-              },
-              child: const Text('Отмена'),
-            ),
-          ],
+        child: ValueListenableBuilder<bool>(
+          valueListenable: launched,
+          builder: (_, isLaunched, __) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 40, color: AppColors.primary),
+              const SizedBox(height: 12),
+              Text(
+                isLaunched ? 'Ожидаем' : dialogTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
+              ),
+              const SizedBox(height: 10),
+              if (isLaunched)
+                const _WaitingIndicator()
+              else ...[
+                Text(
+                  dialogText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, height: 1.4, color: AppColors.muted),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      launched.value = true;
+                      _openMessenger(link, fallback);
+                    },
+                    child: Text(buttonLabel),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () {
+                  cancelled = true;
+                  Navigator.of(ctx).pop();
+                },
+                child: const Text('Отмена'),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -277,6 +303,7 @@ Future<void> _startMessengerLogin(
   if (dialogOpen && context.mounted) {
     Navigator.of(context, rootNavigator: true).pop();
   }
+  launched.dispose();
   if (error == null || error == 'cancelled') return;
   messenger.showSnackBar(SnackBar(
     content: Text(error == 'expired'
@@ -292,6 +319,9 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
     register: register,
     fn: _tgFn,
     key: _tgKey,
+    dialogTitle: 'Подтвердите в Telegram',
+    dialogText: 'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
+    buttonLabel: 'Открыть бота',
     icon: Icons.send_rounded,
     linkFor: (data, nonce) =>
         Uri.parse('tg://resolve?domain=${data['bot']}&start=login_$nonce'),
@@ -307,6 +337,10 @@ Future<void> startWhatsappLogin(BuildContext context, {required bool register}) 
     register: register,
     fn: _waFn,
     key: _waKey,
+    dialogTitle: 'Подтвердите в WhatsApp',
+    dialogText:
+        'Откройте чат и отправьте готовое сообщение. Потом вернитесь сюда: вход выполнится автоматически.',
+    buttonLabel: 'Открыть WhatsApp',
     icon: Icons.chat_rounded,
     linkFor: (data, nonce) => Uri.parse(
         'whatsapp://send?phone=${data['number']}&text=login_$nonce'),
