@@ -50,6 +50,16 @@ class _WalletSheetState extends State<_WalletSheet> {
     return (balance, List<Map<String, dynamic>>.from(rows));
   }
 
+  Future<void> _openLink(String provider) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (_) => _LinkCardSheet(provider: provider),
+    );
+  }
+
   Future<void> _pickAmount(String method) async {
     final amount = await showModalBottomSheet<int>(
       context: context,
@@ -143,12 +153,12 @@ class _WalletSheetState extends State<_WalletSheet> {
                           _MethodTile(
                             name: m.$1,
                             asset: m.$2,
-                            onTap: _busy ? null : () => _pickAmount(m.$1),
+                            onTap: () => _openLink(m.$1),
                           ),
                         _MethodTile(
                           name: 'Другой способ',
                           asset: null,
-                          onTap: _busy ? null : () => _pickAmount('Другой способ'),
+                          onTap: () => _openLink('Другой способ'),
                         ),
                       ],
                     ),
@@ -191,6 +201,93 @@ class _WalletSheetState extends State<_WalletSheet> {
         ),
       ),
     ),
+    );
+  }
+}
+
+/// Форма привязки карты. Пока сохранение выключено: сохранять номер карты в приложении
+/// нельзя, привязка пойдёт через платёжного провайдера.
+class _LinkCardSheet extends StatefulWidget {
+  const _LinkCardSheet({required this.provider});
+
+  final String provider;
+
+  @override
+  State<_LinkCardSheet> createState() => _LinkCardSheetState();
+}
+
+class _LinkCardSheetState extends State<_LinkCardSheet> {
+  final _number = TextEditingController();
+  final _expiry = TextEditingController();
+  final _holder = TextEditingController();
+
+  @override
+  void dispose() {
+    _number.dispose();
+    _expiry.dispose();
+    _holder.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Привязать · ${widget.provider}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _number,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Номер карты',
+                hintText: '0000 0000 0000 0000',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _expiry,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Срок (ММ/ГГ)'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _holder,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(labelText: 'Имя на карте'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Сохранение станет доступно после подключения платёжного провайдера. '
+              'Номер карты в приложении не хранится: в списке будут только последние 4 цифры.',
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            const FilledButton(
+              onPressed: null,
+              child: Text('Привязать карту'),
+            ),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Закрыть'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
