@@ -6,8 +6,8 @@ import 'package:flutter/rendering.dart';
 
 import 'theme.dart';
 
-/// Подгонка фото профиля: фото двигается и масштабируется внутри круга.
-/// Возвращает PNG только того, что видно в круге, или null, если пользователь вышел.
+/// Подгонка фото профиля: круг — это то, что останется в профиле, а края фото видны за ним.
+/// Возвращает PNG только того, что внутри круга (вне круга прозрачно), или null, если вышли.
 class AvatarCropScreen extends StatefulWidget {
   const AvatarCropScreen({super.key, required this.bytes});
 
@@ -25,8 +25,18 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
     setState(() => _saving = true);
     try {
       final boundary = _boundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 2.0);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      final shot = await boundary.toImage(pixelRatio: 2.0);
+      final size = shot.width.toDouble();
+
+      // Обрезаем по кругу: всё вне круга становится прозрачным
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      canvas.clipPath(Path()..addOval(Rect.fromLTWH(0, 0, size, size)));
+      canvas.drawImage(shot, Offset.zero, Paint());
+      final picture = recorder.endRecording();
+      final round = await picture.toImage(shot.width, shot.height);
+      final data = await round.toByteData(format: ui.ImageByteFormat.png);
+
       if (!mounted) return;
       Navigator.of(context).pop(data?.buffer.asUint8List());
     } catch (_) {
@@ -38,7 +48,6 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
   Widget build(BuildContext context) {
     final side = MediaQuery.sizeOf(context).width - 64;
     return Scaffold(
-      // Фон экрана — как у приложения: вокруг круга ничего лишнего, фото видно на фоне темы
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -66,41 +75,30 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
-                // Квадрат с шашечкой: там, где фото не закрывает квадрат, видно прозрачный фон
-                IgnorePointer(
-                  child: CustomPaint(
-                    size: Size(side, side),
-                    painter: const _CheckerPainter(),
-                  ),
-                ),
+                // Всё фото целиком (с краями), подгоняется пальцами
                 RepaintBoundary(
                   key: _boundaryKey,
-                  child: ClipOval(
-                    child: SizedBox(
-                      width: side,
-                      height: side,
-                      child: InteractiveViewer(
-                        minScale: 0.5,
-                        maxScale: 4,
-                        child: Image.memory(
-                          widget.bytes,
-                          width: side,
-                          height: side,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                        ),
+                  child: SizedBox(
+                    width: side,
+                    height: side,
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4,
+                      child: Image.memory(
+                        widget.bytes,
+                        width: side,
+                        height: side,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
                       ),
                     ),
                   ),
                 ),
+                // Затемнение за кругом и рамка круга (не попадают в сохранённое фото)
                 IgnorePointer(
-                  child: Container(
-                    width: side,
-                    height: side,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary, width: 2),
-                    ),
+                  child: CustomPaint(
+                    size: Size(side, side),
+                    painter: _CircleFramePainter(),
                   ),
                 ),
               ],
@@ -118,25 +116,24 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
   }
 }
 
-/// Шашечка для показа прозрачного фона.
-class _CheckerPainter extends CustomPainter {
-  const _CheckerPainter();
-
+/// Затемняет всё, кроме круга, и рисует рамку круга.
+class _CircleFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    const cell = 12.0;
-    final light = Paint()..color = const Color(0xFFFFFFFF);
-    final dark = Paint()..color = const Color(0xFFD9D9D9);
-    canvas.drawRect(Offset.zero & size, light);
-    final cols = (size.width / cell).ceil();
-    final rows = (size.height / cell).ceil();
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        if ((r + c).isOdd) {
-          canvas.drawRect(Rect.fromLTWH(c * cell, r * cell, cell, cell), dark);
-        }
-      }
-    }
+    final rect = Offset.zero & size;
+    final circle = Path()..addOval(rect);
+    final outside = Path()
+      ..addRect(rect)
+      ..addPath(circle, Offset.zero);
+    outside.fillType = PathFillType.evenOdd;
+    canvas.drawPath(outside, Paint()..color = const Color(0x66000000));
+    canvas.drawOval(
+      rect.deflate(1),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = const Color(0xFF0E7C66),
+    );
   }
 
   @override
