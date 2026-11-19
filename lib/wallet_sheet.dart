@@ -15,13 +15,13 @@ Future<void> showWalletSheet(BuildContext context) {
   );
 }
 
-/// Способы пополнения из макета. Пока только для выбора; сам способ в заявке не сохраняется.
+/// Способы пополнения: название и иконка. Пока только для выбора; сам способ в заявке не сохраняется.
 const _methods = [
-  ('VISA', Color(0xFF1A1F71)),
-  ('Mastercard', Color(0xFFEB001B)),
-  ('Humo', Color(0xFF0E7C66)),
-  ('PayMe', Color(0xFF00B3E6)),
-  ('Click', Color(0xFF3DBE29)),
+  ('Душанбе Сити', 'assets/payment_icons/dushanbe_city.png'),
+  ('Алиф Моби', 'assets/payment_icons/alif_mobi.png'),
+  ('Эсхата Онлайн', 'assets/payment_icons/eskhata.png'),
+  ('МегаФон Лайф', 'assets/payment_icons/megafon_life.png'),
+  ('Хумо Онлайн', 'assets/payment_icons/humo.png'),
 ];
 
 const _gold = Color(0xFFF5C84B);
@@ -131,20 +131,28 @@ class _WalletSheetState extends State<_WalletSheet> {
                     style: TextStyle(color: AppColors.muted, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      for (final m in _methods)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 3),
-                            child: _MethodTile(
-                              label: m.$1,
-                              color: m.$2,
-                              onTap: _busy ? null : () => _pickAmount(m.$1),
-                            ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.mint,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < _methods.length; i++) ...[
+                          _MethodRow(
+                            name: _methods[i].$1,
+                            asset: _methods[i].$2,
+                            onTap: _busy ? null : () => _pickAmount(_methods[i].$1),
                           ),
+                          Divider(height: 1, indent: 62, color: AppColors.line),
+                        ],
+                        _MethodRow(
+                          name: 'Другой способ',
+                          asset: null,
+                          onTap: _busy ? null : () => _pickAmount('Другой способ'),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -264,36 +272,35 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _MethodTile extends StatelessWidget {
-  const _MethodTile({required this.label, required this.color, required this.onTap});
+class _MethodRow extends StatelessWidget {
+  const _MethodRow({required this.name, required this.asset, required this.onTap});
 
-  final String label;
-  final Color color;
+  final String name;
+  final String? asset;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 62,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.mint,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _gold.withValues(alpha: 0.7), width: 1.2),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: asset == null
+                  ? Icon(Icons.add_rounded, color: AppColors.title, size: 28)
+                  : Image.asset(asset!, fit: BoxFit.contain),
             ),
-          ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(name,
+                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink)),
+            ),
+            Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+          ],
         ),
       ),
     );
