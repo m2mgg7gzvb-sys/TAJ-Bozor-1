@@ -22,6 +22,8 @@ const _methods = [
   ('Душанбе Сити', 'assets/payment_icons/dushanbe_city.png'),
   ('Алиф Моби', 'assets/payment_icons/alif_mobi.png'),
   ('Эсхата Онлайн', 'assets/payment_icons/eskhata.png'),
+  ('МегаФон Лайф', 'assets/payment_icons/megafon_life.png'),
+  ('Хумо Онлайн', 'assets/payment_icons/humo.png'),
 ];
 
 const _green = Color(0xFF22C55E);
