@@ -34,7 +34,7 @@ Future<void> maybeShowContactsSetup(BuildContext context) async {
     final saved = await showContactsEditor(context, uid);
     if (saved != true) {
       // Закрыли без сохранения: запоминаем, что спрашивали, чтобы не показывать при каждом входе
-      await SellerContacts.save(uid, show: false);
+      await SellerContacts.save(uid, show: true);
     }
     await prefs.setBool('$_shownPrefix$uid', true);
   } catch (_) {
@@ -55,7 +55,6 @@ class _ContactsSetupSheetState extends State<_ContactsSetupSheet> {
   final _phone = TextEditingController();
   final _whatsapp = TextEditingController();
   final _telegram = TextEditingController();
-  bool _showContacts = true;
   bool _verifiedBySms = false;
   bool _saving = false;
   String? _error;
@@ -126,7 +125,7 @@ class _ContactsSetupSheetState extends State<_ContactsSetupSheet> {
         widget.uid,
         whatsapp: waNum,
         telegram: tgNick,
-        show: _showContacts,
+        show: true,
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
@@ -191,12 +190,6 @@ class _ContactsSetupSheetState extends State<_ContactsSetupSheet> {
                   child: Image.asset('assets/icons/telegram_logo.png', width: 22, height: 22),
                 ),
               ),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _showContacts,
-              onChanged: (v) => setState(() => _showContacts = v),
-              title: const Text('Показывать покупателям в чате'),
             ),
             if (_error != null) ...[
               const SizedBox(height: 6),
