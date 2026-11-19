@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -117,6 +119,71 @@ Future<void> resumeTelegramLogin(BuildContext context) async {
   }
 }
 
+/// Анимация ожидания «• • •». Через 15 секунд показываем подсказку, если вход не прошёл.
+class _WaitingIndicator extends StatefulWidget {
+  const _WaitingIndicator();
+
+  @override
+  State<_WaitingIndicator> createState() => _WaitingIndicatorState();
+}
+
+class _WaitingIndicatorState extends State<_WaitingIndicator> {
+  static const _hintAfter = Duration(seconds: 15);
+  Timer? _dots;
+  Timer? _hint;
+  int _step = 0;
+  bool _showHint = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _dots = Timer.periodic(const Duration(milliseconds: 400), (_) {
+      if (mounted) setState(() => _step = (_step + 1) % 4);
+    });
+    _hint = Timer(_hintAfter, () {
+      if (mounted) setState(() => _showHint = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _dots?.cancel();
+    _hint?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < 3; i++)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: i < _step ? 1 : 0.2),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _showHint
+              ? 'Вход занимает дольше обычного. Нажмите кнопку выше и попробуйте ещё раз'
+              : 'Ждём подтверждения',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: AppColors.muted),
+        ),
+      ],
+    );
+  }
+}
+
 /// Общий сценарий входа через мессенджер: запрос, открытие чата, стеклянное окно ожидания.
 Future<void> _startMessengerLogin(
   BuildContext context, {
@@ -197,19 +264,7 @@ Future<void> _startMessengerLogin(
               ),
             ),
             const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                ),
-                const SizedBox(width: 8),
-                Text('Ждём подтверждения…',
-                    style: TextStyle(fontSize: 13, color: AppColors.muted)),
-              ],
-            ),
+            const _WaitingIndicator(),
             const SizedBox(height: 4),
             TextButton(
               onPressed: () {
