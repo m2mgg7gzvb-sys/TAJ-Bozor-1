@@ -38,11 +38,17 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
   Widget build(BuildContext context) {
     final side = MediaQuery.sizeOf(context).width - 64;
     return Scaffold(
-      backgroundColor: Colors.black,
+      // Фон экрана — как у приложения: вокруг круга ничего лишнего, фото видно на фоне темы
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: const Text('Фото профиля'),
+        backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: AppColors.title,
+        title: Text(
+          'Фото профиля',
+          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.title),
+        ),
         actions: [
           TextButton(
             onPressed: _saving ? null : _done,
@@ -86,17 +92,17 @@ class _AvatarCropScreenState extends State<AvatarCropScreen> {
                     height: side,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white70, width: 2),
+                      border: Border.all(color: AppColors.primary, width: 2),
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Сдвигайте и увеличивайте фото, чтобы выбрать, как оно будет смотреться',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              style: TextStyle(color: AppColors.muted, fontSize: 14),
             ),
           ],
         ),
