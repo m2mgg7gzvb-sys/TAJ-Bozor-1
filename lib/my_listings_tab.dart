@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,6 +9,7 @@ import 'guest_prompt.dart';
 import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listing_actions_sheet.dart';
+import 'nav_state.dart';
 import 'promote_sheet.dart';
 import 'slide_up_in.dart';
 import 'theme.dart';
@@ -31,6 +34,37 @@ class _MyListingsTabState extends State<MyListingsTab> {
   void initState() {
     super.initState();
     _future = _load();
+    // Вкладка «Объявления» — 2-я в нижней панели: при переходе на неё список обновляется.
+    tabIndex.addListener(_onTabChanged);
+  }
+
+  Timer? _poll;
+
+  @override
+  void dispose() {
+    tabIndex.removeListener(_onTabChanged);
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (tabIndex.value == 2) _reload();
+  }
+
+  /// Пока есть объявления на проверке, статус перепроверяется каждые 30 секунд,
+  /// чтобы не нужно было перезаходить в приложение.
+  void _updatePoll(List<Map<String, dynamic>> rows) {
+    final hasModeration = rows.any((e) => e['status'] == 'moderation');
+    if (!hasModeration) {
+      _poll?.cancel();
+      _poll = null;
+      return;
+    }
+    if (_poll == null || !_poll!.isActive) {
+      _poll = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (mounted) _reload();
+      });
+    }
   }
 
   /// Все свои объявления, включая проданные и снятые: они нужны для раздела «Завершённые».
@@ -42,7 +76,9 @@ class _MyListingsTabState extends State<MyListingsTab> {
         .select('$listingSelect, status, admin_note')
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(rows);
+    final list = List<Map<String, dynamic>>.from(rows);
+    if (mounted) _updatePoll(list);
+    return list;
   }
 
   void _reload() => setState(() => _future = _load());
@@ -297,10 +333,11 @@ class _MyListingsTabState extends State<MyListingsTab> {
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _future,
         builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
+          // При фоновом обновлении показываем прежние данные, без спиннера.
+          if (!snapshot.hasData && snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
+          if (snapshot.hasError && !snapshot.hasData) {
             return Center(
               child: GreenButton(onPressed: _reload, child: const Text('Повторить')),
             );
