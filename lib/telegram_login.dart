@@ -119,7 +119,7 @@ Future<void> resumeTelegramLogin(BuildContext context) async {
   }
 }
 
-/// Анимация ожидания «• • •». Через 15 секунд показываем подсказку, если вход не прошёл.
+/// Анимация «• • •» и обратный отсчёт 15 → 0 в окне ожидания.
 class _WaitingIndicator extends StatefulWidget {
   const _WaitingIndicator();
 
@@ -128,11 +128,11 @@ class _WaitingIndicator extends StatefulWidget {
 }
 
 class _WaitingIndicatorState extends State<_WaitingIndicator> {
-  static const _hintAfter = Duration(seconds: 15);
+  static const _seconds = 15;
   Timer? _dots;
-  Timer? _hint;
+  Timer? _tick;
   int _step = 0;
-  bool _showHint = false;
+  int _left = _seconds;
 
   @override
   void initState() {
@@ -140,15 +140,20 @@ class _WaitingIndicatorState extends State<_WaitingIndicator> {
     _dots = Timer.periodic(const Duration(milliseconds: 400), (_) {
       if (mounted) setState(() => _step = (_step + 1) % 4);
     });
-    _hint = Timer(_hintAfter, () {
-      if (mounted) setState(() => _showHint = true);
+    _tick = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() => _left = _left > 0 ? _left - 1 : 0);
+      if (_left == 0) t.cancel();
     });
   }
 
   @override
   void dispose() {
     _dots?.cancel();
-    _hint?.cancel();
+    _tick?.cancel();
     super.dispose();
   }
 
@@ -171,14 +176,18 @@ class _WaitingIndicatorState extends State<_WaitingIndicator> {
               ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          _showHint
-              ? 'Вход занимает дольше обычного. Нажмите кнопку выше и попробуйте ещё раз'
-              : 'Ждём подтверждения',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: AppColors.muted),
-        ),
+        const SizedBox(height: 14),
+        if (_left > 0)
+          Text(
+            '$_left',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.primary),
+          )
+        else
+          Text(
+            'Ссылка могла не открыться. Нажмите «Отмена» и начните вход заново',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: AppColors.muted),
+          ),
       ],
     );
   }
@@ -190,9 +199,6 @@ Future<void> _startMessengerLogin(
   required bool register,
   required String fn,
   required String key,
-  required String dialogTitle,
-  required String dialogText,
-  required String buttonLabel,
   required IconData icon,
   required Uri Function(Map<String, dynamic> data, String nonce) linkFor,
   Uri Function(Map<String, dynamic> data, String nonce)? fallbackFor,
@@ -245,23 +251,9 @@ Future<void> _startMessengerLogin(
             Icon(icon, size: 40, color: AppColors.primary),
             const SizedBox(height: 12),
             Text(
-              dialogTitle,
+              'Ожидаем',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              dialogText,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, height: 1.4, color: AppColors.muted),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => _openMessenger(link, fallback),
-                child: Text(buttonLabel),
-              ),
             ),
             const SizedBox(height: 14),
             const _WaitingIndicator(),
@@ -300,9 +292,6 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
     register: register,
     fn: _tgFn,
     key: _tgKey,
-    dialogTitle: 'Подтвердите в Telegram',
-    dialogText: 'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
-    buttonLabel: 'Открыть бота',
     icon: Icons.send_rounded,
     linkFor: (data, nonce) =>
         Uri.parse('tg://resolve?domain=${data['bot']}&start=login_$nonce'),
@@ -318,10 +307,6 @@ Future<void> startWhatsappLogin(BuildContext context, {required bool register}) 
     register: register,
     fn: _waFn,
     key: _waKey,
-    dialogTitle: 'Подтвердите в WhatsApp',
-    dialogText:
-        'Откройте чат и отправьте готовое сообщение. Потом вернитесь сюда: вход выполнится автоматически.',
-    buttonLabel: 'Открыть WhatsApp',
     icon: Icons.chat_rounded,
     linkFor: (data, nonce) => Uri.parse(
         'whatsapp://send?phone=${data['number']}&text=login_$nonce'),
