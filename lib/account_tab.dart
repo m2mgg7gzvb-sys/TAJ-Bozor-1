@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'auth_screen.dart';
+import 'avatar_crop_screen.dart';
 import 'copy_id.dart';
 import 'glass_widgets.dart';
 import 'favorites_store.dart';
@@ -438,26 +440,34 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     });
   }
 
-  /// Выбор фото из галереи и загрузка в бакет avatars (путь: <id пользователя>/avatar.jpg).
+  /// Выбор фото из галереи, подгонка в круге и загрузка в бакет avatars (путь: <id пользователя>/avatar.png).
   Future<void> _pickAvatar() async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: 800,
+      imageQuality: 90,
+      maxWidth: 1200,
     );
     if (picked == null) return;
+    final original = await picked.readAsBytes();
+    if (!mounted) return;
+    final cropped = await Navigator.of(context).push<Uint8List>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AvatarCropScreen(bytes: original),
+      ),
+    );
+    if (cropped == null) return;
     setState(() {
       _uploading = true;
       _error = null;
     });
     try {
       final db = Supabase.instance.client;
-      final bytes = await picked.readAsBytes();
-      final path = '${widget.user.id}/avatar.jpg';
+      final path = '${widget.user.id}/avatar.png';
       await db.storage.from('avatars').uploadBinary(
             path,
-            bytes,
-            fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+            cropped,
+            fileOptions: const FileOptions(contentType: 'image/png', upsert: true),
           );
       final url = db.storage.from('avatars').getPublicUrl(path);
       // Метка времени, чтобы браузер не показывал старое фото из кеша
