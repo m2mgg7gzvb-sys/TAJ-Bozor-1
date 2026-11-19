@@ -284,6 +284,13 @@ Future<void> _startMessengerLogin(
 
   // Окно сначала показывает кнопку. После открытия мессенджера оно становится «Ожидаем».
   final launched = ValueNotifier<bool>(false);
+  var tapped = false;
+  // Окно меняется на «Ожидаем» только после возврата на сайт, а не сразу по нажатию.
+  final lifecycle = AppLifecycleListener(
+    onResume: () {
+      if (tapped) launched.value = true;
+    },
+  );
   var dialogOpen = true;
   var cancelled = false;
   showDialog<void>(
@@ -322,7 +329,7 @@ Future<void> _startMessengerLogin(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () {
-                      launched.value = true;
+                      tapped = true;
                       _openMessenger(link, fallback);
                     },
                     child: Text(buttonLabel),
@@ -350,6 +357,7 @@ Future<void> _startMessengerLogin(
   if (dialogOpen && context.mounted) {
     Navigator.of(context, rootNavigator: true).pop();
   }
+  lifecycle.dispose();
   launched.dispose();
   if (error == null || error == 'cancelled') return;
   messenger.showSnackBar(SnackBar(
