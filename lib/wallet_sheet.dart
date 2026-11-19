@@ -38,6 +38,15 @@ class _WalletSheetState extends State<_WalletSheet> {
   static const _amounts = [50, 100, 200, 500];
   late Future<(int, List<Map<String, dynamic>>)> _data = _load();
   bool _busy = false;
+  // Привязанные карты. Пока провайдер не подключён, список пуст: сохранение выключено.
+  final List<_LinkedCard> _linked = [];
+
+  String? _assetFor(String name) {
+    for (final m in _methods) {
+      if (m.$1 == name) return m.$2;
+    }
+    return null;
+  }
 
   Future<(int, List<Map<String, dynamic>>)> _load() async {
     final db = Supabase.instance.client;
@@ -48,6 +57,19 @@ class _WalletSheetState extends State<_WalletSheet> {
         .order('created_at', ascending: false)
         .limit(20);
     return (balance, List<Map<String, dynamic>>.from(rows));
+  }
+
+  Future<void> _openLink(String provider) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (_) => _LinkCardSheet(
+        provider: provider,
+        onLinked: (last4) => setState(() => _linked.add(_LinkedCard(provider, last4))),
+      ),
+    );
   }
 
   Future<void> _pickAmount(String method) async {
@@ -107,7 +129,9 @@ class _WalletSheetState extends State<_WalletSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.85,
+      child: SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
         child: FutureBuilder<(int, List<Map<String, dynamic>>)>(
@@ -141,16 +165,42 @@ class _WalletSheetState extends State<_WalletSheet> {
                           _MethodTile(
                             name: m.$1,
                             asset: m.$2,
-                            onTap: _busy ? null : () => _pickAmount(m.$1),
+                            onTap: () => _openLink(m.$1),
                           ),
                         _MethodTile(
                           name: 'Другой способ',
                           asset: null,
-                          onTap: _busy ? null : () => _pickAmount('Другой способ'),
+                          onTap: () => _openLink('Другой способ'),
                         ),
                       ],
                     ),
                   ),
+                  if (_linked.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 116,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        children: [
+                          for (final c in _linked) ...[
+                            _MethodTile(
+                              name: c.provider,
+                              asset: _assetFor(c.provider),
+                              last4: c.last4,
+                              onTap: () => _openLink(c.provider),
+                            ),
+                            // Плитка «ещё такая же карта» рядом с привязанной.
+                            _MethodTile(
+                              name: c.provider,
+                              asset: null,
+                              onTap: () => _openLink(c.provider),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
                     'Онлайн-оплата пока не подключена. Заявка появится в истории и пополнит баланс после подтверждения.',
@@ -186,6 +236,103 @@ class _WalletSheetState extends State<_WalletSheet> {
               ),
             );
           },
+        ),
+      ),
+    ),
+    );
+  }
+}
+
+/// Форма привязки карты. Пока сохранение выключено: сохранять номер карты в приложении
+/// нельзя, привязка пойдёт через платёжного провайдера.
+class _LinkedCard {
+  const _LinkedCard(this.provider, this.last4);
+
+  final String provider;
+  final String last4;
+}
+
+class _LinkCardSheet extends StatefulWidget {
+  const _LinkCardSheet({required this.provider, this.onLinked});
+
+  final String provider;
+  // Вызывается после успешной привязки с последними 4 цифрами карты.
+  final void Function(String last4)? onLinked;
+
+  @override
+  State<_LinkCardSheet> createState() => _LinkCardSheetState();
+}
+
+class _LinkCardSheetState extends State<_LinkCardSheet> {
+  final _number = TextEditingController();
+  final _expiry = TextEditingController();
+  final _holder = TextEditingController();
+
+  @override
+  void dispose() {
+    _number.dispose();
+    _expiry.dispose();
+    _holder.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Привязать · ${widget.provider}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _number,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Номер карты',
+                hintText: '0000 0000 0000 0000',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _expiry,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Срок (ММ/ГГ)'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _holder,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(labelText: 'Имя на карте'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Сохранение станет доступно после подключения платёжного провайдера. '
+              'Номер карты в приложении не хранится: в списке будут только последние 4 цифры.',
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            const FilledButton(
+              onPressed: null,
+              child: Text('Привязать карту'),
+            ),
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Закрыть'),
+            ),
+          ],
         ),
       ),
     );
@@ -270,11 +417,12 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _MethodTile extends StatelessWidget {
-  const _MethodTile({required this.name, required this.asset, required this.onTap});
+  const _MethodTile({required this.name, required this.asset, required this.onTap, this.last4});
 
   final String name;
   final String? asset;
   final VoidCallback? onTap;
+  final String? last4;
 
   @override
   Widget build(BuildContext context) {
@@ -314,6 +462,11 @@ class _MethodTile extends StatelessWidget {
                   color: AppColors.ink,
                 ),
               ),
+              if (last4 != null)
+                Text(
+                  '*$last4',
+                  style: TextStyle(color: AppColors.muted, fontSize: 11),
+                ),
             ],
           ),
         ),
