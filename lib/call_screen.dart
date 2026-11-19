@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:js_interop';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,32 +6,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'call_widgets.dart';
 import 'lang_store.dart';
+import 'platform_bridge.dart';
 
 // Мост к web/agora.js (Agora Web SDK).
-@JS('agoraJoin')
-external JSPromise<JSBoolean> _jsJoin(JSString appId, JSString channel, JSString token, JSNumber uid);
 
-@JS('agoraSetMic')
-external JSPromise<JSBoolean> _jsSetMic(JSBoolean on);
-
-@JS('agoraLeave')
-external JSPromise<JSBoolean> _jsLeave();
-
-@JS('agoraIsConnected')
-external JSBoolean _jsIsConnected();
-
-@JS('agoraPrepareAudio')
-external void _jsPrepareAudio();
-
-// Гудки у звонящего (web/agora.js).
-@JS('agoraBackStart')
-external void _jsBackStart();
-
-@JS('agoraBackStop')
-external void _jsBackStop();
-
-@JS('agoraLevel')
-external JSNumber _jsLevel();
 
 /// Канал одинаков для двух собеседников: собирается из их id (отсортированных),
 /// поэтому оба попадают в одну комнату, если открыли звонок.
@@ -101,7 +78,7 @@ class _CallScreenState extends State<CallScreen> {
     activeCallChannel = widget.channel;
     // Звук разрешаем сразу, пока действие пользователя ещё «живое» (иначе iPhone заглушит гудки).
     try {
-      _jsPrepareAudio();
+      agoraPrepareAudio();
     } catch (_) {}
     _start();
   }
@@ -111,12 +88,12 @@ class _CallScreenState extends State<CallScreen> {
       final res = await Supabase.instance.client.functions
           .invoke('agora-token', body: {'channel': widget.channel});
       final data = Map<String, dynamic>.from(res.data as Map);
-      await _jsJoin(
-        (data['appId'] as String).toJS,
-        widget.channel.toJS,
-        (data['token'] as String).toJS,
-        (data['uid'] as num).toDouble().toJS,
-      ).toDart;
+      await agoraJoin(
+        data['appId'] as String,
+        widget.channel,
+        data['token'] as String,
+        (data['uid'] as num).toInt(),
+      );
       if (!mounted) return;
       setState(() => _joined = true);
       _startBack();
@@ -137,7 +114,7 @@ class _CallScreenState extends State<CallScreen> {
     if (_backOn) return;
     _backOn = true;
     try {
-      _jsBackStart();
+      agoraBackStart();
     } catch (_) {
       // Звук недоступен: звонок работает без гудков.
     }
@@ -147,7 +124,7 @@ class _CallScreenState extends State<CallScreen> {
     if (!_backOn) return;
     _backOn = false;
     try {
-      _jsBackStop();
+      agoraBackStop();
     } catch (_) {}
   }
 
@@ -156,7 +133,7 @@ class _CallScreenState extends State<CallScreen> {
     if (!mounted || !_joined) return;
     double raw = 0;
     try {
-      raw = _jsLevel().toDartDouble;
+      raw = agoraLevel();
     } catch (_) {}
     // Фоновый шум ниже порога не считаем голосом; плавно поднимаем и опускаем столбики.
     final target = ((raw - 0.05) / 0.35).clamp(0.0, 1.0);
@@ -169,7 +146,7 @@ class _CallScreenState extends State<CallScreen> {
   /// Раз в секунду: ответил ли собеседник, его статус и таймер.
   Future<void> _tick(Timer _) async {
     if (!mounted || !_joined) return;
-    if (_connectedAt == null && _jsIsConnected().toDart) {
+    if (_connectedAt == null && agoraIsConnected()) {
       _connectedAt = DateTime.now();
       _stopBack();
     }
@@ -195,7 +172,7 @@ class _CallScreenState extends State<CallScreen> {
   Future<void> _toggleMic() async {
     if (!_joined) return;
     final next = !_muted;
-    await _jsSetMic(next.toJS).toDart;
+    await agoraSetMic(next);
     if (mounted) setState(() => _muted = next);
   }
 
@@ -242,7 +219,7 @@ class _CallScreenState extends State<CallScreen> {
     _levelTimer?.cancel();
     if (_joined) {
       try {
-        await _jsLeave().toDart;
+        await agoraLeave();
       } catch (_) {}
     }
     if (mounted) Navigator.of(context).pop();
@@ -258,7 +235,7 @@ class _CallScreenState extends State<CallScreen> {
     _level.dispose();
     if (activeCallChannel == widget.channel) activeCallChannel = null;
     if (_joined) {
-      _jsLeave().toDart.ignore();
+      agoraLeave().ignore();
     }
     super.dispose();
   }

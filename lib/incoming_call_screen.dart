@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:js_interop';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -8,14 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'call_screen.dart';
 import 'call_widgets.dart';
 import 'notify_store.dart';
+import 'platform_bridge.dart';
 
 // Мелодия и вибрация входящего звонка (web/agora.js).
-@JS('agoraRingStart')
-external void _ringStart();
-
-@JS('agoraRingStop')
-external void _ringStop();
-
 OverlayEntry? _banner;
 
 /// Входящий звонок сверху экрана. Не пропадает, пока человек не ответит или не отклонит.
@@ -58,7 +52,7 @@ class _IncomingCallBannerState extends State<_IncomingCallBanner> with SingleTic
   void initState() {
     super.initState();
     try {
-      _ringStart();
+      ringStart();
     } catch (_) {
       // Если звук не доступен, баннер всё равно работает.
     }
@@ -100,7 +94,7 @@ class _IncomingCallBannerState extends State<_IncomingCallBanner> with SingleTic
     if (_done) return;
     _done = true;
     try {
-      _ringStop();
+      ringStop();
     } catch (_) {}
   }
 
