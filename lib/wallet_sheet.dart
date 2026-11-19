@@ -131,22 +131,19 @@ class _WalletSheetState extends State<_WalletSheet> {
                     style: TextStyle(color: AppColors.muted, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.mint,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
+                  SizedBox(
+                    height: 116,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
                       children: [
-                        for (var i = 0; i < _methods.length; i++) ...[
-                          _MethodRow(
-                            name: _methods[i].$1,
-                            asset: _methods[i].$2,
-                            onTap: _busy ? null : () => _pickAmount(_methods[i].$1),
+                        for (final m in _methods)
+                          _MethodTile(
+                            name: m.$1,
+                            asset: m.$2,
+                            onTap: _busy ? null : () => _pickAmount(m.$1),
                           ),
-                          Divider(height: 1, indent: 62, color: AppColors.line),
-                        ],
-                        _MethodRow(
+                        _MethodTile(
                           name: 'Другой способ',
                           asset: null,
                           onTap: _busy ? null : () => _pickAmount('Другой способ'),
@@ -272,8 +269,8 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _MethodRow extends StatelessWidget {
-  const _MethodRow({required this.name, required this.asset, required this.onTap});
+class _MethodTile extends StatelessWidget {
+  const _MethodTile({required this.name, required this.asset, required this.onTap});
 
   final String name;
   final String? asset;
@@ -281,26 +278,44 @@ class _MethodRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: asset == null
-                  ? Icon(Icons.add_rounded, color: AppColors.title, size: 28)
-                  : Image.asset(asset!, fit: BoxFit.contain),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(name,
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink)),
-            ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.muted),
-          ],
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: 104,
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+          decoration: BoxDecoration(
+            color: AppColors.mint,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _gold.withValues(alpha: 0.7), width: 1.2),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: asset == null
+                    ? Icon(Icons.add_rounded, color: AppColors.title, size: 32)
+                    : Image.asset(asset!, fit: BoxFit.contain),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  height: 1.2,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
