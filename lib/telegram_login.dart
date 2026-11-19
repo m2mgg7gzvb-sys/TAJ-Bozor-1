@@ -46,6 +46,18 @@ Future<(String, DateTime)?> _loadPending(String key) async {
   }
 }
 
+/// Открывает мессенджер напрямую (без промежуточной веб-страницы, которая мигала белым экраном).
+/// Если приложение не открылось, открывает запасную ссылку.
+Future<void> _openMessenger(Uri primary, Uri? fallback) async {
+  try {
+    final ok = await launchUrl(primary, mode: LaunchMode.externalApplication);
+    if (ok) return;
+  } catch (_) {}
+  if (fallback != null) {
+    await launchUrl(fallback, mode: LaunchMode.externalApplication);
+  }
+}
+
 /// Ждёт подтверждения и входит. Возвращает null при успехе, 'cancelled', 'expired' или 'failed'.
 Future<String?> _waitForLogin(
   String fn,
@@ -56,7 +68,8 @@ Future<String?> _waitForLogin(
   final client = Supabase.instance.client;
   final deadline = started.add(_pendingTtl);
   while (!cancelled() && DateTime.now().isBefore(deadline)) {
-    await Future<void>.delayed(const Duration(seconds: 2));
+    final fast = DateTime.now().difference(started) < const Duration(seconds: 30);
+    await Future<void>.delayed(Duration(milliseconds: fast ? 1000 : 2000));
     if (cancelled()) return 'cancelled';
     try {
       final res = await client.functions.invoke(fn, body: {'action': 'check', 'nonce': nonce});
@@ -115,6 +128,7 @@ Future<void> _startMessengerLogin(
   required String buttonLabel,
   required IconData icon,
   required Uri Function(Map<String, dynamic> data, String nonce) linkFor,
+  Uri Function(Map<String, dynamic> data, String nonce)? fallbackFor,
 }) async {
   await rememberAuthIntent(register: register);
   final client = Supabase.instance.client;
@@ -142,7 +156,8 @@ Future<void> _startMessengerLogin(
   await _savePending(key, nonce);
 
   final link = linkFor(data, nonce);
-  await launchUrl(link, mode: LaunchMode.externalApplication);
+  final fallback = fallbackFor?.call(data, nonce);
+  await _openMessenger(link, fallback);
   if (!context.mounted) return;
 
   var dialogOpen = true;
@@ -177,9 +192,23 @@ Future<void> _startMessengerLogin(
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () => launchUrl(link, mode: LaunchMode.externalApplication),
+                onPressed: () => _openMessenger(link, fallback),
                 child: Text(buttonLabel),
               ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                ),
+                const SizedBox(width: 8),
+                Text('Ждём подтверждения…',
+                    style: TextStyle(fontSize: 13, color: AppColors.muted)),
+              ],
             ),
             const SizedBox(height: 4),
             TextButton(
@@ -236,6 +265,9 @@ Future<void> startWhatsappLogin(BuildContext context, {required bool register}) 
         'Откройте чат и отправьте готовое сообщение. Потом вернитесь сюда: вход выполнится автоматически.',
     buttonLabel: 'Открыть WhatsApp',
     icon: Icons.chat_rounded,
-    linkFor: (data, nonce) => Uri.parse('https://wa.me/${data['number']}?text=login_$nonce'),
+    linkFor: (data, nonce) => Uri.parse(
+        'whatsapp://send?phone=${data['number']}&text=login_$nonce'),
+    fallbackFor: (data, nonce) => Uri.parse(
+        'https://wa.me/${data['number']}?text=login_$nonce'),
   );
 }
