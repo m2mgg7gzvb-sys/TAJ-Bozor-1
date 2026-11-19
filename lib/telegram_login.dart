@@ -304,7 +304,10 @@ Future<void> startTelegramLogin(BuildContext context, {required bool register}) 
     dialogText: 'Откройте бота и нажмите Start. Потом вернитесь сюда: вход выполнится автоматически.',
     buttonLabel: 'Открыть бота',
     icon: Icons.send_rounded,
-    linkFor: (data, nonce) => Uri.parse('https://t.me/${data['bot']}?start=login_$nonce'),
+    linkFor: (data, nonce) =>
+        Uri.parse('tg://resolve?domain=${data['bot']}&start=login_$nonce'),
+    fallbackFor: (data, nonce) =>
+        Uri.parse('https://t.me/${data['bot']}?start=login_$nonce'),
   );
 }
 
