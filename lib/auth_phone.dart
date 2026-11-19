@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -133,7 +134,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                       child: TextField(
                         controller: _phoneCtrl,
                         keyboardType: TextInputType.phone,
-                        maxLength: 11,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(9),
+                    ],
                         decoration: InputDecoration(
                           counterText: '',
                           hintText: '90 000 00 00',

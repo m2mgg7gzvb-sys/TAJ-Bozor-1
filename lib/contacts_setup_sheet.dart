@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'green_button.dart';
+import 'phone_input.dart';
 import 'seller_contacts.dart';
 import 'theme.dart';
 
@@ -157,6 +158,7 @@ class _ContactsSetupSheetState extends State<_ContactsSetupSheet> {
             TextField(
               controller: _phone,
               keyboardType: TextInputType.phone,
+              inputFormatters: [PhoneLimitFormatter()],
               decoration: InputDecoration(
                 labelText: 'Прямой номер',
                 hintText: '+992900000000',
@@ -168,6 +170,7 @@ class _ContactsSetupSheetState extends State<_ContactsSetupSheet> {
             TextField(
               controller: _whatsapp,
               keyboardType: TextInputType.phone,
+              inputFormatters: [PhoneLimitFormatter()],
               decoration: InputDecoration(
                 labelText: 'WhatsApp',
                 hintText: '+992900000000 или +79001234567',
