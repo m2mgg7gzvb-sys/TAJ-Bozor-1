@@ -109,7 +109,11 @@ jobs:
           PY
 
       - name: Собрать release APK
-        run: flutter build apk --release
+        run: |
+          # versionCode должен расти с каждой сборкой (RuStore отклоняет меньший или равный).
+          # Берём минуты с 1970 года: всегда больше предыдущих и меньше лимита Android.
+          BUILD_NUMBER=$(( $(date +%s) / 60 ))
+          flutter build apk --release --build-number=$BUILD_NUMBER
 
       - name: Подписать ключом TAJ Bozor
         env:
