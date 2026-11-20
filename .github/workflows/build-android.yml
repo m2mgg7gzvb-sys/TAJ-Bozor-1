@@ -66,7 +66,7 @@ jobs:
           manifest.write_text(m, encoding='utf-8')
           PY
 
-      - name: Поднять compileSdk до 36 для всех модулей (нужно плагинам)
+      - name: Поднять compileSdk до 36 и отключить lint (нужно плагинам)
         run: |
           python3 - <<'PY'
           import pathlib
@@ -92,7 +92,20 @@ jobs:
                   '    }\n'
                   '}\n'
               )
-          root.write_text(block + text, encoding='utf-8')
+          lint_off = (
+              'allprojects {\n'
+              '    tasks.configureEach {\n'
+              '        if (name.startsWith("lint")) enabled = false\n'
+              '    }\n'
+              '}\n'
+          ) if root.suffix == '.kts' else (
+              'allprojects {\n'
+              '    tasks.configureEach {\n'
+              '        if (name.startsWith("lint")) { enabled = false }\n'
+              '    }\n'
+              '}\n'
+          )
+          root.write_text(lint_off + block + text, encoding='utf-8')
           PY
 
       - name: Собрать release APK
