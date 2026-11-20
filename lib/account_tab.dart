@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:image_picker/image_picker.dart';
 
+import 'about_page.dart';
 import 'auth_screen.dart';
 import 'avatar_crop_screen.dart';
 import 'copy_id.dart';
@@ -273,6 +274,13 @@ class _ProfilePageState extends State<_ProfilePage> {
                       title: tr('Условия использования', 'Шартҳои истифода'),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const TermsPage()),
+                      ),
+                    ),
+                    _MenuTile(
+                      icon: Icons.info_outline,
+                      title: tr('О приложении', 'Дар бораи барнома'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AboutPage()),
                       ),
                     ),
                   ],

@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'car_catalog.dart';
+import 'car_generations.dart';
 import 'city_store.dart';
 import 'confirm_delete.dart';
 import 'map_picker.dart';
@@ -767,12 +768,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           _generationCtrl.text = '';
         },
       ),
-      if ((_catalog[_brandCtrl.text]?[_modelCtrl.text] ?? const <String>[]).isNotEmpty) ...[
+      if (carGenerationsFor(_brandCtrl.text, _modelCtrl.text).isNotEmpty) ...[
         const SizedBox(height: 12),
         _pick(
           'Поколение',
           _generationCtrl.text,
-          _catalog[_brandCtrl.text]![_modelCtrl.text]!,
+          carGenerationsFor(_brandCtrl.text, _modelCtrl.text),
           (v) => _generationCtrl.text = v,
         ),
         if (_generationCtrl.text.isNotEmpty)
