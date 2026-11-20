@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'block_store.dart';
 import 'car_catalog.dart';
+import 'car_generations.dart';
 import 'location_helper.dart';
 import 'city_store.dart';
 import 'lang_store.dart';
@@ -279,6 +280,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
       }
       final techModel = _techFilters['model'];
       if (_techCar && techModel != null) query = query.eq('details->>model', techModel);
+      final techGen = _techFilters['generation'];
+      if (_techCar && techGen != null) query = query.eq('details->>generation', techGen);
       final tMin = num.tryParse(_priceMinCtrl.text.trim());
       if (tMin != null) query = query.gte('price', tMin);
       final tMax = num.tryParse(_priceMaxCtrl.text.trim());
@@ -1570,6 +1573,12 @@ class _ListingsScreenState extends State<ListingsScreen> {
                 active: _techFilters['model'] != null,
                 onTap: () => _thenReload(_pickTechModel),
               ),
+            if (_techCar && f.key == 'brand' && _techGenerations.isNotEmpty)
+              _chip(
+                _techFilters['generation'] ?? 'Поколение',
+                active: _techFilters['generation'] != null,
+                onTap: () => _thenReload(_pickTechGeneration),
+              ),
           ],
           _chip(
             priceText == null ? 'Цена' : 'Цена: $priceText',
@@ -1661,6 +1670,14 @@ class _ListingsScreenState extends State<ListingsScreen> {
                           () => pick(_pickTechModel),
                         ),
                       ],
+                      if (_techCar && f.key == 'brand' && _techGenerations.isNotEmpty) ...[
+                        _fLabel('Поколение'),
+                        _fBox(
+                          _techFilters['generation'] ?? 'Любое',
+                          _techFilters['generation'] != null,
+                          () => pick(_pickTechGeneration),
+                        ),
+                      ],
                   ],
                   _fLabel('Сортировка'),
                   _fChips(
@@ -1724,6 +1741,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
     );
     if (model == null) return;
     setState(() {
+      // Смена модели сбрасывает поколение: старое могло относиться к другой модели.
+      _techFilters.remove('generation');
       if (model.isEmpty) {
         _techFilters.remove('model');
       } else {
@@ -1732,15 +1751,46 @@ class _ListingsScreenState extends State<ListingsScreen> {
     });
   }
 
+  /// Поколения выбранной модели из открытого набора данных (ODbL, см. car_generations.dart).
+  List<String> get _techGenerations {
+    final brand = _techFilters['brand'];
+    final model = _techFilters['model'];
+    if (brand == null || model == null) return const <String>[];
+    return carGenerationsFor(brand, model);
+  }
+
+  Future<void> _pickTechGeneration() async {
+    final gen = await _pickFromList(
+      title: 'Поколение',
+      items: _techGenerations,
+      anyLabel: 'Все поколения',
+      current: _techFilters['generation'],
+    );
+    if (gen == null) return;
+    setState(() {
+      if (gen.isEmpty) {
+        _techFilters.remove('generation');
+      } else {
+        _techFilters['generation'] = gen;
+      }
+    });
+  }
+
   void _pruneTechFilters() {
     final keys = {for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) f.key};
-    if (_techCar) keys.add('model');
+    if (_techCar) {
+      keys.add('model');
+      keys.add('generation');
+    }
     _techFilters.removeWhere((k, _) => !keys.contains(k));
     // Модель должна принадлежать выбранной марке: при смене марки старая модель сбрасывается.
     final brand = _techFilters['brand'];
     final model = _techFilters['model'];
     if (_techCar && model != null && !(_catalog[brand]?.containsKey(model) ?? false)) {
       _techFilters.remove('model');
+    }
+    if (!_techGenerations.contains(_techFilters['generation'])) {
+      _techFilters.remove('generation');
     }
   }
 
@@ -2052,7 +2102,9 @@ class _ListingsScreenState extends State<ListingsScreen> {
             }
 
             final generations = (_brand != null && _model != null)
-                ? (_catalog[_brand]?[_model] ?? <String>[])
+                ? (widget.subcategoryId == motoSubcategoryId
+                    ? (_catalog[_brand]?[_model] ?? <String>[])
+                    : carGenerationsFor(_brand!, _model!))
                 : <String>[];
 
             return Scaffold(
