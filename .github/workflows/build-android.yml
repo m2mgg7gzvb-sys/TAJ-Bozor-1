@@ -66,6 +66,35 @@ jobs:
           manifest.write_text(m, encoding='utf-8')
           PY
 
+      - name: Поднять compileSdk до 36 для всех модулей (нужно плагинам)
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          root = list(pathlib.Path('android').glob('build.gradle*'))[0]
+          text = root.read_text(encoding='utf-8')
+          if root.suffix == '.kts':
+              block = (
+                  'subprojects {\n'
+                  '    afterEvaluate {\n'
+                  '        extensions.findByName("android")?.let { ext ->\n'
+                  '            ext.javaClass.methods.first { it.name == "setCompileSdk" && it.parameterCount == 1 }.invoke(ext, 36)\n'
+                  '        }\n'
+                  '    }\n'
+                  '}\n'
+              )
+          else:
+              block = (
+                  'subprojects {\n'
+                  '    afterEvaluate { p ->\n'
+                  '        if (p.hasProperty("android")) {\n'
+                  '            p.android.compileSdkVersion 36\n'
+                  '        }\n'
+                  '    }\n'
+                  '}\n'
+              )
+          root.write_text(block + text, encoding='utf-8')
+          PY
+
       - name: Собрать release APK
         run: flutter build apk --release
 
