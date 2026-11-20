@@ -277,6 +277,8 @@ class _ListingsScreenState extends State<ListingsScreen> {
         final v = _techFilters[f.key];
         if (v != null) query = query.eq('details->>${f.key}', v);
       }
+      final techModel = _techFilters['model'];
+      if (_techCar && techModel != null) query = query.eq('details->>model', techModel);
       final tMin = num.tryParse(_priceMinCtrl.text.trim());
       if (tMin != null) query = query.gte('price', tMin);
       final tMax = num.tryParse(_priceMaxCtrl.text.trim());
@@ -1556,12 +1558,19 @@ class _ListingsScreenState extends State<ListingsScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          for (final f in fields.take(2))
+          for (final f in fields.take(2)) ...[
             _chip(
               _techFilters[f.key] ?? f.label,
               active: _techFilters[f.key] != null,
               onTap: () => _thenReload(() => _pickValue(f.label, f.options, (v) => _techFilters[f.key] = v, current: _techFilters[f.key])),
             ),
+            if (_techCar && f.key == 'brand' && _techFilters['brand'] != null)
+              _chip(
+                _techFilters['model'] ?? 'Модель',
+                active: _techFilters['model'] != null,
+                onTap: () => _thenReload(_pickTechModel),
+              ),
+          ],
           _chip(
             priceText == null ? 'Цена' : 'Цена: $priceText',
             active: priceText != null,
@@ -1644,6 +1653,14 @@ class _ListingsScreenState extends State<ListingsScreen> {
                         _techFilters[f.key] != null,
                         () => pick(() => _pickValue(f.label, f.options, (v) => _techFilters[f.key] = v, current: _techFilters[f.key])),
                       ),
+                      if (_techCar && f.key == 'brand' && _techFilters['brand'] != null) ...[
+                        _fLabel('Модель'),
+                        _fBox(
+                          _techFilters['model'] ?? 'Любая',
+                          _techFilters['model'] != null,
+                          () => pick(_pickTechModel),
+                        ),
+                      ],
                   ],
                   _fLabel('Сортировка'),
                   _fChips(
@@ -1692,9 +1709,39 @@ class _ListingsScreenState extends State<ListingsScreen> {
   }
 
   /// Убирает фильтры, которых нет в наборе выбранного типа (например, после смены типа недвижимости).
+  /// Легковые авто в технической схеме фильтров (подкатегории 11, 12, 13): у них есть марка и модель.
+  bool get _techCar => _isTech && const {11, 12, 13}.contains(_subcatId);
+
+  /// Выбор модели для технической схемы авто: список берётся из марки, выбранной в фильтре.
+  Future<void> _pickTechModel() async {
+    final brand = _techFilters['brand'];
+    final model = await _pickFromList(
+      title: 'Модель',
+      items: _catalog[brand]?.keys.toList() ?? <String>[],
+      anyLabel: 'Все модели',
+      current: _techFilters['model'],
+      popular: carPopularModels[brand] ?? const <String>[],
+    );
+    if (model == null) return;
+    setState(() {
+      if (model.isEmpty) {
+        _techFilters.remove('model');
+      } else {
+        _techFilters['model'] = model;
+      }
+    });
+  }
+
   void _pruneTechFilters() {
     final keys = {for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) f.key};
+    if (_techCar) keys.add('model');
     _techFilters.removeWhere((k, _) => !keys.contains(k));
+    // Модель должна принадлежать выбранной марке: при смене марки старая модель сбрасывается.
+    final brand = _techFilters['brand'];
+    final model = _techFilters['model'];
+    if (_techCar && model != null && !(_catalog[brand]?.containsKey(model) ?? false)) {
+      _techFilters.remove('model');
+    }
   }
 
   /// Сбрасывает фильтры подкатегории с общим набором характеристик.
