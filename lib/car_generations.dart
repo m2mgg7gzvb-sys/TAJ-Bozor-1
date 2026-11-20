@@ -1159,9 +1159,19 @@ const Map<String, Map<String, List<String>>> carGenerations = {
   },
 };
 
-/// Поколения модели. Сначала берём вручную заданные коды из [carCatalog] (к ним привязаны фото),
-/// если их нет — периоды выпуска из открытого набора данных [carGenerations]. Пусто, если данных нет.
+/// Буквенные коды поколений в формате «F (1991–2000)», источник: Википедия (английская статья по модели).
+/// Факты (коды и годы) взяты из общедоступного источника; текст статьи не копировался.
+const Map<String, Map<String, List<String>>> carGenerationCodes = {
+  'Opel': {
+    'Astra': ['L (2021–н.в.)', 'K (2015–2021)', 'J (2009–2015)', 'H (2004–2009)', 'G (1998–2009)', 'F (1991–2000)'],
+  },
+};
+
+/// Поколения модели. Приоритет: буквенные коды [carGenerationCodes], затем вручную заданные
+/// коды [carCatalog] (к ним привязаны фото), затем периоды из набора данных [carGenerations].
 List<String> carGenerationsFor(String brand, String model) {
+  final codes = carGenerationCodes[brand]?[model];
+  if (codes != null && codes.isNotEmpty) return codes;
   final curated = carCatalog[brand]?[model];
   if (curated != null && curated.isNotEmpty) return curated;
   return carGenerations[brand]?[model] ?? const <String>[];
