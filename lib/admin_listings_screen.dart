@@ -52,7 +52,47 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
 
   void _setFilter(String status) {
     _status = status;
+    _selected.clear();
     _reload();
+  }
+
+  /// Выбранные объявления для массовых действий (долгое нажатие на карточку).
+  final _selected = <String>{};
+  bool get _selecting => _selected.isNotEmpty;
+
+  void _toggleSel(String id) => setState(() {
+        if (!_selected.remove(id)) _selected.add(id);
+      });
+
+  /// Применяет одно действие ко всем выбранным объявлениям по очереди.
+  Future<void> _bulk(String status, String message, String action, {bool askNote = false}) async {
+    String? note;
+    if (askNote) {
+      note = await askReason(context, 'Причина для выбранных объявлений');
+      if (note == null) return;
+    }
+    final ids = _selected.toList();
+    var done = 0;
+    for (final id in ids) {
+      try {
+        await adminSetStatus(
+          listingId: id,
+          status: status,
+          action: action,
+          note: (note == null || note.isEmpty) ? null : note,
+        );
+        done++;
+      } catch (_) {
+        // Ошибку одного объявления пропускаем, остальные продолжаем.
+      }
+    }
+    setState(_selected.clear);
+    _reload();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$message: $done из ${ids.length}')),
+      );
+    }
   }
 
   Future<void> _set(String id, String status, String message,
@@ -80,7 +120,35 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Все объявления')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
+        title: _selecting ? Text('Выбрано: ${_selected.length}') : const Text('Все объявления'),
+        leading: _selecting
+            ? IconButton(
+                tooltip: 'Отменить выбор',
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => setState(_selected.clear),
+              )
+            : null,
+        actions: _selecting
+            ? [
+                IconButton(
+                  tooltip: 'Активировать',
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  onPressed: () => _bulk('active', 'Активировано', 'restore'),
+                ),
+                IconButton(
+                  tooltip: 'Заморозить',
+                  icon: const Icon(Icons.ac_unit_rounded),
+                  onPressed: () => _bulk('frozen', 'Заморожено', 'freeze', askNote: true),
+                ),
+                IconButton(
+                  tooltip: 'Заблокировать',
+                  icon: const Icon(Icons.block_rounded),
+                  onPressed: () => _bulk('blocked', 'Заблокировано', 'block', askNote: true),
+                ),
+              ]
+            : null,
+      ),
       body: Column(
         children: [
           const AdminDailyStats(),
@@ -154,7 +222,19 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       for (final item in items) ...[
-                        _AdminTile(
+                        GestureDetector(
+                          onLongPress: () => _toggleSel(item['id'] as String),
+                          onTap: _selecting ? () => _toggleSel(item['id'] as String) : null,
+                          child: Container(
+                            decoration: _selected.contains(item['id'])
+                                ? BoxDecoration(
+                                    border: Border.all(color: AppColors.primary, width: 2),
+                                    borderRadius: BorderRadius.circular(18),
+                                  )
+                                : null,
+                            child: AbsorbPointer(
+                              absorbing: _selecting,
+                              child: _AdminTile(
                           item: item,
                           onOpen: () => Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
@@ -180,6 +260,9 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                               _set(item['id'] as String, 'hidden', 'Объявление удалено', action: 'delete');
                             }
                           },
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 10),
                       ],
