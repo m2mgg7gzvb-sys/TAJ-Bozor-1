@@ -12,6 +12,7 @@ import 'block_store.dart';
 import 'follow_button.dart';
 import 'lang_store.dart';
 import 'theme.dart';
+import 'user_complaints.dart';
 import 'green_button.dart';
 
 /// Кружок с буквой имени или фото пользователя.
@@ -277,6 +278,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         scrolledUnderElevation: 0,
         title: Text(tr('Профиль пользователя', 'Профили корбар')),
         actions: [
+          if (_me.isNotEmpty && _me != widget.userId)
+            IconButton(
+              tooltip: tr('Пожаловаться', 'Шикоят кардан'),
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: () => showUserComplaintDialog(context, widget.userId),
+            ),
           if (_me.isNotEmpty && _me != widget.userId)
             ValueListenableBuilder<Set<String>>(
               valueListenable: BlockStore.ids,

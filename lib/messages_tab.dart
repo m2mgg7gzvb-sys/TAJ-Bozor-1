@@ -8,6 +8,7 @@ import 'admin_log.dart';
 import 'admin_broadcast_screen.dart';
 import 'admin_threads.dart';
 import 'listing_reports.dart';
+import 'user_complaints.dart';
 import 'moderation_screen.dart';
 import 'notify_store.dart';
 import 'notifications_screen.dart';
@@ -238,6 +239,15 @@ class _MessagesTabState extends State<MessagesTab> {
                     badge: _badges['rep'],
                     onTap: () => Navigator.of(context)
                         .push(MaterialPageRoute(builder: (_) => const ReportsScreen()))
+                        .then((_) => _reload()),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.person_off_outlined,
+                    title: 'Жалобы на пользователей',
+                    subtitle: 'Жалобы на профили и переписку',
+                    onTap: () => Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (_) => const UserComplaintsScreen()))
                         .then((_) => _reload()),
                   ),
                   const SizedBox(height: 10),
