@@ -1,3 +1,4 @@
+import 'lang_store.dart';
 import 'package:flutter/material.dart';
 
 import 'create_listing_screen.dart';
@@ -21,11 +22,11 @@ class AdminListingsScreen extends StatefulWidget {
   State<AdminListingsScreen> createState() => _AdminListingsScreenState();
 }
 
-const _filters = <String, String>{
-  'active': 'Активные',
-  'frozen': 'Заморожены',
-  'blocked': 'Заблокированы',
-  'hidden': 'Скрытые',
+final _filters = <String, String>{
+  'active': tr('Активные', 'Фаъол'),
+  'frozen': tr('Заморожены', 'Музд шудаанд'),
+  'blocked': tr('Заблокированы', 'Маҳдуд шудаанд'),
+  'hidden': tr('Скрытые', 'Пинҳон'),
 };
 
 class _AdminListingsScreenState extends State<AdminListingsScreen> {
@@ -70,7 +71,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
   Future<void> _bulk(String status, String message, String action, {bool askNote = false}) async {
     String? note;
     if (askNote) {
-      note = await askReason(context, 'Причина для выбранных объявлений');
+      note = await askReason(context, tr('Причина для выбранных объявлений', 'Сабаб барои эълонҳои интихобшуда'));
       if (note == null) return;
     }
     final ids = _selected.toList();
@@ -92,7 +93,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
     _reload();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$message: $done из ${ids.length}')),
+        SnackBar(content: Text(tr('$message: $done из ${ids.length}', '$message: $done аз ${ids.length}'))),
       );
     }
   }
@@ -106,7 +107,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не удалось сохранить изменение')),
+          SnackBar(content: Text(tr('Не удалось сохранить изменение', 'Захира кардани тағйирот муяссар нашуд'))),
         );
       }
     }
@@ -123,10 +124,10 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
-        title: _selecting ? Text('Выбрано: ${_selected.length}') : const Text('Все объявления'),
+        title: _selecting ? Text(tr('Выбрано: ${_selected.length}', 'Интихоб: ${_selected.length}')) : Text(tr('Все объявления', 'Ҳамаи эълонҳо')),
         leading: _selecting
             ? IconButton(
-                tooltip: 'Отменить выбор',
+                tooltip: tr('Отменить выбор', 'Бекор кардани интихоб'),
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () => setState(_selected.clear),
               )
@@ -134,19 +135,19 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
         actions: _selecting
             ? [
                 IconButton(
-                  tooltip: 'Активировать',
+                  tooltip: tr('Активировать', 'Фаъол кардан'),
                   icon: const Icon(Icons.check_circle_outline_rounded),
-                  onPressed: () => _bulk('active', 'Активировано', 'restore'),
+                  onPressed: () => _bulk('active', tr('Активировано', 'Фаъол карда шуд'), 'restore'),
                 ),
                 IconButton(
-                  tooltip: 'Заморозить',
+                  tooltip: tr('Заморозить', 'Музд кардан'),
                   icon: const Icon(Icons.ac_unit_rounded),
-                  onPressed: () => _bulk('frozen', 'Заморожено', 'freeze', askNote: true),
+                  onPressed: () => _bulk('frozen', tr('Заморожено', 'Музд шудааст'), 'freeze', askNote: true),
                 ),
                 IconButton(
-                  tooltip: 'Заблокировать',
+                  tooltip: tr('Заблокировать', 'Маҳдуд кардан'),
                   icon: const Icon(Icons.block_rounded),
-                  onPressed: () => _bulk('blocked', 'Заблокировано', 'block', askNote: true),
+                  onPressed: () => _bulk('blocked', tr('Заблокировано', 'Маҳдуд шудааст'), 'block', askNote: true),
                 ),
               ]
             : null,
@@ -176,7 +177,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
               controller: _searchCtrl,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: 'Поиск по названию',
+                hintText: tr('Поиск по названию', 'Ҷустуҷӯ аз рӯи ном'),
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: AppColors.surface,
@@ -200,7 +201,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                     return ListView(children: [
                       Padding(
                         padding: EdgeInsets.all(24),
-                        child: Text('Не удалось загрузить объявления',
+                        child: Text(tr('Не удалось загрузить объявления', 'Бор кардани эълонҳо муяссар нашуд'),
                             textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
                       ),
                     ]);
@@ -215,7 +216,7 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                     return ListView(children: [
                       Padding(
                         padding: EdgeInsets.all(24),
-                        child: Text('Ничего не найдено',
+                        child: Text(tr('Ничего не найдено', 'Чизе ёфт нашуд'),
                             textAlign: TextAlign.center, style: TextStyle(color: AppColors.muted)),
                       ),
                     ]);
@@ -242,9 +243,9 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                             MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
                           ),
                           onFreeze: () async {
-                            final note = await askReason(context, 'Заморозить объявление?');
+                            final note = await askReason(context, tr('Заморозить объявление?', 'Эълонро музд кунем?'));
                             if (note == null) return;
-                            _set(item['id'] as String, 'frozen', 'Объявление заморожено',
+                            _set(item['id'] as String, 'frozen', tr('Объявление заморожено', 'Эълон музд карда шуд'),
                                 action: 'freeze', note: note.isEmpty ? null : note);
                           },
                           onEdit: () async {
@@ -255,19 +256,19 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                             );
                             if (saved == true) _reload();
                           },
-                          onUnfreeze: () => _set(item['id'] as String, 'active', 'Объявление разморожено',
+                          onUnfreeze: () => _set(item['id'] as String, 'active', tr('Объявление разморожено', 'Эълон аз музд баромад'),
                               action: 'unfreeze'),
-                          onRestore: () => _set(item['id'] as String, 'active', 'Объявление активно',
+                          onRestore: () => _set(item['id'] as String, 'active', tr('Объявление активно', 'Эълон фаъол аст'),
                               action: 'restore'),
                           onBlock: () async {
-                            final note = await askReason(context, 'Заблокировать объявление?');
+                            final note = await askReason(context, tr('Заблокировать объявление?', 'Эълонро маҳдуд кунем?'));
                             if (note == null) return;
-                            _set(item['id'] as String, 'blocked', 'Объявление заблокировано',
+                            _set(item['id'] as String, 'blocked', tr('Объявление заблокировано', 'Эълон маҳдуд карда шуд'),
                                 action: 'block', note: note.isEmpty ? null : note);
                           },
                           onDelete: () async {
                             if (await confirmDeleteByTyping(context)) {
-                              _set(item['id'] as String, 'hidden', 'Объявление удалено', action: 'delete');
+                              _set(item['id'] as String, 'hidden', tr('Объявление удалено', 'Эълон нест карда шуд'), action: 'delete');
                             }
                           },
                               ),
@@ -318,23 +319,23 @@ class _AdminTile extends StatelessWidget {
 
     final List<Widget> statusActions = switch (status) {
       'active' => [
-          OutlinedButton(onPressed: onFreeze, child: const Text('Заморозить')),
-          OutlinedButton(onPressed: onBlock, child: const Text('Блокировать')),
+          OutlinedButton(onPressed: onFreeze, child: Text(tr('Заморозить', 'Музд кардан'))),
+          OutlinedButton(onPressed: onBlock, child: Text(tr('Блокировать', 'Маҳдуд кардан'))),
         ],
       'frozen' => [
-          GreenButton(onPressed: onUnfreeze, child: const Text('Разморозить')),
-          OutlinedButton(onPressed: onBlock, child: const Text('Блокировать')),
+          GreenButton(onPressed: onUnfreeze, child: Text(tr('Разморозить', 'Аз музд баровардан'))),
+          OutlinedButton(onPressed: onBlock, child: Text(tr('Блокировать', 'Маҳдуд кардан'))),
         ],
       'blocked' => [
-          GreenButton(onPressed: onRestore, child: const Text('Разблокировать')),
+          GreenButton(onPressed: onRestore, child: Text(tr('Разблокировать', 'Маҳдудиятро бардоштан'))),
         ],
       'hidden' => [
-          GreenButton(onPressed: onRestore, child: const Text('Вернуть')),
+          GreenButton(onPressed: onRestore, child: Text(tr('Вернуть', 'Баргардонидан'))),
         ],
       _ => <Widget>[],
     };
     final actions = <Widget>[
-      OutlinedButton(onPressed: onEdit, child: const Text('Изменить')),
+      OutlinedButton(onPressed: onEdit, child: Text(tr('Изменить', 'Таҳрир'))),
       ...statusActions,
     ];
 
@@ -388,7 +389,7 @@ class _AdminTile extends StatelessWidget {
               ...actions,
               TextButton(
                 onPressed: onDelete,
-                child: Text('Удалить', style: TextStyle(color: Colors.red.shade700)),
+                child: Text(tr('Удалить', 'Нест кардан'), style: TextStyle(color: Colors.red.shade700)),
               ),
             ],
           ),

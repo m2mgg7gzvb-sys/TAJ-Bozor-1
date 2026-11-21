@@ -1,3 +1,4 @@
+import 'lang_store.dart';
 import 'package:flutter/material.dart';
 
 import 'glass_widgets.dart';
@@ -7,22 +8,22 @@ import 'admin_threads.dart';
 import 'theme.dart';
 import 'green_button.dart';
 
-const adminActionNames = <String, String>{
-  'approve': 'Опубликовано',
-  'freeze': 'Заморожено',
-  'unfreeze': 'Разморожено',
-  'block': 'Заблокировано',
-  'unblock': 'Разблокировано',
-  'delete': 'Удалено',
-  'restore': 'Возвращено в активные',
-  'report_closed': 'Жалоба закрыта',
-  'report_block': 'Жалоба: объявление заблокировано',
-  'message': 'Сообщение администратора',
-  'profile_hide': 'Скрыто через профиль пользователя',
-  'edit': 'Изменено администратором',
-  'user_block': 'Пользователь: блокировка',
-  'user_admin_role': 'Пользователь: права админа',
-  'user_verified': 'Пользователь: бейдж «Проверено»',
+final adminActionNames = <String, String>{
+  'approve': tr('Опубликовано', 'Нашр шуд'),
+  'freeze': tr('Заморожено', 'Музд шудааст'),
+  'unfreeze': tr('Разморожено', 'Аз музд баромад'),
+  'block': tr('Заблокировано', 'Маҳдуд шудааст'),
+  'unblock': tr('Разблокировано', 'Маҳдудият бардошта шуд'),
+  'delete': tr('Удалено', 'Нест карда шуд'),
+  'restore': tr('Возвращено в активные', 'Ба фаъолон баргардонида шуд'),
+  'report_closed': tr('Жалоба закрыта', 'Шикоят пӯшида шуд'),
+  'report_block': tr('Жалоба: объявление заблокировано', 'Шикоят: эълон маҳдуд шуд'),
+  'message': tr('Сообщение администратора', 'Паёми администратор'),
+  'profile_hide': tr('Скрыто через профиль пользователя', 'Аз профили корбар пинҳон шуд'),
+  'edit': tr('Изменено администратором', 'Аз ҷониби администратор тағйир ёфт'),
+  'user_block': tr('Пользователь: блокировка', 'Корбар: маҳдуд кардан'),
+  'user_admin_role': tr('Пользователь: права админа', 'Корбар: ҳуқуқҳои админ'),
+  'user_verified': tr('Пользователь: бейдж «Проверено»', 'Корбар: нишони «Тасдиқшуда»'),
 };
 
 /// Меняет статус объявления от имени админа, сохраняет причину для владельца и пишет в журнал.
@@ -54,9 +55,9 @@ Future<void> _notifyOwner(Map<String, dynamic>? listing, String action, String? 
   final ownerId = listing?['user_id'] as String?;
   final title = (listing?['title'] as String?) ?? '';
   final texts = <String, (String, String)>{
-    'approve': ('Объявление опубликовано', '«$title» успешно прошло проверку и опубликовано.'),
-    'block': ('Объявление заблокировано', '«$title» заблокировано администрацией.${note == null ? '' : ' Причина: $note'}'),
-    'freeze': ('Объявление заморожено', '«$title» временно скрыто администрацией.${note == null ? '' : ' Причина: $note'}'),
+    'approve': (tr('Объявление опубликовано', 'Эълон нашр шуд'), tr('«$title» успешно прошло проверку и опубликовано.', '«$title» санҷишро бомуваффақият гузашт ва нашр шуд.')),
+    'block': (tr('Объявление заблокировано', 'Эълон маҳдуд карда шуд'), '«$title» заблокировано администрацией.${note == null ? '' : tr(' Причина: $note', ' Сабаб: $note')}'),
+    'freeze': (tr('Объявление заморожено', 'Эълон музд карда шуд'), '«$title» временно скрыто администрацией.${note == null ? '' : tr(' Причина: $note', ' Сабаб: $note')}'),
   };
   final t = texts[action];
   if (ownerId == null || t == null) return;
@@ -82,8 +83,8 @@ Future<void> adminSendMessage(String listingId, String text) async {
   try {
     await db.from('notifications').insert({
       'user_id': ownerId,
-      'title': 'Сообщение от администратора',
-      'body': 'По объявлению «${listing?['title'] ?? ''}»: $text',
+      'title': tr('Сообщение от администратора', 'Паём аз администратор'),
+      'body': tr('По объявлению «${listing?[\'title\'] ?? \'\'}»: $text', 'Ба эълони «${listing?[\'title\'] ?? \'\'}»: $text'),
       'is_read': false,
     });
   } catch (_) {
@@ -103,7 +104,7 @@ Future<String?> askReason(BuildContext context, String title) async {
         autofocus: true,
         maxLines: 3,
         decoration: InputDecoration(
-          hintText: 'Причина (увидит владелец, можно пропустить)',
+          hintText: tr('Причина (увидит владелец, можно пропустить)', 'Сабаб (соҳиб мебинад, метавонед гузаред)'),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
@@ -114,13 +115,13 @@ Future<String?> askReason(BuildContext context, String title) async {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           ),
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('Отмена', style: TextStyle(fontWeight: FontWeight.w700)),
+          child: Text(tr('Отмена', 'Бекор'), style: TextStyle(fontWeight: FontWeight.w700)),
         ),
         GreenButton(
 height: 50,
 
           onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-          child: const Text('Далее', style: TextStyle(fontWeight: FontWeight.w700)),
+          child: Text(tr('Далее', 'Идома'), style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     ),
@@ -166,7 +167,7 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Журнал действий')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: Text(tr('Журнал действий', 'Журнали амалҳо'))),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _future,
         builder: (context, snap) {
@@ -174,11 +175,11 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError) {
-            return const Center(child: Text('Не удалось загрузить журнал'));
+            return Center(child: Text(tr('Не удалось загрузить журнал', 'Бор кардани журнал муяссар нашуд')));
           }
           final items = snap.data ?? const [];
           if (items.isEmpty) {
-            return Center(child: Text('Действий пока нет', style: TextStyle(color: AppColors.muted)));
+            return Center(child: Text(tr('Действий пока нет', 'Ҳоло амал нест'), style: TextStyle(color: AppColors.muted)));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -203,17 +204,17 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${e['admin_name'] ?? 'Админ'} · ${e['admin_public_id'] ?? '—'}',
+                    Text('${e['admin_name'] ?? tr('Админ', 'Админ')} · ${e['admin_public_id'] ?? '—'}',
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                     Text(adminActionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
                     if (e['from_value'] != null || e['to_value'] != null)
                       Text('${e['from_value'] ?? '—'} → ${e['to_value'] ?? '—'}',
                           style: const TextStyle(fontSize: 13)),
                     if (listingId != null)
-                      Text('Объявление: ${e['listing_public_id'] ?? e['no'] ?? '—'}',
+                      Text(tr('Объявление: ${e[\'listing_public_id\'] ?? e[\'no\'] ?? \'—\'}', 'Эълон: ${e[\'listing_public_id\'] ?? e[\'no\'] ?? \'—\'}'),
                           style: TextStyle(color: AppColors.muted, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
-                      Text(action == 'message' ? note : 'Причина: $note', style: const TextStyle(fontSize: 13)),
+                      Text(action == 'message' ? note : tr('Причина: $note', 'Сабаб: $note'), style: TextStyle(fontSize: 13)),
                     Text(date, style: TextStyle(color: AppColors.muted, fontSize: 12)),
                   ],
                 ),

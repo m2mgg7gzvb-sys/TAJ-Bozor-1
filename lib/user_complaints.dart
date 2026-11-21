@@ -6,7 +6,7 @@ import 'lang_store.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
-const _userReasons = ['Мошенничество', 'Оскорбления', 'Спам', 'Фейковый профиль', 'Другое'];
+_userReasons = [tr('Мошенничество', 'Фиребгарӣ'), tr('Оскорбления', 'Таҳқир'), tr('Спам', 'Спам'), tr('Фейковый профиль', 'Профили қалбакӣ'), tr('Другое', 'Дигар')];
 
 /// Окно жалобы на пользователя. Сохраняет жалобу в таблицу complaints.
 Future<void> showUserComplaintDialog(BuildContext context, String userId) async {
@@ -92,7 +92,7 @@ class _UserComplaintsScreenState extends State<UserComplaintsScreen> {
       _reload();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Не удалось закрыть жалобу')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Не удалось закрыть жалобу', 'Пӯшидани шикоят муяссар нашуд'))));
       }
     }
   }
@@ -100,7 +100,7 @@ class _UserComplaintsScreenState extends State<UserComplaintsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Жалобы на пользователей')),
+      appBar: AppBar(title: Text(tr('Жалобы на пользователей', 'Шикоятҳо ба корбарон'))),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
         child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -110,13 +110,13 @@ class _UserComplaintsScreenState extends State<UserComplaintsScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              return const Center(child: Text('Не удалось загрузить жалобы'));
+              return Center(child: Text(tr('Не удалось загрузить жалобы', 'Бор кардани шикоятҳо муяссар нашуд')));
             }
             final rows = snap.data ?? const [];
             if (rows.isEmpty) {
               return ListView(children: [
                 const SizedBox(height: 120),
-                Center(child: Text('Открытых жалоб нет', style: TextStyle(color: AppColors.muted))),
+                Center(child: Text(tr('Открытых жалоб нет', 'Шикоятҳои кушода нест'), style: TextStyle(color: AppColors.muted))),
               ]);
             }
             return ListView.separated(
@@ -125,7 +125,7 @@ class _UserComplaintsScreenState extends State<UserComplaintsScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, i) {
                 final r = rows[i];
-                final name = ((r['target'] as Map?)?['name'] as String?) ?? 'Пользователь';
+                final name = ((r['target'] as Map?)?['name'] as String?) ?? tr('Пользователь', 'Корбар');
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(14),
@@ -146,12 +146,12 @@ class _UserComplaintsScreenState extends State<UserComplaintsScreen> {
                                   MaterialPageRoute(builder: (_) => UserProfileScreen(userId: uid)),
                                 );
                               },
-                              child: const Text('Профиль'),
+                              child: Text(tr('Профиль', 'Профил')),
                             ),
                             const Spacer(),
                             TextButton(
                               onPressed: () => _close(r['id'] as String),
-                              child: const Text('Закрыть'),
+                              child: Text(tr('Закрыть', 'Пӯшидан')),
                             ),
                           ],
                         ),
