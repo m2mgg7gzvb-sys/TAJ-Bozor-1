@@ -46,3 +46,29 @@ List<String> photoUrls(Map<String, dynamic> item) {
           .getPublicUrl(img['path'] as String),
   ];
 }
+
+/// Добавляет каждой карточке средний рейтинг продавца (`seller_rating`: avg, count).
+/// Один запрос на всю страницу; при ошибке карточки просто без рейтинга.
+Future<void> attachSellerRatings(List<Map<String, dynamic>> items) async {
+  final ids = items.map((e) => e['user_id']).whereType<String>().toSet().toList();
+  if (ids.isEmpty) return;
+  try {
+    final rows = await Supabase.instance.client
+        .from('reviews')
+        .select('reviewed_id, rating')
+        .inFilter('reviewed_id', ids);
+    final sum = <String, int>{};
+    final cnt = <String, int>{};
+    for (final r in rows) {
+      final id = r['reviewed_id'] as String?;
+      if (id == null) continue;
+      sum[id] = (sum[id] ?? 0) + ((r['rating'] as num?)?.toInt() ?? 0);
+      cnt[id] = (cnt[id] ?? 0) + 1;
+    }
+    for (final it in items) {
+      final uid = it['user_id'] as String?;
+      if (uid == null || cnt[uid] == null) continue;
+      it['seller_rating'] = {'avg': sum[uid]! / cnt[uid]!, 'count': cnt[uid]};
+    }
+  } catch (_) {}
+}

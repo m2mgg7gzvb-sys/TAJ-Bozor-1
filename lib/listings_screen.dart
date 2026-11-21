@@ -318,6 +318,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
     };
     final rows = await query.order(order.$1, ascending: order.$2).limit(100);
     final items = List<Map<String, dynamic>>.from(rows);
+    await attachSellerRatings(items);
     if (_isTech) {
       final rangeChecks = <(String, num?, num?)>[];
       for (final f in techFieldsFor(widget.categoryId ?? -1, _subcatId, _techFilters['property_type'])) {
