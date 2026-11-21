@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{bg1}}"/>
+      <stop offset="1" stop-color="{{bg2}}"/>
+    </linearGradient>
+    <linearGradient id="case" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="{{a}}"/>
+      <stop offset="1" stop-color="{{b}}"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="318" cy="92" r="42" fill="#FFFFFF" opacity="0.4"/>
+  <circle cx="80" cy="300" r="52" fill="#FFFFFF" opacity="0.22"/>
+  <rect y="316" width="400" height="84" fill="#000000" opacity="0.08"/>
+  <ellipse cx="200" cy="330" rx="130" ry="11" fill="#000000" opacity="0.2"/>
+  <path d="M158 178 L158 150 Q158 130 178 130 L222 130 Q242 130 242 150 L242 178" fill="none" stroke="#1E2A26" stroke-width="14" stroke-linecap="round"/>
+  <rect x="92" y="170" width="216" height="154" rx="22" fill="url(#case)"/>
+  <rect x="92" y="232" width="216" height="8" fill="#000000" opacity="0.14"/>
+  <rect x="180" y="218" width="40" height="34" rx="8" fill="#F5D26B"/>
+  <rect x="194" y="228" width="12" height="14" rx="3" fill="#B5891A"/>
+  <rect x="92" y="170" width="216" height="26" rx="14" fill="#FFFFFF" opacity="0.16"/>
+</svg>
