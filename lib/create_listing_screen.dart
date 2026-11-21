@@ -28,10 +28,13 @@ final _carYears = carYears;
 
 /// Подача объявления: категория, описание, цена, город, фото и для авто — характеристики.
 class CreateListingScreen extends StatefulWidget {
-  const CreateListingScreen({super.key, this.listing});
+  const CreateListingScreen({super.key, this.listing, this.adminEdit = false});
 
   /// Если передано — экран открывается для правки уже опубликованного объявления.
   final Map<String, dynamic>? listing;
+
+  /// Правка админом: статус и телефон владельца не меняются, всё пишется в журнал.
+  final bool adminEdit;
 
   @override
   State<CreateListingScreen> createState() => _CreateListingScreenState();
@@ -346,7 +349,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       case 'city':
         return _cityCtrl.text.trim().isEmpty;
       case 'phone':
-        return _phoneCtrl.text.length != 9;
+        return !widget.adminEdit && _phoneCtrl.text.length != 9;
       case 'photos':
         return widget.listing == null && _photos.isEmpty;
       case 'brand':
@@ -519,7 +522,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       return _fail('Заполните поля, выделенные красным');
     }
     if (title.length < 3) return _fail('Название — от 3 символов');
-    if (_phoneCtrl.text.length != 9) return _fail('Номер телефона: +992 и 9 цифр');
+    if (!widget.adminEdit && _phoneCtrl.text.length != 9) return _fail('Номер телефона: +992 и 9 цифр');
     if (_isAuto) {
       final yearText = _yearCtrl.text.trim();
       final year = int.tryParse(yearText);
@@ -537,12 +540,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     try {
       final db = Supabase.instance.client;
       // Телефон сохраняем в профиле: по нему с объявлением связываются покупатели.
-      await db.from('profiles').update({'phone': '+992${_phoneCtrl.text}'}).eq('id', user.id);
+      if (!widget.adminEdit) {
+        await db.from('profiles').update({'phone': '+992${_phoneCtrl.text}'}).eq('id', user.id);
+      }
       final editing = widget.listing;
       if (editing != null) {
         // Правка: фото не меняем, обновляем только текстовые поля и характеристики.
         await db.from('listings').update({
-          'status': 'moderation',
+          if (!widget.adminEdit) 'status': 'moderation',
           'category_id': _categoryId,
           'subcategory_id': _subcategoryId,
           'title': title,

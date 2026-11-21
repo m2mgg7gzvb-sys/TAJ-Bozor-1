@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'create_listing_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'listing_detail_screen.dart';
@@ -245,6 +247,14 @@ class _AdminListingsScreenState extends State<AdminListingsScreen> {
                             _set(item['id'] as String, 'frozen', 'Объявление заморожено',
                                 action: 'freeze', note: note.isEmpty ? null : note);
                           },
+                          onEdit: () async {
+                            final saved = await Navigator.of(context).push<bool>(
+                              MaterialPageRoute(
+                                builder: (_) => CreateListingScreen(listing: item, adminEdit: true),
+                              ),
+                            );
+                            if (saved == true) _reload();
+                          },
                           onUnfreeze: () => _set(item['id'] as String, 'active', 'Объявление разморожено',
                               action: 'unfreeze'),
                           onRestore: () => _set(item['id'] as String, 'active', 'Объявление активно',
@@ -287,7 +297,10 @@ class _AdminTile extends StatelessWidget {
     required this.onRestore,
     required this.onBlock,
     required this.onDelete,
+    required this.onEdit,
   });
+
+  final VoidCallback onEdit;
 
   final Map<String, dynamic> item;
   final VoidCallback onOpen;
@@ -303,7 +316,7 @@ class _AdminTile extends StatelessWidget {
     final photo = photoUrl(item);
     final city = (item['city'] as String?) ?? '';
 
-    final List<Widget> actions = switch (status) {
+    final List<Widget> statusActions = switch (status) {
       'active' => [
           OutlinedButton(onPressed: onFreeze, child: const Text('Заморозить')),
           OutlinedButton(onPressed: onBlock, child: const Text('Блокировать')),
@@ -320,6 +333,10 @@ class _AdminTile extends StatelessWidget {
         ],
       _ => <Widget>[],
     };
+    final actions = <Widget>[
+      OutlinedButton(onPressed: onEdit, child: const Text('Изменить')),
+      ...statusActions,
+    ];
 
     return Container(
       padding: const EdgeInsets.all(12),
