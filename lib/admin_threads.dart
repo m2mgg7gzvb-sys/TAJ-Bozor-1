@@ -1,3 +1,4 @@
+import 'lang_store.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,14 +12,14 @@ import 'glass_widgets.dart';
 import 'theme.dart';
 import 'green_button.dart';
 
-const _statusNames = <String, String>{
-  'active': 'Активно',
-  'moderation': 'На проверке',
-  'frozen': 'Заморожено',
-  'blocked': 'Заблокировано',
-  'hidden': 'Скрыто',
-  'expired': 'Срок истёк',
-  'sold': 'Продано',
+final _statusNames = <String, String>{
+  'active': tr('Активно', 'Фаъол'),
+  'moderation': tr('На проверке', 'Санҷиш дар ҷараён'),
+  'frozen': tr('Заморожено', 'Музд шудааст'),
+  'blocked': tr('Заблокировано', 'Маҳдуд шудааст'),
+  'hidden': tr('Скрыто', 'Пинҳон'),
+  'expired': tr('Срок истёк', 'Мӯҳлат гузашт'),
+  'sold': tr('Продано', 'Фурӯхта шуд'),
 };
 
 String _shortDate(String? raw) => (raw ?? '').replaceFirst('T', ' ').split('.').first;
@@ -61,7 +62,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
         MaterialPageRoute(builder: (_) => ListingDetailScreen(item: Map<String, dynamic>.from(row))),
       );
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть объявление')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Не удалось открыть объявление', 'Кушодани эълон муяссар нашуд'))));
     }
   }
 
@@ -97,10 +98,10 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
       );
       if (saved == true) {
         _reload();
-        _snack('Объявление изменено');
+        _snack(tr('Объявление изменено', 'Эълон тағйир ёфт'));
       }
     } catch (_) {
-      _snack('Не удалось открыть объявление для правки');
+      _snack(tr('Не удалось открыть объявление для правки', 'Барои таҳрир кушодани эълон муяссар нашуд'));
     }
   }
 
@@ -125,7 +126,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
       _reload();
       _snack(done);
     } catch (_) {
-      _snack('Не удалось сохранить изменение');
+      _snack(tr('Не удалось сохранить изменение', 'Захира кардани тағйирот муяссар нашуд'));
     }
   }
 
@@ -136,9 +137,9 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
       await adminSendMessage(widget.listingId, text);
       _msgCtrl.clear();
       _reload();
-      _snack('Сообщение отправлено владельцу');
+      _snack(tr('Сообщение отправлено владельцу', 'Паём ба соҳиб фиристода шуд'));
     } catch (_) {
-      _snack('Не удалось отправить сообщение');
+      _snack(tr('Не удалось отправить сообщение', 'Фиристодани паём муяссар нашуд'));
     }
   }
 
@@ -156,43 +157,43 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
     }
 
     final freeze = btn(
-      'Заморозить',
-      () => _act(status: 'frozen', action: 'freeze', done: 'Объявление заморожено', question: 'Заморозить объявление?'),
+      tr('Заморозить', 'Музд кардан'),
+      () => _act(status: 'frozen', action: 'freeze', done: tr('Объявление заморожено', 'Эълон музд карда шуд'), question: tr('Заморозить объявление?', 'Эълонро музд кунем?')),
     );
     final block = btn(
-      'Заблокировать',
-      () => _act(status: 'blocked', action: 'block', done: 'Объявление заблокировано', question: 'Заблокировать объявление?'),
+      tr('Заблокировать', 'Маҳдуд кардан'),
+      () => _act(status: 'blocked', action: 'block', done: tr('Объявление заблокировано', 'Эълон маҳдуд карда шуд'), question: tr('Заблокировать объявление?', 'Эълонро маҳдуд кунем?')),
     );
     final remove = btn(
-      'Удалить',
-      () => _act(status: 'hidden', action: 'delete', done: 'Объявление удалено', confirmDelete: true),
+      tr('Удалить', 'Нест кардан'),
+      () => _act(status: 'hidden', action: 'delete', done: tr('Объявление удалено', 'Эълон нест карда шуд'), confirmDelete: true),
       danger: true,
     );
 
     return switch (status) {
       'active' => [freeze, block, remove],
       'frozen' => [
-          btn('Разморозить',
-              () => _act(status: 'active', action: 'unfreeze', done: 'Объявление разморожено'),
+          btn(tr('Разморозить', 'Аз музд баровардан'),
+              () => _act(status: 'active', action: 'unfreeze', done: tr('Объявление разморожено', 'Эълон аз музд баромад')),
               filled: true),
           block,
           remove,
         ],
       'blocked' => [
-          btn('Разблокировать',
-              () => _act(status: 'active', action: 'unblock', done: 'Объявление разблокировано'),
+          btn(tr('Разблокировать', 'Маҳдудиятро бардоштан'),
+              () => _act(status: 'active', action: 'unblock', done: tr('Объявление разблокировано', 'Эълон аз маҳдудият баромад')),
               filled: true),
           remove,
         ],
       'moderation' => [
-          btn('Опубликовать',
-              () => _act(status: 'active', action: 'approve', done: 'Объявление опубликовано'),
+          btn(tr('Опубликовать', 'Нашр кардан'),
+              () => _act(status: 'active', action: 'approve', done: tr('Объявление опубликовано', 'Эълон нашр шуд')),
               filled: true),
           block,
         ],
       'hidden' => [
-          btn('Вернуть в активные',
-              () => _act(status: 'active', action: 'restore', done: 'Объявление возвращено'),
+          btn(tr('Вернуть в активные', 'Ба фаъолон баргардонидан'),
+              () => _act(status: 'active', action: 'restore', done: tr('Объявление возвращено', 'Эълон ба фаъолон баргардонида шуд')),
               filled: true),
         ],
       _ => [block],
@@ -209,10 +210,10 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
-        title: const Text('Объявление'),
+        title: Text(tr('Объявление', 'Эълон')),
         actions: [
           IconButton(
-            tooltip: 'Открыть объявление',
+            tooltip: tr('Открыть объявление', 'Кушодани эълон'),
             icon: const Icon(Icons.open_in_new_rounded),
             onPressed: _openListing,
           ),
@@ -225,7 +226,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError || snap.data == null) {
-            return const Center(child: Text('Не удалось загрузить переписку'));
+            return Center(child: Text(tr('Не удалось загрузить переписку', 'Бор кардани мукотибот муяссар нашуд')));
           }
           final data = snap.data!;
           final listing = data.listing;
@@ -243,14 +244,14 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            listing == null ? 'Объявление не найдено' : ((listing['title'] as String?) ?? ''),
+                            listing == null ? tr('Объявление не найдено', 'Эълон ёфт нашуд') : ((listing['title'] as String?) ?? ''),
                             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                           ),
                           if (listing != null) ...[
                             const SizedBox(height: 4),
                             Text(priceText(listing),
                                 style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
-                            Text('Статус: ${_statusNames[status] ?? status}',
+                            Text(tr('Статус: ${_statusNames[status] ?? status}', 'Ҳолат: ${_statusNames[status] ?? status}'),
                                 style: TextStyle(color: AppColors.muted, fontSize: 13)),
                           ],
                           const SizedBox(height: 6),
@@ -261,7 +262,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                     ),
                     const SizedBox(height: 14),
                     if (data.logs.isEmpty)
-                      Text('Записей пока нет', style: TextStyle(color: AppColors.muted)),
+                      Text(tr('Записей пока нет', 'Ҳоло сабт нест'), style: TextStyle(color: AppColors.muted)),
                     for (final e in data.logs) ...[
                       _Bubble(
                         action: (e['action'] as String?) ?? '',
@@ -278,7 +279,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                   color: AppColors.surface,
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                   child: Wrap(spacing: 8, runSpacing: 8, children: [
-                    OutlinedButton(onPressed: _editListing, child: const Text('Изменить')),
+                    OutlinedButton(onPressed: _editListing, child: Text(tr('Изменить', 'Таҳрир'))),
                     ..._actionButtons(status),
                   ]),
                 ),
@@ -293,7 +294,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                         minLines: 1,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: 'Написать владельцу от имени администратора',
+                          hintText: tr('Написать владельцу от имени администратора', 'Аз номи администратор ба соҳиб нависед'),
                           isDense: true,
                           filled: true,
                           fillColor: AppColors.background,
@@ -306,7 +307,7 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton.filled(
-                      tooltip: 'Отправить',
+                      tooltip: tr('Отправить', 'Фиристодан'),
                       onPressed: _send,
                       icon: const Icon(Icons.send_rounded),
                     ),
@@ -345,7 +346,7 @@ class _Bubble extends StatelessWidget {
             children: [
               const Icon(Icons.shield_outlined, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
-              const Text('Администратор',
+              Text(tr('Администратор', 'Администратор'),
                   style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 13)),
             ],
           ),
@@ -353,7 +354,7 @@ class _Bubble extends StatelessWidget {
           Text(adminActionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
           if (hasNote) ...[
             const SizedBox(height: 2),
-            Text(isMessage ? note! : 'Причина: $note', style: const TextStyle(fontSize: 14)),
+            Text(isMessage ? note! : tr('Причина: $note', 'Сабаб: $note'), style: TextStyle(fontSize: 14)),
           ],
           const SizedBox(height: 4),
           Text(date, style: TextStyle(color: AppColors.muted, fontSize: 12)),
@@ -398,7 +399,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
             .maybeSingle();
         if (!mounted) return;
         if (conv == null) {
-          messenger.showSnackBar(const SnackBar(content: Text('Чат с таким ID не найден')));
+          messenger.showSnackBar(SnackBar(content: Text(tr('Чат с таким ID не найден', 'Чат бо ин ID ёфт нашуд'))));
           return;
         }
         final ids = [conv['buyer_id'], conv['seller_id']].whereType<String>().toList();
@@ -416,9 +417,9 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Тип: ${conv['kind'] ?? '—'}', style: TextStyle(color: AppColors.muted)),
+                Text(tr('Тип: ${conv[\'kind\'] ?? \'—\'}', 'Намуд: ${conv[\'kind\'] ?? \'—\'}'), style: TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 12),
-                for (final entry in [('Покупатель', conv['buyer_id']), ('Продавец', conv['seller_id'])])
+                for (final entry in [(tr('Покупатель', 'Харидор'), conv['buyer_id']), (tr('Продавец', 'Фурӯшанда'), conv['seller_id'])])
                   if (entry.$2 is String && byId[entry.$2 as String] != null)
                     OutlinedButton(
                       onPressed: () {
@@ -434,7 +435,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                     ),
               ],
             ),
-            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Закрыть'))],
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('Закрыть', 'Пӯшидан')))],
           ),
         );
         _idCtrl.clear();
@@ -445,7 +446,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
         final prof = await _db.from('profiles').select('id').eq('public_id', code).maybeSingle();
         if (!mounted) return;
         if (prof == null) {
-          messenger.showSnackBar(const SnackBar(content: Text('Аккаунт с таким ID не найден')));
+          messenger.showSnackBar(SnackBar(content: Text(tr('Аккаунт с таким ID не найден', 'Ҳисоб бо ин ID ёфт нашуд'))));
           return;
         }
         final userId = prof['id'] as String;
@@ -460,7 +461,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
           : await _db.from('listings').select('id').eq('id', id).maybeSingle();
       if (!mounted) return;
       if (row == null) {
-        messenger.showSnackBar(const SnackBar(content: Text('Объявление с таким ID не найдено')));
+        messenger.showSnackBar(SnackBar(content: Text(tr('Объявление с таким ID не найдено', 'Эълон бо ин ID ёфт нашуд'))));
         return;
       }
       final uuid = row['id'] as String;
@@ -469,7 +470,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
       );
       _idCtrl.clear();
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('Проверьте ID объявления')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Проверьте ID объявления', 'ID-и эълонро санҷед'))));
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -484,7 +485,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: const Text('Поиск по ID')),
+        titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),title: Text(tr('Поиск по ID', 'Ҷустуҷӯ бо ID'))),
       body: Column(
         children: [
           Padding(
@@ -498,7 +499,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   onSubmitted: (_) => _search(),
                   style: const TextStyle(color: AppColors.onLight),
                   decoration: InputDecoration(
-                    hintText: 'Например OB-1A2B3C4D, PR-1A2B3C4D или CH-1A2B3C4D',
+                    hintText: tr('Например OB-1A2B3C4D, PR-1A2B3C4D или CH-1A2B3C4D', 'Масалан OB-1A2B3C4D, PR-1A2B3C4D ё CH-1A2B3C4D'),
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: const Color(0xFFE6ECEA),
@@ -513,7 +514,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                 const SizedBox(height: 10),
                 GreenButton(
                   onPressed: _searching ? null : _search,
-                  child: const Text('Найти'),
+                  child: Text(tr('Найти', 'Ёфтан')),
                 ),
               ],
             ),
@@ -526,12 +527,12 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
                   Icon(Icons.shield_outlined, size: 72, color: AppColors.primary),
                   SizedBox(height: 16),
                   Text(
-                    'Поиск по ID',
+                    tr('Поиск по ID', 'Ҷустуҷӯ бо ID'),
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Введите ID объявления (OB-…) или аккаунта (PR-…),\nчтобы открыть его',
+                    tr('Введите ID объявления (OB-…) или аккаунта (PR-…),\nчтобы открыть его', 'ID-и эълон (OB-…) ё ҳисоби (PR-…)-ро ворид кунед,\nто кушода шавад'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.muted),
                   ),

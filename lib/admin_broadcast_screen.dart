@@ -1,3 +1,4 @@
+import 'lang_store.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,17 +30,17 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
     final body = _bodyCtrl.text.trim();
     final messenger = ScaffoldMessenger.of(context);
     if (title.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('Введите заголовок')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Введите заголовок', 'Сарлавҳаро ворид кунед'))));
       return;
     }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Отправить всем?'),
-        content: Text('«$title» получат все пользователи. Отменить будет нельзя.'),
+        title: Text(tr('Отправить всем?', 'Ба ҳама фиристем?')),
+        content: Text(tr('«$title» получат все пользователи. Отменить будет нельзя.', '«$title» ба ҳамаи корбарон мерасад. Бекор кардан мумкин нест.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-          GreenButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Отправить')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Отмена', 'Бекор'))),
+          GreenButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Отправить', 'Фиристодан'))),
         ],
       ),
     );
@@ -49,12 +50,12 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
       final n = await Supabase.instance.client
           .rpc('admin_broadcast', params: {'p_title': title, 'p_body': body});
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('Отправлено: $n')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Отправлено: $n', 'Фиристода шуд: $n'))));
       _titleCtrl.clear();
       _bodyCtrl.clear();
     } catch (_) {
       if (mounted) {
-        messenger.showSnackBar(const SnackBar(content: Text('Не удалось отправить рассылку')));
+        messenger.showSnackBar(SnackBar(content: Text(tr('Не удалось отправить рассылку', 'Фиристодани паёми умумӣ муяссар нашуд'))));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -71,7 +72,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.title),
-        title: const Text('Рассылка'),
+        title: Text(tr('Рассылка', 'Паёми умумӣ')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -80,7 +81,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             controller: _titleCtrl,
             maxLength: 100,
             decoration: InputDecoration(
-              labelText: 'Заголовок',
+              labelText: tr('Заголовок', 'Сарлавҳа'),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(borderSide: BorderSide.none),
@@ -93,7 +94,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             maxLines: 8,
             maxLength: 1000,
             decoration: InputDecoration(
-              labelText: 'Текст',
+              labelText: tr('Текст', 'Матн'),
               alignLabelWithHint: true,
               filled: true,
               fillColor: AppColors.surface,
@@ -102,7 +103,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Уведомление получат все пользователи приложения.',
+            tr('Уведомление получат все пользователи приложения.', 'Огоҳиномаро ҳамаи корбарони барнома мегиранд.'),
             style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
           const SizedBox(height: 16),
@@ -111,7 +112,7 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
             icon: _sending
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.campaign_rounded),
-            label: const Text('Отправить всем'),
+            label: Text(tr('Отправить всем', 'Ба ҳама фиристодан')),
           ),
         ],
       ),

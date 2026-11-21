@@ -1,3 +1,4 @@
+import 'lang_store.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -54,9 +55,9 @@ class _AdminDailyStatsState extends State<AdminDailyStats> {
             ),
             child: Row(
               children: [
-                _Stat(label: 'Подано', value: s?.$1, color: AppColors.primary),
-                _Stat(label: 'Одобрено', value: s?.$2, color: const Color(0xFF2E7D5B)),
-                _Stat(label: 'Заблокировано', value: s?.$3, color: const Color(0xFFC0392B)),
+                _Stat(label: tr('Подано', 'Пешниҳод шуд'), value: s?.$1, color: AppColors.primary),
+                _Stat(label: tr('Одобрено', 'Тасдиқ шуд'), value: s?.$2, color: Color(0xFF2E7D5B)),
+                _Stat(label: tr('Заблокировано', 'Маҳдуд шудааст'), value: s?.$3, color: Color(0xFFC0392B)),
               ],
             ),
           );
