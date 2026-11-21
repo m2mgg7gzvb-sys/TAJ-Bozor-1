@@ -824,7 +824,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final channel = pairChannel(me, otherId as String);
     inviteToCall(calleeId: otherId, channel: channel).then((ok) {
       if (!ok && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('Собеседник не получил уведомление о звонке. Попросите его открыть приложение', 'Суҳбатдош огоҳии занг нагирифт. Аз ӯ хоҳиш кунед, ки барномаро кушояд')),
         ));
       }
@@ -951,7 +951,7 @@ class _ChatScreenState extends State<ChatScreen> {
           if (!widget.joinMode && !widget.staffTicket && _conv?['kind'] != 'support')
             PopupMenuButton<String>(
               onSelected: (_) => _contactSupport(),
-              itemBuilder: (_) => const [
+              itemBuilder: (_) => [
                 PopupMenuItem(value: 'support', child: Text(tr('Поддержка', 'Дастгирӣ'))),
               ],
             ),
@@ -999,7 +999,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       tr('Оставьте отзыв продавцу', 'Ба фурӯшанда бознигарӣ гузоред'),
                       style: TextStyle(fontWeight: FontWeight.w700),
@@ -1355,7 +1355,7 @@ class _RecordingBar extends StatelessWidget {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => onCancel(),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.chevron_left_rounded, color: AppColors.ruby, size: 20),
