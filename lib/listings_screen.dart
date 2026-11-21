@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -86,6 +88,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
   String? _seller;
   String? _option;
   String _sort = 'default';
+  double? _radiusKm; // радиус «Рядом со мной», null — без ограничения
   Position? _nearPos; // точка пользователя для сортировки «Рядом со мной»
   final _rangeCtrls = <String, (TextEditingController, TextEditingController)>{
     for (final k in const ['power_hp', 'fuel_consumption', 'acceleration', 'seats', 'trunk_l', 'clearance_mm'])
@@ -186,6 +189,17 @@ class _ListingsScreenState extends State<ListingsScreen> {
         .eq('status', 'active');
     if (widget.categoryId != null) {
       query = query.eq('category_id', widget.categoryId!);
+    }
+    if (_sort == 'nearby' && _nearPos != null && _radiusKm != null) {
+      // Радиус: прямоугольник координат вокруг пользователя, точные расстояния считаются ниже.
+      final p = _nearPos!;
+      final dLat = _radiusKm! / 111;
+      final dLng = _radiusKm! / (111 * math.cos(p.latitude * math.pi / 180));
+      query = query
+          .gte('lat', p.latitude - dLat)
+          .lte('lat', p.latitude + dLat)
+          .gte('lng', p.longitude - dLng)
+          .lte('lng', p.longitude + dLng);
     }
     if (_subcatId != null) {
       query = query.eq('subcategory_id', _subcatId!);
@@ -2302,6 +2316,28 @@ class _ListingsScreenState extends State<ListingsScreen> {
                             return;
                           }
                           _nearPos = pos;
+                          if (!context.mounted) return;
+                          _radiusKm = await showModalBottomSheet<double>(
+                            context: context,
+                            builder: (ctx) => SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  for (final km in const [5.0, 10.0, 25.0, 50.0])
+                                    ListTile(
+                                      title: Text('До ${km.toInt()} км'),
+                                      onTap: () => Navigator.pop(ctx, km),
+                                    ),
+                                  ListTile(
+                                    title: const Text('Без ограничения'),
+                                    onTap: () => Navigator.pop(ctx),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        } else {
+                          _radiusKm = null;
                         }
                         _sort = o.$1;
                         rebuild();
