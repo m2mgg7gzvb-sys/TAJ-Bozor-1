@@ -21,6 +21,7 @@ import 'notify_store.dart';
 import 'review_dialog.dart';
 import 'seller_contacts.dart';
 import 'block_store.dart';
+import 'user_complaints.dart';
 import 'theme.dart';
 import 'glass_widgets.dart';
 import 'user_profile_screen.dart';
@@ -982,7 +983,16 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           if (!widget.joinMode && !widget.staffTicket && _conv?['kind'] != 'support')
             PopupMenuButton<String>(
-              onSelected: (v) => v == 'block' ? _toggleBlock() : _contactSupport(),
+              onSelected: (v) {
+                if (v == 'block') {
+                  _toggleBlock();
+                } else if (v == 'complaint') {
+                  final id = _otherId;
+                  if (id != null) showUserComplaintDialog(context, id);
+                } else {
+                  _contactSupport();
+                }
+              },
               itemBuilder: (_) => [
                 if (_otherId != null)
                   PopupMenuItem(
@@ -990,6 +1000,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Text(_blocked
                         ? tr('Снять блокировку', 'Баст бекор кардан')
                         : tr('Заблокировать собеседника', 'Суҳбатдошро баст кардан')),
+                  ),
+                if (_otherId != null)
+                  PopupMenuItem(
+                    value: 'complaint',
+                    child: Text(tr('Пожаловаться на собеседника', 'Аз суҳбатдош шикоят кардан')),
                   ),
                 PopupMenuItem(value: 'support', child: Text(tr('Поддержка', 'Дастгирӣ'))),
               ],

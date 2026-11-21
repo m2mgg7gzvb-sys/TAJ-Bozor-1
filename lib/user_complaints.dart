@@ -40,6 +40,7 @@ Future<void> showUserComplaintDialog(BuildContext context, String userId) async 
   final messenger = ScaffoldMessenger.of(context);
   try {
     await Supabase.instance.client.from('complaints').insert({
+      'reporter_id': Supabase.instance.client.auth.currentUser!.id,
       'target_user_id': userId,
       'reason': reason,
     });

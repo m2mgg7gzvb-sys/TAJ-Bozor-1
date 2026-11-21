@@ -19,6 +19,9 @@ const adminActionNames = <String, String>{
   'report_block': 'Жалоба: объявление заблокировано',
   'message': 'Сообщение администратора',
   'profile_hide': 'Скрыто через профиль пользователя',
+  'user_block': 'Пользователь: блокировка',
+  'user_admin_role': 'Пользователь: права админа',
+  'user_verified': 'Пользователь: бейдж «Проверено»',
 };
 
 /// Меняет статус объявления от имени админа, сохраняет причину для владельца и пишет в журнал.
@@ -29,9 +32,19 @@ Future<void> adminSetStatus({
   String? note,
 }) async {
   final db = Supabase.instance.client;
-  final listing = await db.from('listings').select('user_id, title').eq('id', listingId).maybeSingle();
+  final listing = await db
+      .from('listings')
+      .select('user_id, title, status')
+      .eq('id', listingId)
+      .maybeSingle();
   await db.from('listings').update({'status': status, 'admin_note': note}).eq('id', listingId);
-  await db.from('admin_log').insert({'listing_id': listingId, 'action': action, 'note': note});
+  await db.from('admin_log').insert({
+    'listing_id': listingId,
+    'action': action,
+    'note': note,
+    'from_value': listing?['status'],
+    'to_value': status,
+  });
   await _notifyOwner(listing, action, note);
 }
 
