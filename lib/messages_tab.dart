@@ -8,6 +8,7 @@ import 'admin_log.dart';
 import 'admin_broadcast_screen.dart';
 import 'admin_threads.dart';
 import 'listing_reports.dart';
+import 'admin_log_screen.dart';
 import 'user_complaints.dart';
 import 'moderation_screen.dart';
 import 'notify_store.dart';
@@ -240,6 +241,15 @@ class _MessagesTabState extends State<MessagesTab> {
                     onTap: () => Navigator.of(context)
                         .push(MaterialPageRoute(builder: (_) => const ReportsScreen()))
                         .then((_) => _reload()),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.history_rounded,
+                    title: 'Журнал админов',
+                    subtitle: 'Кто, когда и что изменил',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AdminLogScreen()),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _Tile(

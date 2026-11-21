@@ -635,6 +635,77 @@ class _ListingsScreenState extends State<ListingsScreen> {
       );
 
   /// Подписка на рассылку по текущим фильтрам: новые объявления этого поиска присылают уведомление.
+  /// Включает «Рядом со мной»: запрашивает геолокацию и радиус, затем перезагружает список.
+  Future<void> _enableNearby() async {
+    final pos = await currentPosition();
+    if (!mounted) return;
+    if (pos == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Разрешите доступ к геолокации, чтобы искать рядом'),
+      ));
+      return;
+    }
+    _nearPos = pos;
+    final km = await showModalBottomSheet<double>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final r in const [5.0, 10.0, 25.0, 50.0])
+              ListTile(
+                title: Text('До ${r.toInt()} км'),
+                onTap: () => Navigator.pop(ctx, r),
+              ),
+            ListTile(
+              title: const Text('Без ограничения'),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _sort = 'nearby';
+      _radiusKm = km;
+    });
+    _reload();
+  }
+
+  void _disableNearby() {
+    setState(() {
+      _sort = 'default';
+      _radiusKm = null;
+    });
+    _reload();
+  }
+
+  /// Строка «Рядом со мной» над списком: видно, включён ли радиус.
+  Widget _nearbyRow() {
+    final on = _sort == 'nearby';
+    final label = !on
+        ? 'Рядом со мной'
+        : _radiusKm == null
+            ? 'Рядом: без ограничения'
+            : 'Рядом: до ${_radiusKm!.toInt()} км';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: [
+          ChoiceChip(
+            avatar: const Icon(Icons.near_me_outlined, size: 18),
+            label: Text(label),
+            selected: on,
+            onSelected: (_) => on ? _disableNearby() : _enableNearby(),
+          ),
+          if (on)
+            TextButton(onPressed: _disableNearby, child: const Text('Сбросить')),
+        ],
+      ),
+    );
+  }
+
   Widget _subscribeBar() {
     return ValueListenableBuilder<List<SavedSearch>>(
       valueListenable: SavedSearchesStore.items,
@@ -2559,6 +2630,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
               ),
             ),
           ),
+          _nearbyRow(),
           if (_savedTitle() != widget.title) _subscribeBar(),
           _subcatRow(),
           if (_carMode) _carChipsRow(),
