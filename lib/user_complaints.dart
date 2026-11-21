@@ -6,7 +6,7 @@ import 'lang_store.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
-_userReasons = [tr('Мошенничество', 'Фиребгарӣ'), tr('Оскорбления', 'Таҳқир'), tr('Спам', 'Спам'), tr('Фейковый профиль', 'Профили қалбакӣ'), tr('Другое', 'Дигар')];
+final _userReasons = [tr('Мошенничество', 'Фиребгарӣ'), tr('Оскорбления', 'Таҳқир'), tr('Спам', 'Спам'), tr('Фейковый профиль', 'Профили қалбакӣ'), tr('Другое', 'Дигар')];
 
 /// Окно жалобы на пользователя. Сохраняет жалобу в таблицу complaints.
 Future<void> showUserComplaintDialog(BuildContext context, String userId) async {
