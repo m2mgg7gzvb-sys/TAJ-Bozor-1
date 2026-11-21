@@ -2341,6 +2341,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
                         }
                         _sort = o.$1;
                         rebuild();
+                        if (mounted) _reload();
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
