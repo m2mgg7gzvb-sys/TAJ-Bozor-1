@@ -144,7 +144,7 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
     final db = Supabase.instance.client;
     final rows = List<Map<String, dynamic>>.from(await db
         .from('admin_log')
-        .select('action, note, created_at, listing_id')
+        .select('action, note, created_at, listing_id, admin_name, admin_public_id, listing_public_id, from_value, to_value')
         .order('created_at', ascending: false)
         .limit(200));
     final ids = rows.map((r) => r['listing_id']).whereType<String>().toSet().toList();
@@ -202,9 +202,14 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text('${e['admin_name'] ?? 'Админ'} · ${e['admin_public_id'] ?? '—'}',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                     Text(adminActionNames[action] ?? action, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    if (e['from_value'] != null || e['to_value'] != null)
+                      Text('${e['from_value'] ?? '—'} → ${e['to_value'] ?? '—'}',
+                          style: const TextStyle(fontSize: 13)),
                     if (listingId != null)
-                      Text('ID: ${e['no'] ?? '—'}',
+                      Text('Объявление: ${e['listing_public_id'] ?? e['no'] ?? '—'}',
                           style: TextStyle(color: AppColors.muted, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
                       Text(action == 'message' ? note : 'Причина: $note', style: const TextStyle(fontSize: 13)),
