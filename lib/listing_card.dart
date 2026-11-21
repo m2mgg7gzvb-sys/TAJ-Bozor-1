@@ -212,6 +212,19 @@ class ListingCard extends StatelessWidget {
                       style: TextStyle(fontSize: 13, color: AppColors.muted),
                     ),
                   ],
+                  if (item['seller_rating'] is Map) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF2B600)),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${((item['seller_rating'] as Map)['avg'] as num).toStringAsFixed(1)} (${(item['seller_rating'] as Map)['count']})',
+                          style: TextStyle(fontSize: 13, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
