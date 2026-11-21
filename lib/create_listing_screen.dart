@@ -8,6 +8,7 @@ import 'car_catalog.dart';
 import 'car_generations.dart';
 import 'city_store.dart';
 import 'confirm_delete.dart';
+import 'error_log.dart';
 import 'map_picker.dart';
 import 'laptop_catalog.dart';
 import 'listing_draft.dart';
@@ -604,7 +605,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (_) {
+    } catch (e, st) {
+      // Сохраняем реальную причину в журнал ошибок, пользователю показываем общий текст.
+      ErrorLog.report(widget.adminEdit ? 'admin_listing_save' : 'listing_save', e.toString(), st);
       _fail('Не удалось опубликовать. Проверьте сеть и попробуйте снова');
     }
   }
