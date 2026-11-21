@@ -433,7 +433,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 const SizedBox(height: 22),
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(tr('Отзывы', 'Бознигариҳо'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                     ),
                   ],
