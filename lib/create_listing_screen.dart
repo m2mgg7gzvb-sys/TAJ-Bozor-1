@@ -385,9 +385,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   /// Название авто как на Авито: «Марка Модель объём КПП, год».
   String _autoTitle() {
     const gearShort = {'Автомат': 'AT', 'Механика': 'MT', 'Робот': 'RT', 'Вариатор': 'CVT'};
+    // Буква поколения (например «G» из «G (1998–2009)») идёт в название после модели.
+    final genFirst = _generationCtrl.text.trim().split(' ').first;
+    final genCode = RegExp(r'^[A-ZА-Я][A-Za-z0-9]{0,2}$').hasMatch(genFirst) ? genFirst : '';
     final head = [
       _brandCtrl.text.trim(),
       _modelCtrl.text.trim(),
+      genCode,
       _engineCtrl.text.trim(),
       if (_gearbox != null) gearShort[_gearbox] ?? '',
     ].where((e) => e.isNotEmpty).join(' ');
