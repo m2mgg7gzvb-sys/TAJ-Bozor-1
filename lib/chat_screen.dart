@@ -614,10 +614,15 @@ class _ChatScreenState extends State<ChatScreen> {
         'body': text,
       });
       _ctrl.clear();
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        final limited = '$e'.contains('rate_limited');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('Не удалось отправить сообщение', 'Фиристодани паём муяссар нашуд'))),
+          SnackBar(
+            content: Text(limited
+                ? tr('Слишком много сообщений, подождите минуту', 'Паёмҳо зиёданд, як дақиқа интизор шавед')
+                : tr('Не удалось отправить сообщение', 'Фиристодани паём муяссар нашуд')),
+          ),
         );
       }
     } finally {
