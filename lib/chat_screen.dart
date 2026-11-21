@@ -165,7 +165,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось присоединиться к чату')),
+        SnackBar(content: Text(tr('Не удалось присоединиться к чату', 'Ба гуфтугӯ пайваст шудан муяссар нашуд'))),
       );
     }
   }
@@ -177,16 +177,16 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Вы ещё не в этом чате',
+            Text(tr('Вы ещё не в этом чате', 'Шумо ҳанӯз дар ин гуфтугӯ нестед'),
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 8),
             Text(
-              'Присоединитесь, чтобы видеть переписку и отвечать',
+              tr('Присоединитесь, чтобы видеть переписку и отвечать', 'Пайваст шавед, то мактубҳоро бинед ва ҷавоб диҳед'),
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 16),
-            GreenButton(onPressed: _join, child: const Text('Присоединиться')),
+            GreenButton(onPressed: _join, child: Text(tr('Присоединиться', 'Пайваст шудан'))),
           ],
         ),
       ),
@@ -202,7 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
         MaterialPageRoute(
           builder: (_) => ChatScreen(
             conversationId: id,
-            title: 'Поддержка',
+            title: tr('Поддержка', 'Дастгирӣ'),
             initialText: 'ID чата: ${widget.conversationId}\n',
           ),
         ),
@@ -210,7 +210,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось открыть поддержку')),
+        SnackBar(content: Text(tr('Не удалось открыть поддержку', 'Кушодани дастгирӣ муяссар нашуд'))),
       );
     }
   }
@@ -233,7 +233,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 MaterialPageRoute(
                   builder: (_) => ChatScreen(
                     conversationId: id,
-                    title: 'Чат пользователя',
+                    title: tr('Чат пользователя', 'Гуфтугӯи корбар'),
                     joinMode: true,
                   ),
                 ),
@@ -275,7 +275,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!ok) ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось открыть $name')),
+        SnackBar(content: Text(tr('Не удалось открыть $name', 'Кушодани $name муяссар нашуд'))),
       );
     }
   }
@@ -360,7 +360,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!sent || !mounted) return;
     setState(() => _showReview = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Спасибо за отзыв!')),
+      SnackBar(content: Text(tr('Спасибо за отзыв!', 'Ташаккур барои бознигарӣ!'))),
     );
   }
 
@@ -420,14 +420,14 @@ class _ChatScreenState extends State<ChatScreen> {
       final seller = _conv?['seller_id'] as String?;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showTopBanner(
-          'Оставьте отзыв продавцу',
-          'Вы общались с продавцом. Нажмите, чтобы написать отзыв',
+          tr('Оставьте отзыв продавцу', 'Ба фурӯшанда бознигарӣ гузоред'),
+          tr('Вы общались с продавцом. Нажмите, чтобы написать отзыв', 'Шумо бо фурӯшанда муошират кардед. Барои навиштани бознигарӣ пахш кунед'),
           onTap: () {
             final ctx = appNavigatorKey.currentState?.overlay?.context;
             if (ctx == null || seller == null) return;
             showReviewSheet(ctx, sellerId: seller, conversationId: id);
           },
-          secondaryLabel: 'Отказать',
+          secondaryLabel: tr('Отказать', 'Рад кардан'),
           onSecondary: () async {
             try {
               await Supabase.instance.client
@@ -550,12 +550,12 @@ class _ChatScreenState extends State<ChatScreen> {
     return Text(_lastSeenText(seen), style: base.copyWith(color: AppColors.muted, fontWeight: FontWeight.w500));
   }
 
-  static const _quick = [
-    'Да, в наличии',
-    'Можно посмотреть сегодня?',
-    'Цена окончательная',
-    'Уточните, пожалуйста, детали',
-    'Спасибо, свяжусь позже',
+  static List<String> get _quick => [
+    tr('Да, в наличии', 'Ҳа, дастрас аст'),
+    tr('Можно посмотреть сегодня?', 'Имрӯз дидан мумкин аст?'),
+    tr('Цена окончательная', 'Нарх ниҳоӣ аст'),
+    tr('Уточните, пожалуйста, детали', 'Лутфан тафсилотро равшан кунед'),
+    tr('Спасибо, свяжусь позже', 'Ташаккур, баъдтар тамос мегирам'),
   ];
 
   /// Быстрый ответ: подставляет текст в поле, отправляет продавец сам.
@@ -590,7 +590,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не удалось отправить сообщение')),
+          SnackBar(content: Text(tr('Не удалось отправить сообщение', 'Фиристодани паём муяссар нашуд'))),
         );
       }
     } finally {
@@ -610,12 +610,12 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Галерея'),
+              title: Text(tr('Галерея', 'Галерея')),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Камера'),
+              title: Text(tr('Камера', 'Камера')),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
           ],
@@ -629,7 +629,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final bytes = await file.readAsBytes();
     if (bytes.length > 10 * 1024 * 1024) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Фото больше 10 МБ')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Фото больше 10 МБ', 'Акс аз 10 МБ зиёд аст'))));
       }
       return;
     }
@@ -654,7 +654,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Не удалось отправить фото')),
+          SnackBar(content: Text(tr('Не удалось отправить фото', 'Фиристодани акс муяссар нашуд'))),
         );
       }
     } finally {
@@ -705,7 +705,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final bytes = picked?.bytes;
     if (picked == null || bytes == null) return;
     if (bytes.length > 20 * 1024 * 1024) {
-      _snack('Файл больше 20 МБ');
+      _snack(tr('Файл больше 20 МБ', 'Файл аз 20 МБ зиёд аст'));
       return;
     }
     final raw = (picked.extension ?? '').toLowerCase();
@@ -721,7 +721,7 @@ class _ChatScreenState extends State<ChatScreen> {
         contentType: 'application/octet-stream',
       );
     } catch (_) {
-      _snack('Не удалось отправить файл');
+      _snack(tr('Не удалось отправить файл', 'Фиристодани файл муяссар нашуд'));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -748,7 +748,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_sending) return;
     if (!_recording) {
       if (!await _recorder.hasPermission()) {
-        _snack('Разрешите доступ к микрофону');
+        _snack(tr('Разрешите доступ к микрофону', 'Дастрасӣ ба микрофонро иҷозат диҳед'));
         return;
       }
       await _recorder.start(const RecordConfig(encoder: AudioEncoder.opus), path: 'voice');
@@ -781,7 +781,7 @@ class _ChatScreenState extends State<ChatScreen> {
         contentType: 'audio/webm',
       );
     } catch (_) {
-      _snack('Не удалось отправить голосовое');
+      _snack(tr('Не удалось отправить голосовое', 'Фиристодани паёми овозӣ муяссар нашуд'));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -801,13 +801,13 @@ class _ChatScreenState extends State<ChatScreen> {
           MaterialPageRoute(
             builder: (_) => ChatScreen(
               conversationId: id,
-              title: 'Чат пользователя',
+              title: tr('Чат пользователя', 'Гуфтугӯи корбар'),
               joinMode: true,
             ),
           ),
         ),
         icon: const Icon(Icons.login_rounded, size: 18),
-        label: const Text('Открыть чат пользователя'),
+        label: Text(tr('Открыть чат пользователя', 'Кушодани гуфтугӯи корбар')),
       ),
     ];
   }
@@ -818,14 +818,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (c == null || me == null) return;
     final otherId = me == c['buyer_id'] ? c['seller_id'] : c['buyer_id'];
     if (otherId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Собеседник не найден')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Собеседник не найден', 'Суҳбатдош ёфт нашуд'))));
       return;
     }
     final channel = pairChannel(me, otherId as String);
     inviteToCall(calleeId: otherId, channel: channel).then((ok) {
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Собеседник не получил уведомление о звонке. Попросите его открыть приложение'),
+          content: Text(tr('Собеседник не получил уведомление о звонке. Попросите его открыть приложение', 'Суҳбатдош огоҳии занг нагирифт. Аз ӯ хоҳиш кунед, ки барномаро кушояд')),
         ));
       }
     });
@@ -847,7 +847,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (c == null || me == null) return;
     final otherId = me == c['buyer_id'] ? c['seller_id'] : c['buyer_id'];
     if (otherId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Собеседник не найден')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Собеседник не найден', 'Суҳбатдош ёфт нашуд'))));
       return;
     }
     final p = await Supabase.instance.client
@@ -859,14 +859,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!mounted) return;
     if (phone == null || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Номер собеседника пока не указан')),
+        SnackBar(content: Text(tr('Номер собеседника пока не указан', 'Рақами суҳбатдош ҳанӯз нишон дода нашудааст'))),
       );
       return;
     }
     final ok = await launchUrl(Uri(scheme: 'tel', path: phone));
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось открыть звонок')),
+        SnackBar(content: Text(tr('Не удалось открыть звонок', 'Кушодани занг муяссар нашуд'))),
       );
     }
   }
@@ -884,13 +884,13 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Обращение: на помощи')),
+        SnackBar(content: Text(tr('Обращение: на помощи', 'Муроҷиат: ба кумак'))),
       );
     } catch (e) {
       if (!mounted) return;
       final reason = e is PostgrestException ? ': ${e.message}' : '';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось изменить статус$reason')),
+        SnackBar(content: Text(tr('Не удалось изменить статус$reason', 'Иваз кардани ҳолат муяссар нашуд$reason'))),
       );
     }
   }
@@ -924,13 +924,13 @@ class _ChatScreenState extends State<ChatScreen> {
           // Контакты собеседника в мессенджерах (только если он разрешил показ)
           if (_peerContacts?.whatsappUri != null)
             IconButton(
-              tooltip: 'Написать в WhatsApp',
+              tooltip: tr('Написать в WhatsApp', 'Навиштан дар WhatsApp'),
               icon: Image.asset('assets/icons/whatsapp_logo.png', width: 26, height: 26),
               onPressed: () => _openMessenger(_peerContacts!.whatsappUri, 'WhatsApp'),
             ),
           if (_peerContacts?.telegramUri != null)
             IconButton(
-              tooltip: 'Написать в Telegram',
+              tooltip: tr('Написать в Telegram', 'Навиштан дар Telegram'),
               icon: Image.asset('assets/icons/telegram_logo.png', width: 26, height: 26),
               onPressed: () => _openMessenger(
                 _peerContacts!.telegramUri,
@@ -940,7 +940,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           if (_conv != null && _conv!['kind'] != 'support')
             IconButton(
-              tooltip: 'Позвонить',
+              tooltip: tr('Позвонить', 'Занг задан'),
               icon: const Icon(Icons.call_rounded),
               onPressed: () => showCallOptionsSheet(
                 context,
@@ -952,7 +952,7 @@ class _ChatScreenState extends State<ChatScreen> {
             PopupMenuButton<String>(
               onSelected: (_) => _contactSupport(),
               itemBuilder: (_) => const [
-                PopupMenuItem(value: 'support', child: Text('Поддержка')),
+                PopupMenuItem(value: 'support', child: Text(tr('Поддержка', 'Дастгирӣ'))),
               ],
             ),
         ],
@@ -968,7 +968,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _setTicket('in_progress'),
                       icon: const Icon(Icons.support_agent_rounded),
-                      label: const Text('На помощь'),
+                      label: Text(tr('На помощь', 'Ба кумак')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF9A7400),
                         side: const BorderSide(color: Color(0xFFF2B600), width: 1.5),
@@ -981,7 +981,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: FilledButton.icon(
                         onPressed: () => _setTicket('answered'),
                         icon: const Icon(Icons.check_circle_rounded),
-                        label: const Text('Завершить'),
+                        label: Text(tr('Завершить', 'Анҷом додан')),
                         style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
                       ),
                     ),
@@ -1001,12 +1001,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   const Expanded(
                     child: Text(
-                      'Оставьте отзыв продавцу',
+                      tr('Оставьте отзыв продавцу', 'Ба фурӯшанда бознигарӣ гузоред'),
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
-                  TextButton(onPressed: _dismissReview, child: const Text('Отказать')),
-                  GreenButton(onPressed: _writeReview, child: const Text('Оставить отзыв')),
+                  TextButton(onPressed: _dismissReview, child: Text(tr('Отказать', 'Рад кардан'))),
+                  GreenButton(onPressed: _writeReview, child: Text(tr('Оставить отзыв', 'Бознигарӣ гузоштан'))),
                 ],
               ),
             ),
@@ -1017,7 +1017,7 @@ class _ChatScreenState extends State<ChatScreen> {
               stream: _stream,
               builder: (context, snap) {
                 if (snap.hasError) {
-                  return const Center(child: Text('Не удалось загрузить переписку'));
+                  return Center(child: Text(tr('Не удалось загрузить переписку', 'Боргирии гуфтугӯ муяссар нашуд')));
                 }
                 if (!snap.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -1032,7 +1032,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
                 if (items.isEmpty) {
                   return Center(
-                    child: Text('Напишите первое сообщение', style: TextStyle(color: AppColors.muted)),
+                    child: Text(tr('Напишите первое сообщение', 'Аввалин паёмро нависед'), style: TextStyle(color: AppColors.muted)),
                   );
                 }
                 return ListView.builder(
@@ -1066,7 +1066,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           if (m['attachment_kind'] == 'file' && m['attachment_url'] != null)
                             ChatFileTile(
                               path: m['attachment_url'] as String,
-                              name: (m['attachment_name'] ?? 'Файл') as String,
+                              name: (m['attachment_name'] ?? tr('Файл', 'Файл')) as String,
                               mine: mine,
                             ),
                           if (m['attachment_kind'] == 'call')
@@ -1309,7 +1309,7 @@ class _GlowInputState extends State<_GlowInput> with SingleTickerProviderStateMi
           maxLines: 4,
           style: TextStyle(color: AppColors.ink, fontSize: 15),
           decoration: InputDecoration(
-            hintText: 'Сообщение',
+            hintText: tr('Сообщение', 'Паём'),
             hintStyle: TextStyle(color: AppColors.muted),
             filled: false,
             isDense: true,
@@ -1359,7 +1359,7 @@ class _RecordingBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.chevron_left_rounded, color: AppColors.ruby, size: 20),
-                Text('Отмена', style: TextStyle(color: AppColors.ruby, fontWeight: FontWeight.w600)),
+                Text(tr('Отмена', 'Бекор кардан'), style: TextStyle(color: AppColors.ruby, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
