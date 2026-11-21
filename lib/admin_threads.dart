@@ -417,7 +417,7 @@ class _AdminChatsScreenState extends State<AdminChatsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(tr('Тип: ${conv[\'kind\'] ?? \'—\'}', 'Намуд: ${conv[\'kind\'] ?? \'—\'}'), style: TextStyle(color: AppColors.muted)),
+                Text(tr('Тип: ${conv['kind'] ?? '—'}', 'Намуд: ${conv['kind'] ?? '—'}'), style: TextStyle(color: AppColors.muted)),
                 const SizedBox(height: 12),
                 for (final entry in [(tr('Покупатель', 'Харидор'), conv['buyer_id']), (tr('Продавец', 'Фурӯшанда'), conv['seller_id'])])
                   if (entry.$2 is String && byId[entry.$2 as String] != null)

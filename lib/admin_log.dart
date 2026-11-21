@@ -84,7 +84,7 @@ Future<void> adminSendMessage(String listingId, String text) async {
     await db.from('notifications').insert({
       'user_id': ownerId,
       'title': tr('Сообщение от администратора', 'Паём аз администратор'),
-      'body': tr('По объявлению «${listing?[\'title\'] ?? \'\'}»: $text', 'Ба эълони «${listing?[\'title\'] ?? \'\'}»: $text'),
+      'body': tr('По объявлению «${listing?['title'] ?? ''}»: $text', 'Ба эълони «${listing?['title'] ?? ''}»: $text'),
       'is_read': false,
     });
   } catch (_) {
@@ -211,7 +211,7 @@ class _AdminLogScreenState extends State<AdminLogScreen> {
                       Text('${e['from_value'] ?? '—'} → ${e['to_value'] ?? '—'}',
                           style: const TextStyle(fontSize: 13)),
                     if (listingId != null)
-                      Text(tr('Объявление: ${e[\'listing_public_id\'] ?? e[\'no\'] ?? \'—\'}', 'Эълон: ${e[\'listing_public_id\'] ?? e[\'no\'] ?? \'—\'}'),
+                      Text(tr('Объявление: ${e['listing_public_id'] ?? e['no'] ?? '—'}', 'Эълон: ${e['listing_public_id'] ?? e['no'] ?? '—'}'),
                           style: TextStyle(color: AppColors.muted, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
                       Text(action == 'message' ? note : tr('Причина: $note', 'Сабаб: $note'), style: TextStyle(fontSize: 13)),
