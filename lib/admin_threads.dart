@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'admin_log.dart';
+import 'create_listing_screen.dart';
 import 'confirm_delete.dart';
 import 'listing_detail_screen.dart';
 import 'listing_utils.dart';
@@ -82,6 +83,25 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
 
   void _snack(String text) {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Правка текста и характеристик объявления админом (статус и профиль владельца не трогаем).
+  Future<void> _editListing() async {
+    try {
+      final row = await _db.from('listings').select('$listingSelect, status').eq('id', widget.listingId).single();
+      if (!mounted) return;
+      final saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => CreateListingScreen(listing: Map<String, dynamic>.from(row), adminEdit: true),
+        ),
+      );
+      if (saved == true) {
+        _reload();
+        _snack('Объявление изменено');
+      }
+    } catch (_) {
+      _snack('Не удалось открыть объявление для правки');
+    }
   }
 
   /// Меняет статус от имени администратора: с причиной, с подтверждением удаления или без.
@@ -257,7 +277,10 @@ class _AdminThreadScreenState extends State<AdminThreadScreen> {
                 Container(
                   color: AppColors.surface,
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                  child: Wrap(spacing: 8, runSpacing: 8, children: _actionButtons(status)),
+                  child: Wrap(spacing: 8, runSpacing: 8, children: [
+                    OutlinedButton(onPressed: _editListing, child: const Text('Изменить')),
+                    ..._actionButtons(status),
+                  ]),
                 ),
               Container(
                 color: AppColors.surface,

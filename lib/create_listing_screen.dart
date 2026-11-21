@@ -1053,7 +1053,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             const SizedBox(height: 16),
             Text(_error!, style: TextStyle(color: Colors.red.shade700)),
           ],
-          if (widget.listing != null) ...[
+          if (widget.listing != null && !widget.adminEdit) ...[
             const SizedBox(height: 12),
             TextButton(
               onPressed: _saving ? null : _delete,
