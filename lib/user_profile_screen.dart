@@ -133,7 +133,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       setState(() => _future = _load());
     } catch (_) {
       if (!mounted) return;
-      messenger.showSnackBar(const SnackBar(content: Text('Действие не выполнено')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Действие не выполнено', 'Амал иҷро нашуд'))));
     }
   }
 
@@ -148,17 +148,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Управление (админ)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(tr('Управление (админ)', 'Идоракунӣ (админ)'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 10),
           GreenButton.icon(
             height: 46,
             onPressed: () => _adminCall(
               'admin_set_blocked',
               {'p_user': uid, 'p_blocked': !blocked},
-              blocked ? 'Разблокирован' : 'Заблокирован',
+              blocked ? tr('Разблокирован', 'Кушода шуд') : tr('Заблокирован', 'Баста шуд'),
             ),
             icon: Icon(blocked ? Icons.lock_open_rounded : Icons.block_rounded, size: 18),
-            label: Text(blocked ? 'Разблокировать' : 'Заблокировать'),
+            label: Text(blocked ? tr('Разблокировать', 'Кушодан') : tr('Заблокировать', 'Баст кардан')),
           ),
           const SizedBox(height: 8),
           GreenButton.icon(
@@ -167,11 +167,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ? () => _adminCall(
                       'admin_set_admin',
                       {'p_user': uid, 'p_admin': !admin},
-                      admin ? 'Права админа сняты' : 'Выдан админ',
+                      admin ? tr('Права админа сняты', 'Ҳуқуқҳои админ гирифта шуд') : tr('Выдан админ', 'Админ таъин шуд'),
                     )
                 : null,
             icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-            label: Text(admin ? 'Снять админа' : 'Дать админа'),
+            label: Text(admin ? tr('Снять админа', 'Гирифтани админ') : tr('Дать админа', 'Таъин кардани админ')),
           ),
           const SizedBox(height: 8),
           GreenButton.icon(
@@ -179,10 +179,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             onPressed: () => _adminCall(
               'admin_set_verified',
               {'p_user': uid, 'p_verified': !verified},
-              verified ? 'Бейдж снят' : 'Бейдж выдан',
+              verified ? tr('Бейдж снят', 'Нишона гирифта шуд') : tr('Бейдж выдан', 'Нишона дода шуд'),
             ),
             icon: const Icon(Icons.verified_outlined, size: 18),
-            label: Text(verified ? 'Снять бейдж «Проверено»' : 'Выдать бейдж «Проверено»'),
+            label: Text(verified ? tr('Снять бейдж «Проверено»', 'Гирифтани нишонаи «Тасдиқшуда»') : tr('Выдать бейдж «Проверено»', 'Додани нишонаи «Тасдиқшуда»')),
           ),
           const SizedBox(height: 8),
           GreenButton.icon(
@@ -191,20 +191,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Скрыть все объявления?'),
-                  content: const Text('Все активные объявления этого пользователя станут скрытыми.'),
+                  title: Text(tr('Скрыть все объявления?', 'Ҳамаи эълонҳоро пинҳон кунем?')),
+                  content: Text(tr('Все активные объявления этого пользователя станут скрытыми.', 'Ҳамаи эълонҳои фаъоли ин корбар пинҳон мешаванд.')),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
-                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Скрыть')),
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Отмена', 'Бекор кардан'))),
+                    FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Скрыть', 'Пинҳон кардан'))),
                   ],
                 ),
               );
               if (ok == true) {
-                await _adminCall('admin_hide_user_listings', {'p_user': uid}, 'Скрыто объявлений');
+                await _adminCall('admin_hide_user_listings', {'p_user': uid}, tr('Скрыто объявлений', 'Эълон пинҳон шуд'));
               }
             },
             icon: const Icon(Icons.visibility_off_outlined, size: 18),
-            label: const Text('Скрыть все объявления'),
+            label: Text(tr('Скрыть все объявления', 'Пинҳон кардани ҳамаи эълонҳо')),
           ),
           const SizedBox(height: 8),
           GreenButton.icon(
@@ -212,10 +212,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             onPressed: () => _adminCall(
               'admin_unhide_user_listings',
               {'p_user': uid},
-              'Возвращено объявлений',
+              tr('Возвращено объявлений', 'Эълон баргардонда шуд'),
             ),
             icon: const Icon(Icons.visibility_outlined, size: 18),
-            label: const Text('Вернуть скрытые объявления'),
+            label: Text(tr('Вернуть скрытые объявления', 'Баргардонидани эълонҳои пинҳон')),
           ),
         ],
       ),
@@ -226,12 +226,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _callSeller(String phone) async {
     final messenger = ScaffoldMessenger.of(context);
     if (phone.trim().isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('Номер пока не указан')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Номер пока не указан', 'Рақам ҳанӯз нишон дода нашудааст'))));
       return;
     }
     final ok = await launchUrl(Uri(scheme: 'tel', path: phone.trim()));
     if (!ok && mounted) {
-      messenger.showSnackBar(const SnackBar(content: Text('Не удалось открыть звонок')));
+      messenger.showSnackBar(SnackBar(content: Text(tr('Не удалось открыть звонок', 'Кушодани занг муяссар нашуд'))));
     }
   }
 
@@ -246,7 +246,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось открыть переписку')),
+        SnackBar(content: Text(tr('Не удалось открыть переписку', 'Кушодани мактубот муяссар нашуд'))),
       );
     }
   }
@@ -274,7 +274,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text('Профиль пользователя'),
+        title: Text(tr('Профиль пользователя', 'Профили корбар')),
         actions: [
           if (_me.isNotEmpty && _me != widget.userId)
             ValueListenableBuilder<Set<String>>(
@@ -287,11 +287,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(nowBlocked
-                          ? 'Пользователь заблокирован: его объявления скрыты из поиска'
-                          : 'Блокировка снята'),
+                          ? tr('Пользователь заблокирован: его объявления скрыты из поиска', 'Корбар баста шуд: эълонҳояш аз ҷустуҷӯ пинҳон шуданд')
+                          : tr('Блокировка снята', 'Баст бекор шуд')),
                     ));
                   },
-                  child: Text(blocked ? 'Разблокировать' : 'Заблокировать'),
+                  child: Text(blocked ? tr('Разблокировать', 'Кушодан') : tr('Заблокировать', 'Баст кардан')),
                 );
               },
             ),
@@ -304,11 +304,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snap.hasError || snap.data == null) {
-            return const Center(child: Text('Не удалось загрузить профиль'));
+            return Center(child: Text(tr('Не удалось загрузить профиль', 'Боргирии профил муяссар нашуд')));
           }
           final d = snap.data!;
           final name = (d.profile['name'] as String?)?.trim();
-          final displayName = (name == null || name.isEmpty) ? 'Пользователь' : name;
+          final displayName = (name == null || name.isEmpty) ? tr('Пользователь', 'Корбар') : name;
           final city = d.profile['city'] as String?;
           final avg = d.avgRating;
           final canReview = _me.isNotEmpty && _me != widget.userId;
@@ -360,7 +360,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             if (city != null && city.isNotEmpty)
                               Text(city, style: TextStyle(color: AppColors.muted)),
                             if (d.profile['public_id'] != null)
-                              CopyIdLine(label: 'ID профиля:', id: '${d.profile['public_id']}'),
+                              CopyIdLine(label: tr('ID профиля:', 'ID-и профил:'), id: '${d.profile['public_id']}'),
                           ],
                         ),
                       ),
@@ -375,7 +375,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         child: GreenButton.icon(
                           onPressed: () => _write(displayName),
                           icon: const Icon(Icons.chat_bubble_outline_rounded),
-                          label: const Text('Написать'),
+                          label: Text(tr('Написать', 'Навиштан')),
                           height: 50,
                         ),
                       ),
@@ -385,7 +385,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
                           onPressed: () => _callSeller('${d.profile['phone'] ?? ''}'),
                           icon: const Icon(Icons.phone_outlined, size: 18),
-                          label: const Text('Позвонить'),
+                          label: Text(tr('Позвонить', 'Занг задан')),
                         ),
                       ),
                     ],
@@ -394,17 +394,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _stat('${d.activeCount}', 'Активных'),
+                    _stat('${d.activeCount}', tr('Активных', 'Фаъол')),
                     const SizedBox(width: 10),
-                    _stat('${d.closedCount}', 'Завершённых'),
+                    _stat('${d.closedCount}', tr('Завершённых', 'Анҷомёфта')),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _stat('${d.reviews.length}', 'Отзывов'),
+                    _stat('${d.reviews.length}', tr('Отзывов', 'Бознигарӣ')),
                     const SizedBox(width: 10),
-                    _stat(avg == null ? '—' : avg.toStringAsFixed(1), 'Средняя оценка'),
+                    _stat(avg == null ? '—' : avg.toStringAsFixed(1), tr('Средняя оценка', 'Баҳои миёна')),
                   ],
                 ),
                 if (d.viewerIsAdmin && widget.userId != _me) ...[
@@ -412,10 +412,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   _adminPanel(d),
                 ],
                 const SizedBox(height: 22),
-                const Text('Объявления', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                Text(tr('Объявления', 'Эълонҳо'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 if (d.activeCount == 0)
-                  Text('Активных объявлений нет', style: TextStyle(color: AppColors.muted))
+                  Text(tr('Активных объявлений нет', 'Эълонҳои фаъол нест'), style: TextStyle(color: AppColors.muted))
                 else
                   GridView.count(
                     shrinkWrap: true,
@@ -433,13 +433,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 Row(
                   children: [
                     const Expanded(
-                      child: Text('Отзывы', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                      child: Text(tr('Отзывы', 'Бознигариҳо'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 if (d.reviews.isEmpty)
-                  Text('Отзывов пока нет', style: TextStyle(color: AppColors.muted))
+                  Text(tr('Отзывов пока нет', 'Бознигарӣ ҳанӯз нест'), style: TextStyle(color: AppColors.muted))
                 else
                   for (final r in d.reviews) ...[
                     Container(
