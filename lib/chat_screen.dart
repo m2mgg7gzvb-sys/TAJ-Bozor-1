@@ -20,6 +20,7 @@ import 'chat_image.dart';
 import 'notify_store.dart';
 import 'review_dialog.dart';
 import 'seller_contacts.dart';
+import 'block_store.dart';
 import 'theme.dart';
 import 'glass_widgets.dart';
 import 'user_profile_screen.dart';
@@ -576,9 +577,35 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
 
+  /// Заблокирован ли собеседник этим пользователем.
+  bool get _blocked {
+    final id = _otherId;
+    return id != null && BlockStore.isBlocked(id);
+  }
+
+  Future<void> _toggleBlock() async {
+    final id = _otherId;
+    if (id == null) return;
+    final nowBlocked = await BlockStore.toggle(id);
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(nowBlocked
+          ? tr('Собеседник заблокирован', 'Суҳбатдош баста шуд')
+          : tr('Блокировка снята', 'Баст бекор шуд')),
+    ));
+  }
+
   Future<void> _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty || _sending) return;
+    if (_blocked) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('Снимите блокировку, чтобы писать собеседнику',
+            'Барои навиштан ба суҳбатдош баст бекор кунед')),
+      ));
+      return;
+    }
     setState(() => _sending = true);
     try {
       await Supabase.instance.client.from('messages').insert({
@@ -950,8 +977,15 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           if (!widget.joinMode && !widget.staffTicket && _conv?['kind'] != 'support')
             PopupMenuButton<String>(
-              onSelected: (_) => _contactSupport(),
+              onSelected: (v) => v == 'block' ? _toggleBlock() : _contactSupport(),
               itemBuilder: (_) => [
+                if (_otherId != null)
+                  PopupMenuItem(
+                    value: 'block',
+                    child: Text(_blocked
+                        ? tr('Снять блокировку', 'Баст бекор кардан')
+                        : tr('Заблокировать собеседника', 'Суҳбатдошро баст кардан')),
+                  ),
                 PopupMenuItem(value: 'support', child: Text(tr('Поддержка', 'Дастгирӣ'))),
               ],
             ),
