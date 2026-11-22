@@ -46,7 +46,6 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
 
   static const _providers = <String, _ProviderInfo>{
     'google': _ProviderInfo('Google', OAuthProvider.google),
-    'apple': _ProviderInfo('Apple', OAuthProvider.apple),
   };
 
   Future<void> _link(OAuthProvider provider) async {
