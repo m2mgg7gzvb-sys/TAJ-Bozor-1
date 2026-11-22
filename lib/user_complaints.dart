@@ -71,7 +71,7 @@ class _UserComplaintsScreenState extends State<UserComplaintsScreen> {
         .from('complaints')
         .select('id, reason, comment, created_at, target_user_id')
         .eq('status', 'open')
-        .order('created_at', ascending: false));
+        .order('created_at', ascending: true));
     final ids = {for (final r in rows) if (r['target_user_id'] != null) r['target_user_id'] as String};
     if (ids.isNotEmpty) {
       final ps = List<Map<String, dynamic>>.from(

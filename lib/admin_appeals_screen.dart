@@ -21,7 +21,7 @@ class _AdminAppealsScreenState extends State<AdminAppealsScreen> {
         .from('review_appeals')
         .select('id, review_id, seller_id, reason, created_at')
         .eq('status', 'pending')
-        .order('created_at', ascending: false));
+        .order('created_at', ascending: true));
     final reviewIds = {for (final r in rows) if (r['review_id'] != null) r['review_id'] as String};
     final reviews = reviewIds.isEmpty
         ? <Map<String, dynamic>>[]

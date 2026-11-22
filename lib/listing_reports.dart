@@ -70,7 +70,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         .from('listing_reports')
         .select('id, reason, created_at, listing_id, listings(id, title, status, price, currency)')
         .eq('status', 'open')
-        .order('created_at', ascending: false));
+        .order('created_at', ascending: true));
     if (rows.isEmpty) return rows;
     try {
       // Заявители отдельным запросом; если его не выполнить, карточки покажем без имени.
