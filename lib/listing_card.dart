@@ -227,7 +227,7 @@ class ListingCard extends StatelessWidget {
   }
 }
 
-/// Средняя оценка продавца справа от города; без отзывов — «Нет отзывов».
+/// Пять звёзд: жёлтые по средней оценке (с половинкой), серые без отзывов; рядом число отзывов.
 class _SellerStars extends StatelessWidget {
   const _SellerStars({required this.rating});
 
@@ -236,17 +236,34 @@ class _SellerStars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = TextStyle(fontSize: 13, color: AppColors.muted);
-    if (rating is! Map) {
-      return Text(tr('Нет отзывов', 'Шарҳ нест'), style: muted);
+    final map = rating is Map ? rating as Map : null;
+    final avg = (map?['avg'] as num?)?.toDouble() ?? 0;
+    final count = (map?['count'] as num?)?.toInt() ?? 0;
+    // Округляем до половины: 3.5 → 3 целых и половина.
+    final halves = count == 0 ? 0 : (avg * 2).round();
+    const yellow = Color(0xFFF2B600);
+    final stars = <Widget>[];
+    for (var i = 1; i <= 5; i++) {
+      final IconData icon;
+      final Color color;
+      if (halves >= i * 2) {
+        icon = Icons.star_rounded;
+        color = yellow;
+      } else if (halves == i * 2 - 1) {
+        icon = Icons.star_half_rounded;
+        color = yellow;
+      } else {
+        icon = Icons.star_rounded;
+        color = AppColors.muted.withValues(alpha: 0.35);
+      }
+      stars.add(Icon(icon, size: 14, color: color));
     }
-    final avg = ((rating as Map)['avg'] as num).toStringAsFixed(1);
-    final count = (rating as Map)['count'];
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF2B600)),
-        const SizedBox(width: 3),
-        Text('$avg ($count)', style: muted),
+        ...stars,
+        const SizedBox(width: 4),
+        Text('($count)', style: muted),
       ],
     );
   }
