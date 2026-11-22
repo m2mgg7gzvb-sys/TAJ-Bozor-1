@@ -20,6 +20,7 @@ import 'theme.dart';
 import 'wave_background.dart';
 import 'green_button.dart';
 import 'slide_up_in.dart';
+import 'account_choice.dart';
 
 /// Основа приложения: нижнее меню из 5 вкладок.
 class HomeShell extends StatefulWidget {
@@ -46,11 +47,13 @@ class _HomeShellState extends State<HomeShell> {
       if (state.event == AuthChangeEvent.signedIn) {
         _askPush();
         if (mounted) maybeShowContactsSetup(context);
+        if (mounted) maybeShowAccountChoice(context);
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _askPush();
       if (mounted) maybeShowContactsSetup(context);
+      if (mounted) maybeShowAccountChoice(context);
     });
   }
 
