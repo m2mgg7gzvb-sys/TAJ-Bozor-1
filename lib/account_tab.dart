@@ -217,6 +217,8 @@ class _ProfilePageState extends State<_ProfilePage> {
                   const _GuestBanner(),
                   const SizedBox(height: 16),
                 ],
+                _WalletCard(onTap: () => showWalletSheet(context)),
+                const SizedBox(height: 12),
                 _MenuCard(
                   children: [
                     _MenuTile(
@@ -232,11 +234,6 @@ class _ProfilePageState extends State<_ProfilePage> {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const SellerStatsScreen()),
                       ),
-                    ),
-                    _MenuTile(
-                      icon: Icons.account_balance_wallet_outlined,
-                      title: tr('Баланс и пополнение', 'Баланс ва пуркунӣ'),
-                      onTap: () => showWalletSheet(context),
                     ),
                     _MenuTile(
                       icon: Icons.confirmation_number_outlined,
@@ -748,6 +745,51 @@ class _RegisterPageState extends State<_RegisterPage> {
 
   @override
   Widget build(BuildContext context) => const AuthScreen();
+}
+
+/// Заметная карточка «Баланс и пополнение» над меню.
+class _WalletCard extends StatelessWidget {
+  const _WalletCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 30),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tr('Баланс и пополнение', 'Баланс ва пуркунӣ'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      tr('Пополнить и поднять объявление в TOP', 'Пуркунӣ ва боло бурдани эълон ба TOP'),
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _MenuCard extends StatelessWidget {
