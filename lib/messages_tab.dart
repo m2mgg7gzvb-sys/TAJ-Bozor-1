@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'chat_screen.dart';
 import 'listing_utils.dart';
+import 'admin_appeals_screen.dart';
 import 'admin_listings_screen.dart';
 import 'admin_mfa.dart';
 import 'admin_log.dart';
@@ -237,6 +238,13 @@ class _MessagesTabState extends State<MessagesTab> {
                     subtitle: 'Жалобы пользователей на объявления',
                     badge: _badges['rep'],
                     onTap: () => openAdminScreen(context, const ReportsScreen()).then((_) => _reload()),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tile(
+                    icon: Icons.gavel_outlined,
+                    title: 'Обжалования отзывов',
+                    subtitle: 'Продавцы оспаривают отзывы о себе',
+                    onTap: () => openAdminScreen(context, const AdminAppealsScreen()).then((_) => _reload()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
