@@ -150,7 +150,7 @@ class _EnrollScreenState extends State<_EnrollScreen> {
       if (!mounted) return;
       setState(() {
         _factorId = res.id;
-        _secret = res.totp.secret;
+        _secret = res.totp?.secret;
       });
     } catch (_) {
       if (mounted) {
