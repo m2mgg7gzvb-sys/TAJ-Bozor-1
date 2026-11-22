@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'listing_utils.dart';
 import 'admin_listings_screen.dart';
+import 'admin_mfa.dart';
 import 'admin_log.dart';
 import 'admin_broadcast_screen.dart';
 import 'admin_threads.dart';
@@ -227,9 +228,7 @@ class _MessagesTabState extends State<MessagesTab> {
                     icon: Icons.inventory_2_outlined,
                     title: 'Все объявления',
                     subtitle: 'Заморозка, блокировка, удаление',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AdminListingsScreen()),
-                    ),
+                    onTap: () => openAdminScreen(context, const AdminListingsScreen()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
@@ -237,36 +236,28 @@ class _MessagesTabState extends State<MessagesTab> {
                     title: 'Жалобы',
                     subtitle: 'Жалобы пользователей на объявления',
                     badge: _badges['rep'],
-                    onTap: () => Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (_) => const ReportsScreen()))
-                        .then((_) => _reload()),
+                    onTap: () => openAdminScreen(context, const ReportsScreen()).then((_) => _reload()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
                     icon: Icons.person_off_outlined,
                     title: 'Жалобы на пользователей',
                     subtitle: 'Жалобы на профили и переписку',
-                    onTap: () => Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (_) => const UserComplaintsScreen()))
-                        .then((_) => _reload()),
+                    onTap: () => openAdminScreen(context, const UserComplaintsScreen()).then((_) => _reload()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
                     icon: Icons.history_rounded,
                     title: 'Журнал действий',
                     subtitle: 'Кто и что менял у объявлений',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AdminLogScreen()),
-                    ),
+                    onTap: () => openAdminScreen(context, const AdminLogScreen()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
                     icon: Icons.campaign_rounded,
                     title: 'Рассылка',
                     subtitle: 'Уведомление всем пользователям',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AdminBroadcastScreen()),
-                    ),
+                    onTap: () => openAdminScreen(context, const AdminBroadcastScreen()),
                   ),
                   const SizedBox(height: 10),
                   _Tile(
