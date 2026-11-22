@@ -62,6 +62,9 @@ Future<void> _openMessenger(Uri primary, Uri? fallback) async {
   }
 }
 
+/// Кандидаты для выбора аккаунта после подтверждения в Telegram.
+List<Map<String, dynamic>>? _telegramCandidates;
+
 /// Ждёт подтверждения и входит. Возвращает null при успехе, 'cancelled', 'expired' или 'failed'.
 Future<String?> _waitForLogin(
   String fn,
@@ -80,6 +83,12 @@ Future<String?> _waitForLogin(
       final res = await client.functions.invoke(fn, body: {'action': 'check', 'nonce': nonce});
       final data = res.data as Map<String, dynamic>?;
       if (link && data?['linked'] == true) return null;
+      final candidates = data?['candidates'] as List?;
+      if (!link && candidates != null && candidates.isNotEmpty) {
+        // Есть главный и отдельный аккаунт: даём выбрать до входа
+        _telegramCandidates = candidates.cast<Map<String, dynamic>>();
+        return 'choose';
+      }
       final tokenHash = data?['token_hash'] as String?;
       if (tokenHash != null) {
         // Окно выбора аккаунта при входе показываем только для входа через Telegram
@@ -371,6 +380,21 @@ Future<void> _startMessengerLogin(
   }
   lifecycle.dispose();
   launched.dispose();
+  if (error == 'choose') {
+    if (!context.mounted) return;
+    final picked = await showAccountPicker(context, _telegramCandidates ?? const []);
+    if (picked == null) return;
+    markChoiceDone();
+    try {
+      await Supabase.instance.client.auth.verifyOTP(
+        type: OtpType.magiclink,
+        tokenHash: picked['token_hash'] as String,
+      );
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Не удалось войти в выбранный аккаунт')));
+    }
+    return;
+  }
   if (error == 'cancelled') return;
   if (error == null) {
     if (linkMode) messenger.showSnackBar(const SnackBar(content: Text('Telegram привязан')));

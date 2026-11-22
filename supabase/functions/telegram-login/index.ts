@@ -25,6 +25,17 @@ function json(body: unknown, status = 200) {
   });
 }
 
+async function findIdByEmail(email: string): Promise<string | null> {
+  for (let page = 1; page <= 20; page++) {
+    const { data } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+    const users = data?.users ?? [];
+    const found = users.find((u) => u.email === email);
+    if (found) return found.id;
+    if (users.length < 1000) break;
+  }
+  return null;
+}
+
 function hex(buf: ArrayBuffer | Uint8Array): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -116,7 +127,34 @@ Deno.serve(async (req) => {
       const linkedLink = await db.auth.admin.generateLink({ type: 'magiclink', email: ownerEmail });
       const linkedHash = linkedLink.data?.properties?.hashed_token;
       if (!linkedHash) return json({ error: 'link failed' }, 500);
-      return json({ token_hash: linkedHash });
+
+      // Есть отдельный аккаунт этого Telegram: даём выбрать, в какой войти (до входа).
+      const tgEmail = `tg${row.telegram_id}@telegram.tajbozor.local`;
+      const tgUserId = await findIdByEmail(tgEmail);
+      if (!tgUserId || tgUserId === existing.user_id) return json({ token_hash: linkedHash });
+
+      const tgLink = await db.auth.admin.generateLink({ type: 'magiclink', email: tgEmail });
+      const tgHash = tgLink.data?.properties?.hashed_token;
+      if (!tgHash) return json({ token_hash: linkedHash });
+
+      const { data: profs } = await db
+        .from('profiles')
+        .select('id, name, avatar_url, public_id')
+        .in('id', [existing.user_id, tgUserId]);
+      const byId = Object.fromEntries((profs ?? []).map((p) => [p.id as string, p]));
+      const toCandidate = (id: string, hash: string, role: string) => ({
+        role,
+        name: (byId[id]?.name as string | null) ?? '',
+        avatar_url: (byId[id]?.avatar_url as string | null) ?? null,
+        public_id: (byId[id]?.public_id as string | null) ?? null,
+        token_hash: hash,
+      });
+      return json({
+        candidates: [
+          toCandidate(existing.user_id, linkedHash, 'Основной'),
+          toCandidate(tgUserId, tgHash, 'Привязка'),
+        ],
+      });
     }
 
     const email = `tg${row.telegram_id}@telegram.tajbozor.local`;
