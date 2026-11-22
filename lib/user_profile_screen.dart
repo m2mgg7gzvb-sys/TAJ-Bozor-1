@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'chat_screen.dart';
 import 'wave_background.dart';
 import 'listing_card.dart';
+import 'user_reviews_screen.dart';
 import 'listing_utils.dart';
 import 'copy_id.dart';
 import 'block_store.dart';
@@ -408,12 +409,24 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _stat('${d.reviews.length}', tr('Отзывов', 'Бознигарӣ')),
-                    const SizedBox(width: 10),
-                    _stat(avg == null ? '—' : avg.toStringAsFixed(1), tr('Средняя оценка', 'Баҳои миёна')),
-                  ],
+                InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => UserReviewsScreen(reviews: d.reviews)),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+                    child: Row(
+                      children: [
+                        Text(tr('Отзывы', 'Бознигариҳо'), style: TextStyle(fontWeight: FontWeight.w700)),
+                        const Spacer(),
+                        SellerStars(rating: {'avg': avg ?? 0, 'count': d.reviews.length}),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+                      ],
+                    ),
+                  ),
                 ),
                 if (d.viewerIsAdmin && widget.userId != _me) ...[
                   const SizedBox(height: 16),
@@ -437,46 +450,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ListingCard(item: l),
                     ],
                   ),
-                const SizedBox(height: 22),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(tr('Отзывы', 'Бознигариҳо'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                if (d.reviews.isEmpty)
-                  Text(tr('Отзывов пока нет', 'Бознигарӣ ҳанӯз нест'), style: TextStyle(color: AppColors.muted))
-                else
-                  for (final r in d.reviews) ...[
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              for (var i = 1; i <= 5; i++)
-                                Icon(
-                                  i <= ((r['rating'] as num?)?.toInt() ?? 0)
-                                      ? Icons.star_rounded
-                                      : Icons.star_outline_rounded,
-                                  size: 18,
-                                  color: const Color(0xFFF2B600),
-                                ),
-                            ],
-                          ),
-                          if ((r['body'] as String?)?.isNotEmpty ?? false) ...[
-                            const SizedBox(height: 6),
-                            Text(r['body'] as String),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
               ],
             ),
           );
