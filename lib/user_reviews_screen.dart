@@ -20,13 +20,29 @@ class UserReviewsScreen extends StatefulWidget {
 }
 
 class _Review {
-  _Review({required this.authorId, required this.rating, required this.body, required this.createdAt});
+  _Review({
+    required this.id,
+    required this.authorId,
+    required this.rating,
+    required this.body,
+    required this.createdAt,
+    required this.listingId,
+    required this.photos,
+    required this.reply,
+    required this.replyAt,
+  });
 
+  final String id;
   final String authorId;
   final int rating;
   final String? body;
   final DateTime createdAt;
+  final String? listingId;
+  final List<String> photos;
+  String? reply;
+  DateTime? replyAt;
   String authorName = '';
+  String? listingTitle;
 }
 
 class _UserReviewsScreenState extends State<UserReviewsScreen> {
@@ -40,17 +56,31 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
   Future<List<_Review>> _load() async {
     final rows = List<Map<String, dynamic>>.from(await _db
         .from('reviews')
-        .select('author_id, rating, body, created_at')
+        .select('id, author_id, rating, body, created_at, listing_id, photos, reply, reply_at')
         .eq('reviewed_id', widget.userId)
         .order('created_at', ascending: false));
     final reviews = rows
         .map((r) => _Review(
+              id: r['id'] as String,
               authorId: r['author_id'] as String,
               rating: (r['rating'] as num).toInt(),
               body: r['body'] as String?,
               createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
+              listingId: r['listing_id'] as String?,
+              photos: List<String>.from((r['photos'] as List?) ?? const []),
+              reply: r['reply'] as String?,
+              replyAt: r['reply_at'] == null ? null : DateTime.parse(r['reply_at'] as String).toLocal(),
             ))
         .toList();
+    final listingIds = reviews.map((r) => r.listingId).whereType<String>().toSet().toList();
+    if (listingIds.isNotEmpty) {
+      final ls = List<Map<String, dynamic>>.from(
+          await _db.from('listings').select('id, title').inFilter('id', listingIds));
+      final titles = {for (final l in ls) l['id'] as String: (l['title'] as String?) ?? ''};
+      for (final r in reviews) {
+        if (r.listingId != null) r.listingTitle = titles[r.listingId];
+      }
+    }
     final ids = reviews.map((r) => r.authorId).toSet().toList();
     if (ids.isNotEmpty) {
       final profs = List<Map<String, dynamic>>.from(
@@ -134,9 +164,62 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
     }
   }
 
+  void _showInfo() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('О проверке отзывов', 'Дар бораи санҷиши бознигариҳо')),
+        content: Text(tr(
+          'Оставить отзыв можно только после переписки с продавцом по объявлению. Если отзыв нарушает правила, пожалуйтесь на него, и администрация проверит.',
+          'Бознигарӣ танҳо пас аз мукотиба бо фурӯшанда дар бораи эълон гузошта мешавад. Агар бознигарӣ қоидаҳоро вайрон кунад, шикоят кунед, маъмурият санҷад.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('Понятно', 'Фаҳмо'))),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editReply(_Review r) async {
+    final ctrl = TextEditingController(text: r.reply ?? '');
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Ответ на отзыв', 'Ҷавоб ба бознигарӣ')),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 4,
+          decoration: InputDecoration(hintText: tr('Напишите ответ', 'Ҷавоб нависед')),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('Отмена', 'Бекор'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: Text(tr('Сохранить', 'Захира')),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (text == null || text.isEmpty) return;
+    try {
+      await _db
+          .from('reviews')
+          .update({'reply': text, 'reply_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('id', r.id);
+      if (mounted) setState(() => _future = _load());
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Не удалось сохранить ответ', 'Захира кардани ҷавоб муяссар нашуд'))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final canWrite = _me.isNotEmpty && _me != widget.userId;
+    final isOwner = _me.isNotEmpty && _me == widget.userId;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -145,6 +228,13 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         title: Text(tr('Отзывы', 'Бознигариҳо')),
+        actions: [
+          IconButton(
+            tooltip: tr('О проверке отзывов', 'Дар бораи санҷиш'),
+            icon: const Icon(Icons.info_outline_rounded),
+            onPressed: _showInfo,
+          ),
+        ],
       ),
       bottomNavigationBar: canWrite
           ? SafeArea(
@@ -260,6 +350,8 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
                 for (final r in list) ...[
                   _ReviewTile(
                     review: r,
+                    isOwner: isOwner,
+                    onReply: () => _editReply(r),
                     expanded: _expanded.contains(identityHashCode(r)),
                     onToggle: () => setState(() {
                       final key = identityHashCode(r);
@@ -277,11 +369,19 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
 }
 
 class _ReviewTile extends StatelessWidget {
-  const _ReviewTile({required this.review, required this.expanded, required this.onToggle});
+  const _ReviewTile({
+    required this.review,
+    required this.expanded,
+    required this.onToggle,
+    required this.isOwner,
+    required this.onReply,
+  });
 
   final _Review review;
   final bool expanded;
   final VoidCallback onToggle;
+  final bool isOwner;
+  final VoidCallback onReply;
 
   String get _date {
     final d = review.createdAt;
@@ -314,6 +414,16 @@ class _ReviewTile extends StatelessWidget {
                   children: [
                     Text(review.authorName, style: const TextStyle(fontWeight: FontWeight.w700)),
                     Text(_date, style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                    if (review.listingId != null) ...[
+                      const SizedBox(height: 2),
+                      Text(tr('Сделка состоялась', 'Савдо анҷом ёфт'),
+                          style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+                      if (review.listingTitle != null && review.listingTitle!.isNotEmpty)
+                        Text(review.listingTitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                    ],
                   ],
                 ),
               ),
@@ -337,8 +447,8 @@ class _ReviewTile extends StatelessWidget {
               maxLines: expanded || !long ? null : 3,
               overflow: expanded || !long ? null : TextOverflow.ellipsis,
             ),
-            if (long)
-              GestureDetector(
+          if (long)
+            GestureDetector(
                 onTap: onToggle,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -349,8 +459,75 @@ class _ReviewTile extends StatelessWidget {
                 ),
               ),
           ],
+          if (review.photos.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 72,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final path in review.photos)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () => _openPhoto(context, path),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            Supabase.instance.client.storage.from('review-photos').getPublicUrl(path),
+                            width: 72,
+                            height: 72,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const SizedBox(width: 72, height: 72),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          if (review.reply != null && review.reply!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tr('Ответ продавца', 'Ҷавоби фурӯшанда'),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                  const SizedBox(height: 2),
+                  Text(review.reply!),
+                ],
+              ),
+            ),
+          ],
+          if (isOwner)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onReply,
+                child: Text(review.reply == null || review.reply!.isEmpty
+                    ? tr('Ответить', 'Ҷавоб додан')
+                    : tr('Изменить ответ', 'Ҷавобро тағйир додан')),
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+void _openPhoto(BuildContext context, String path) {
+  final url = Supabase.instance.client.storage.from('review-photos').getPublicUrl(path);
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(8),
+      child: InteractiveViewer(child: Image.network(url, fit: BoxFit.contain)),
+    ),
+  );
 }
