@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'auth_intent.dart';
+import 'account_choice.dart';
 import 'frosted_glass.dart';
 import 'theme.dart';
 
@@ -81,6 +82,8 @@ Future<String?> _waitForLogin(
       if (link && data?['linked'] == true) return null;
       final tokenHash = data?['token_hash'] as String?;
       if (tokenHash != null) {
+        // Окно выбора аккаунта при входе показываем только для входа через Telegram
+        loginViaTelegram = true;
         await client.auth.verifyOTP(type: OtpType.magiclink, tokenHash: tokenHash);
         return null;
       }
