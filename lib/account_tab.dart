@@ -14,6 +14,8 @@ import 'glass_widgets.dart';
 import 'favorites_store.dart';
 import 'contacts_setup_sheet.dart';
 import 'seller_stats_screen.dart';
+import 'listing_card.dart';
+import 'user_reviews_screen.dart';
 import 'lang_store.dart';
 import 'legal_screen.dart';
 import 'my_listings_tab.dart';
@@ -51,7 +53,10 @@ class _ProfileData {
     this.isAdmin = false,
     this.avatarUrl,
     this.publicId,
+    this.reviews = const [],
   });
+
+  final List<Map<String, dynamic>> reviews;
 
   final String? publicId;
   final String? name;
@@ -85,7 +90,13 @@ class _ProfilePageState extends State<_ProfilePage> {
         .eq('id', uid)
         .maybeSingle();
     final listings = await db.from('listings').select('id').eq('user_id', uid);
+    final reviews = List<Map<String, dynamic>>.from(await db
+        .from('reviews')
+        .select('rating, body, created_at')
+        .eq('reviewed_id', uid)
+        .order('created_at', ascending: false));
     return _ProfileData(
+      reviews: reviews,
       name: profile?['name'] as String?,
       city: profile?['city'] as String?,
       phone: profile?['phone'] as String?,
@@ -172,6 +183,33 @@ class _ProfilePageState extends State<_ProfilePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                if (!isGuest) ...[
+                  InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => UserReviewsScreen(reviews: d.reviews)),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+                      child: Row(
+                        children: [
+                          Text(tr('Отзывы', 'Бознигариҳо'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                          const Spacer(),
+                          SellerStars(rating: {
+                            'avg': d.reviews.isEmpty
+                                ? 0
+                                : d.reviews.fold<num>(0, (a, r) => a + ((r['rating'] as num?) ?? 0)) / d.reviews.length,
+                            'count': d.reviews.length,
+                          }),
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (!isGuest)
                   ContactsQuickRow(uid: widget.user.id, phone: d.phone, onChanged: _reload),
                 const SizedBox(height: 16),
