@@ -43,6 +43,7 @@ class _Review {
   DateTime? replyAt;
   String authorName = '';
   String? listingTitle;
+  String? appealStatus;
 }
 
 class _UserReviewsScreenState extends State<UserReviewsScreen> {
@@ -91,7 +92,70 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
         r.authorName = n.trim().isEmpty ? tr('Пользователь', 'Корбар') : n.trim();
       }
     }
+    if (_me.isNotEmpty && _me == widget.userId && reviews.isNotEmpty) {
+      final ap = List<Map<String, dynamic>>.from(await _db
+          .from('review_appeals')
+          .select('review_id, status')
+          .eq('seller_id', _me));
+      final statuses = {for (final a in ap) a['review_id'] as String: a['status'] as String};
+      for (final r in reviews) {
+        r.appealStatus = statuses[r.id];
+      }
+    }
     return reviews;
+  }
+
+  /// Обжалование отзыва продавцом: причина, один раз на отзыв. Администратор рассматривает его.
+  Future<void> _appeal(_Review r) async {
+    final ctrl = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Обжаловать отзыв', 'Бознигариро шикоят кунед')),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: tr('Почему отзыв не соответствует действительности (от 10 символов)',
+                'Чаро бознигарӣ ба воқеият мувофиқ нест (аз 10 аломат)'),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('Отмена', 'Бекор'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: Text(tr('Отправить', 'Фиристодан')),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    if (text == null || text.isEmpty) return;
+    if (text.length < 10) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Напишите причину от 10 символов', 'Сабаби аз 10 аломат нависед'))),
+      );
+      return;
+    }
+    try {
+      await _db.from('review_appeals').insert({
+        'review_id': r.id,
+        'seller_id': _me,
+        'reason': text,
+      });
+      if (mounted) setState(() => _future = _load());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('Обжалование отправлено', 'Шикоят фиристода шуд'))),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Не удалось отправить обжалование', 'Шикоят фиристода нашуд'))),
+      );
+    }
   }
 
   List<_Review> _sorted(List<_Review> list) {
@@ -352,6 +416,7 @@ class _UserReviewsScreenState extends State<UserReviewsScreen> {
                     review: r,
                     isOwner: isOwner,
                     onReply: () => _editReply(r),
+                    onAppeal: () => _appeal(r),
                     expanded: _expanded.contains(identityHashCode(r)),
                     onToggle: () => setState(() {
                       final key = identityHashCode(r);
@@ -375,6 +440,7 @@ class _ReviewTile extends StatelessWidget {
     required this.onToggle,
     required this.isOwner,
     required this.onReply,
+    required this.onAppeal,
   });
 
   final _Review review;
@@ -382,6 +448,7 @@ class _ReviewTile extends StatelessWidget {
   final VoidCallback onToggle;
   final bool isOwner;
   final VoidCallback onReply;
+  final VoidCallback onAppeal;
 
   String get _date {
     final d = review.createdAt;
@@ -513,6 +580,26 @@ class _ReviewTile extends StatelessWidget {
                     ? tr('Ответить', 'Ҷавоб додан')
                     : tr('Изменить ответ', 'Ҷавобро тағйир додан')),
               ),
+            ),
+          if (isOwner)
+            Align(
+              alignment: Alignment.centerRight,
+              child: review.appealStatus == null
+                  ? TextButton(
+                      onPressed: onAppeal,
+                      child: Text(tr('Обжаловать', 'Шикоят кардан')),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Text(
+                        switch (review.appealStatus) {
+                          'accepted' => tr('Обжалование одобрено', 'Шикоят қабул шуд'),
+                          'rejected' => tr('Обжалование отклонено', 'Шикоят рад шуд'),
+                          _ => tr('Обжалование на рассмотрении', 'Шикоят баррасӣ мешавад'),
+                        },
+                        style: TextStyle(color: AppColors.muted, fontSize: 13),
+                      ),
+                    ),
             ),
         ],
       ),
