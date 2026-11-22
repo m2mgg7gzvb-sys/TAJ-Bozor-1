@@ -91,8 +91,6 @@ Future<String?> _waitForLogin(
       }
       final tokenHash = data?['token_hash'] as String?;
       if (tokenHash != null) {
-        // Окно выбора аккаунта при входе показываем только для входа через Telegram
-        loginViaTelegram = true;
         await client.auth.verifyOTP(type: OtpType.magiclink, tokenHash: tokenHash);
         return null;
       }

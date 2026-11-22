@@ -140,18 +140,22 @@ Deno.serve(async (req) => {
 
   if (body.action === 'links') {
     const ids = await alternativesOf(uid);
-    // Я — привязанный аккаунт (вошёл как «доп» аккаунт, а не как главный)
+    if (ids.length === 0) return json({ accounts: [] });
+    // Я — привязанный аккаунт (вошёл как «доп»): главный — другой. Иначе я главный.
     const { data: asLinkedSide } = await db.from('account_links').select('id').eq('linked_user_id', uid).maybeSingle();
     const myEmail = await emailOf(uid);
-    const linkedSide = !!asLinkedSide || /^tg\d+@telegram\.tajbozor\.local$/.test(myEmail);
-    if (ids.length === 0) return json({ alternatives: [], linked_side: false });
-    const { data: ps } = await db.from('profiles').select('id, name').in('id', ids);
-    const names = Object.fromEntries((ps ?? []).map((p) => [p.id as string, (p.name as string) ?? '']));
-    const alternatives = [];
-    for (const id of ids) {
-      alternatives.push({ id, name: names[id] ?? '', email: await emailOf(id) });
-    }
-    return json({ alternatives, linked_side: linkedSide });
+    const linkedSide = !!asLinkedSide || TG_EMAIL.test(myEmail);
+    const all = [uid, ...ids];
+    const { data: ps } = await db.from('profiles').select('id, name, avatar_url, public_id').in('id', all);
+    const byId = Object.fromEntries((ps ?? []).map((p) => [p.id as string, p]));
+    const accounts = all.map((id) => ({
+      id,
+      name: (byId[id]?.name as string | null) ?? '',
+      avatar_url: (byId[id]?.avatar_url as string | null) ?? null,
+      public_id: (byId[id]?.public_id as string | null) ?? null,
+      role: (id === uid) === linkedSide ? 'Привязка' : 'Основной',
+    }));
+    return json({ accounts, me: uid });
   }
 
   return json({ error: 'action' }, 400);
