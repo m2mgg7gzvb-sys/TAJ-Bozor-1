@@ -8,6 +8,9 @@ bool accountLinkingBusy = false;
 
 var _choiceShown = false;
 
+/// Вход выполнен через Telegram: тогда показываем выбор аккаунта.
+bool loginViaTelegram = false;
+
 /// Окно выбора при входе: если у вошедшего аккаунта есть связанные (привязка или Telegram),
 /// спрашиваем, в какой войти. Показываем один раз за запуск приложения.
 Future<void> maybeShowAccountChoice(BuildContext context) async {
@@ -16,7 +19,11 @@ Future<void> maybeShowAccountChoice(BuildContext context) async {
   if (client.auth.currentUser == null) return;
   try {
     final res = await client.functions.invoke('account-link', body: {'action': 'links'});
-    final list = (res.data as Map<String, dynamic>?)?['alternatives'] as List? ?? const [];
+    final data = res.data as Map<String, dynamic>?;
+    final list = data?['alternatives'] as List? ?? const [];
+    final linkedSide = data?['linked_side'] == true;
+    // Окно только для входа через Telegram или для привязанного (доп) аккаунта
+    if (!(loginViaTelegram || linkedSide)) return;
     if (list.isEmpty || !context.mounted) return;
     _choiceShown = true;
     final alternatives = list.cast<Map<String, dynamic>>();

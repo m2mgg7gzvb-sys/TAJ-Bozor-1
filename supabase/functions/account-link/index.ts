@@ -140,14 +140,18 @@ Deno.serve(async (req) => {
 
   if (body.action === 'links') {
     const ids = await alternativesOf(uid);
-    if (ids.length === 0) return json({ alternatives: [] });
+    // Я — привязанный аккаунт (вошёл как «доп» аккаунт, а не как главный)
+    const { data: asLinkedSide } = await db.from('account_links').select('id').eq('linked_user_id', uid).maybeSingle();
+    const myEmail = await emailOf(uid);
+    const linkedSide = !!asLinkedSide || /^tg\d+@telegram\.tajbozor\.local$/.test(myEmail);
+    if (ids.length === 0) return json({ alternatives: [], linked_side: false });
     const { data: ps } = await db.from('profiles').select('id, name').in('id', ids);
     const names = Object.fromEntries((ps ?? []).map((p) => [p.id as string, (p.name as string) ?? '']));
     const alternatives = [];
     for (const id of ids) {
       alternatives.push({ id, name: names[id] ?? '', email: await emailOf(id) });
     }
-    return json({ alternatives });
+    return json({ alternatives, linked_side: linkedSide });
   }
 
   return json({ error: 'action' }, 400);
