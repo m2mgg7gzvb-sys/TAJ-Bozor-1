@@ -187,7 +187,7 @@ class _ProfilePageState extends State<_ProfilePage> {
                   InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => UserReviewsScreen(reviews: d.reviews)),
+                      MaterialPageRoute(builder: (_) => UserReviewsScreen(userId: widget.user.id)),
                     ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

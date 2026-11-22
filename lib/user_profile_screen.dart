@@ -412,7 +412,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 InkWell(
                   borderRadius: BorderRadius.circular(16),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => UserReviewsScreen(reviews: d.reviews)),
+                    MaterialPageRoute(builder: (_) => UserReviewsScreen(userId: widget.userId)),
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
