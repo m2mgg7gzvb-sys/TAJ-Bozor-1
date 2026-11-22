@@ -45,7 +45,9 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
   }
 
   static const _providers = <String, _ProviderInfo>{
-    'google': _ProviderInfo('Google', OAuthProvider.google),
+    'google': _ProviderInfo('Google', OAuthProvider.google, enabled: true),
+    // Вход через Apple ещё не настроен: кнопка видна, но не нажимается.
+    'apple': _ProviderInfo('Apple', OAuthProvider.apple, enabled: false),
   };
 
   Future<void> _link(OAuthProvider provider) async {
@@ -120,9 +122,16 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                 if (unlinkedProviders.isNotEmpty && canChange) ...[
                   const SizedBox(height: 8),
                   for (final entry in unlinkedProviders)
-                    OutlinedButton(
-                      onPressed: () => _link(entry.value.provider),
-                      child: Text(tr('Привязать ${entry.value.title}', 'Пайваст кардани ${entry.value.title}')),
+                    Opacity(
+                      opacity: entry.value.enabled ? 1 : 0.4,
+                      child: OutlinedButton(
+                        onPressed: entry.value.enabled ? () => _link(entry.value.provider) : null,
+                        child: Text(
+                          entry.value.enabled
+                              ? tr('Привязать ${entry.value.title}', 'Пайваст кардани ${entry.value.title}')
+                              : tr('Привязать ${entry.value.title} (скоро)', 'Пайваст кардани ${entry.value.title} (наздик)'),
+                        ),
+                      ),
                     ),
                 ],
                 if (!canChange)
@@ -150,8 +159,9 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
 }
 
 class _ProviderInfo {
-  const _ProviderInfo(this.title, this.provider);
+  const _ProviderInfo(this.title, this.provider, {required this.enabled});
 
   final String title;
   final OAuthProvider provider;
+  final bool enabled;
 }
