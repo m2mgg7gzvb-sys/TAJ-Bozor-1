@@ -73,3 +73,62 @@ String _label(Map<String, dynamic> a) {
   final shown = name.isNotEmpty ? name : email;
   return tr('Войти в «$shown»', 'Ба «$shown» ворид шудан');
 }
+
+/// Отмечает, что выбор аккаунта уже сделан при входе (окно при входе повторно не показываем).
+void markChoiceDone() => _choiceShown = true;
+
+/// Выбор аккаунта до входа: аватар, имя, ID аккаунта и метка «Основной» или «Привязка».
+Future<Map<String, dynamic>?> showAccountPicker(
+  BuildContext context,
+  List<Map<String, dynamic>> candidates,
+) {
+  return showDialog<Map<String, dynamic>>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('В какой аккаунт войти?', 'Ба кадом ҳисоб ворид шавем?')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final c in candidates)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              onTap: () => Navigator.of(ctx).pop(c),
+              leading: _avatarFor(c),
+              title: Text(
+                (c['name'] as String?)?.trim().isNotEmpty == true
+                    ? c['name'] as String
+                    : tr('Пользователь', 'Корбар'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                [
+                  if ((c['public_id'] as String?)?.isNotEmpty == true)
+                    'ID: ${c['public_id']}',
+                  c['role'] == 'Основной'
+                      ? tr('Основной', 'Асосӣ')
+                      : tr('Привязка', 'Пайванд'),
+                ].join('  ·  '),
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(tr('Отмена', 'Бекор')),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _avatarFor(Map<String, dynamic> c) {
+  final url = c['avatar_url'] as String?;
+  final name = (c['name'] as String?)?.trim() ?? '';
+  final letter = name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?';
+  if (url != null && url.isNotEmpty) {
+    return CircleAvatar(radius: 22, backgroundImage: NetworkImage(url));
+  }
+  return CircleAvatar(radius: 22, child: Text(letter));
+}
