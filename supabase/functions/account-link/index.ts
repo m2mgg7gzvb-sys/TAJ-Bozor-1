@@ -2,7 +2,7 @@
 // start:   вызывает главный аккаунт, создаёт одноразовый запрос привязки и отдаёт pending_id.
 // confirm: вызывает аккаунт, который подтвердил владение своей почтой кодом, и создаёт связь.
 // switch:  переключение между связанными аккаунтами, отдаёт token_hash для входа.
-// links:   для вошедшего привязанного аккаунта отдаёт главный аккаунт (для окна выбора при входе).
+// links:   отдаёт связанные аккаунты (привязка и Telegram) для окна выбора при входе.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const db = createClient(
@@ -31,6 +31,49 @@ async function callerId(req: Request): Promise<string | null> {
   const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   const { data } = await db.auth.getUser(token);
   return data?.user?.id ?? null;
+}
+
+
+async function emailOf(id: string): Promise<string> {
+  const { data } = await db.auth.admin.getUserById(id);
+  return data?.user?.email ?? '';
+}
+
+async function findIdByEmail(email: string): Promise<string | null> {
+  for (let page = 1; page <= 20; page++) {
+    const { data } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+    const users = data?.users ?? [];
+    const found = users.find((u) => u.email === email);
+    if (found) return found.id;
+    if (users.length < 1000) break;
+  }
+  return null;
+}
+
+/// Аккаунты, связанные с этим: привязанные через «Привязать аккаунт» и
+/// аккаунт Telegram (отдельный tg-аккаунт и главный аккаунт, к которому привязан Telegram).
+async function alternativesOf(uid: string): Promise<string[]> {
+  const ids = new Set<string>();
+  const { data: asOwner } = await db.from('account_links').select('linked_user_id').eq('owner_id', uid);
+  for (const r of asOwner ?? []) ids.add(r.linked_user_id as string);
+  const { data: asLinked } = await db.from('account_links').select('owner_id').eq('linked_user_id', uid);
+  for (const r of asLinked ?? []) ids.add(r.owner_id as string);
+
+  const myEmail = await emailOf(uid);
+  const tg = myEmail.match(/^tg(\d+)@telegram\.tajbozor\.local$/);
+  if (tg) {
+    // Я — отдельный tg-аккаунт: ищем главный аккаунт, к которому привязан этот Telegram
+    const { data: link } = await db.from('telegram_links').select('user_id').eq('telegram_id', tg[1]).maybeSingle();
+    if (link && link.user_id !== uid) ids.add(link.user_id as string);
+  } else {
+    // Я — главный аккаунт: ищем отдельный tg-аккаунт моих Telegram-привязок
+    const { data: mine } = await db.from('telegram_links').select('telegram_id').eq('user_id', uid);
+    for (const r of mine ?? []) {
+      const tgId = await findIdByEmail(`tg${r.telegram_id}@telegram.tajbozor.local`);
+      if (tgId && tgId !== uid) ids.add(tgId);
+    }
+  }
+  return [...ids];
 }
 
 Deno.serve(async (req) => {
@@ -86,16 +129,8 @@ Deno.serve(async (req) => {
   if (body.action === 'switch') {
     const target = String(body.target_user_id ?? '');
     if (!UUID.test(target)) return json({ error: 'bad id' }, 400);
-    const { data: link } = await db
-      .from('account_links')
-      .select('id')
-      .or(
-        `and(owner_id.eq.${uid},linked_user_id.eq.${target}),and(owner_id.eq.${target},linked_user_id.eq.${uid})`,
-      )
-      .maybeSingle();
-    if (!link) return json({ error: 'no link' }, 403);
-    const { data: u } = await db.auth.admin.getUserById(target);
-    const email = u?.user?.email;
+    if (!(await alternativesOf(uid)).includes(target)) return json({ error: 'no link' }, 403);
+    const email = await emailOf(target);
     if (!email) return json({ error: 'no email' }, 409);
     const gen = await db.auth.admin.generateLink({ type: 'magiclink', email });
     const tokenHash = gen.data?.properties?.hashed_token;
@@ -104,17 +139,15 @@ Deno.serve(async (req) => {
   }
 
   if (body.action === 'links') {
-    const { data: l } = await db
-      .from('account_links')
-      .select('owner_id')
-      .eq('linked_user_id', uid)
-      .maybeSingle();
-    if (!l) return json({ owner: null });
-    const { data: u } = await db.auth.admin.getUserById(l.owner_id);
-    const { data: p } = await db.from('profiles').select('name').eq('id', l.owner_id).maybeSingle();
-    return json({
-      owner: { id: l.owner_id, email: u?.user?.email ?? '', name: p?.name ?? '' },
-    });
+    const ids = await alternativesOf(uid);
+    if (ids.length === 0) return json({ alternatives: [] });
+    const { data: ps } = await db.from('profiles').select('id, name').in('id', ids);
+    const names = Object.fromEntries((ps ?? []).map((p) => [p.id as string, (p.name as string) ?? '']));
+    const alternatives = [];
+    for (const id of ids) {
+      alternatives.push({ id, name: names[id] ?? '', email: await emailOf(id) });
+    }
+    return json({ alternatives });
   }
 
   return json({ error: 'action' }, 400);
