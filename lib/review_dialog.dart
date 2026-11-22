@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'glass_widgets.dart';
@@ -42,6 +45,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   String? _name;
   String? _avatarUrl;
   String? _listingTitle;
+  final _photos = <XFile>[];
 
   @override
   void initState() {
@@ -84,20 +88,45 @@ class _ReviewSheetState extends State<_ReviewSheet> {
     }
   }
 
+  Future<void> _pickPhotos() async {
+    final picked = await ImagePicker().pickMultiImage(imageQuality: 80, maxWidth: 1600);
+    if (picked.isEmpty || !mounted) return;
+    setState(() => _photos.addAll(picked.take(5 - _photos.length)));
+  }
+
   Future<void> _send() async {
     if (_sending) return;
     setState(() => _sending = true);
     try {
       final me = _db.auth.currentUser!.id;
-      await _db.from('reviews').upsert(
-        {
-          'reviewed_id': widget.sellerId,
-          'author_id': me,
-          'rating': _rating,
-          'body': _ctrl.text.trim(),
-        },
-        onConflict: 'reviewed_id,author_id',
-      );
+      final row = await _db
+          .from('reviews')
+          .upsert(
+            {
+              'reviewed_id': widget.sellerId,
+              'author_id': me,
+              'rating': _rating,
+              'body': _ctrl.text.trim(),
+            },
+            onConflict: 'reviewed_id,author_id',
+          )
+          .select('id')
+          .single();
+      final reviewId = row['id'] as String;
+      if (_photos.isNotEmpty) {
+        final paths = <String>[];
+        for (var i = 0; i < _photos.length; i++) {
+          final bytes = await _photos[i].readAsBytes();
+          final path = '$me/$reviewId/$i.jpg';
+          await _db.storage.from('review-photos').uploadBinary(
+                path,
+                bytes,
+                fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+              );
+          paths.add(path);
+        }
+        await _db.from('reviews').update({'photos': paths}).eq('id', reviewId);
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
@@ -166,6 +195,41 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
               ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 64,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (var i = 0; i < _photos.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: FutureBuilder<Uint8List>(
+                        future: _photos[i].readAsBytes(),
+                        builder: (_, snap) => snap.hasData
+                            ? Image.memory(snap.data!, width: 64, height: 64, fit: BoxFit.cover)
+                            : const SizedBox(width: 64, height: 64),
+                      ),
+                    ),
+                  ),
+                if (_photos.length < 5)
+                  GestureDetector(
+                    onTap: _pickPhotos,
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 14),
