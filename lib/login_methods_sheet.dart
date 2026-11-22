@@ -32,12 +32,14 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
   String? _info;
 
   bool? _tgLinked;
+  List<Map<String, dynamic>> _linkedAccounts = const [];
 
   @override
   void initState() {
     super.initState();
     _checkPrimary();
     _loadTelegram();
+    _loadLinkedAccounts();
   }
 
   Future<void> _loadTelegram() async {
@@ -56,6 +58,19 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
     setState(() => _error = null);
     await startTelegramLink(context);
     await _loadTelegram();
+  }
+
+  /// Связанные аккаунты (привязка через «Привязать аккаунт») — показываем, с каким аккаунтом связан этот.
+  Future<void> _loadLinkedAccounts() async {
+    try {
+      final res = await Supabase.instance.client.functions.invoke('account-link', body: {'action': 'links'});
+      final list = (res.data as Map<String, dynamic>?)?['accounts'] as List? ?? const [];
+      final me = Supabase.instance.client.auth.currentUser?.id;
+      final others = list.cast<Map<String, dynamic>>().where((a) => a['id'] != me).toList();
+      if (mounted) setState(() => _linkedAccounts = others);
+    } catch (_) {
+      // Без списка связанных аккаунтов шторка работает как раньше
+    }
   }
 
   Future<void> _checkPrimary() async {
@@ -312,6 +327,23 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                     title: const Text('Telegram', style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(tr('Привязан', 'Пайваст шуд')),
                   ),
+                if (_linkedAccounts.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(tr('Связанные аккаунты', 'Пайвастшуда ҳисобҳо'),
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  for (final a in _linkedAccounts)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.link_rounded, color: AppColors.primary),
+                      title: Text((a['name'] as String?)?.trim().isNotEmpty == true
+                          ? a['name'] as String
+                          : tr('Пользователь', 'Корбар')),
+                      subtitle: Text([
+                        if ((a['public_id'] as String?)?.isNotEmpty == true) 'ID: ${a['public_id']}',
+                        a['role'] == 'Основной' ? tr('Основной', 'Асосӣ') : tr('Привязка', 'Пайванд'),
+                      ].join('  ·  ')),
+                    ),
+                ],
                 if (canChange) ...[
                   const SizedBox(height: 8),
                   for (final entry in unlinkedProviders)
