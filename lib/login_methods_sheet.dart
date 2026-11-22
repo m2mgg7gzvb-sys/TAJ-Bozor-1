@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'account_choice.dart';
 import 'lang_store.dart';
 import 'telegram_login.dart';
 import 'theme.dart';
@@ -118,6 +119,72 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
       _fail(tr(
         'Не удалось отправить письмо. Возможно, эта почта уже занята.',
         'Мактуб фиристода нашуд. Шояд ин почта банд аст.',
+      ));
+    }
+  }
+
+  /// Привязка другого аккаунта по его почте. Чтобы доказать, что аккаунт ваш, приходит код на его почту.
+  /// Потом приложение возвращает исходный аккаунт обратно.
+  Future<void> _linkAccount() async {
+    final client = Supabase.instance.client;
+    final myRefresh = client.auth.currentSession?.refreshToken;
+    if (myRefresh == null) return;
+    final email = await _askText(
+      title: tr('Привязать аккаунт', 'Пайваст кардани ҳисоб'),
+      hint: tr('почта другого аккаунта', 'почтаи ҳисоби дигар'),
+      keyboard: TextInputType.emailAddress,
+    );
+    if (email == null || email.isEmpty) return;
+
+    accountLinkingBusy = true;
+    String? error;
+    try {
+      final start = await client.functions.invoke('account-link', body: {'action': 'start'});
+      final pendingId = (start.data as Map<String, dynamic>)['pending_id'] as String;
+
+      await client.auth.signInWithOtp(email: email, shouldCreateUser: false);
+      if (!mounted) return;
+      final code = await _askText(
+        title: tr('Код из письма', 'Рамз аз мактуб'),
+        hint: '123456',
+        keyboard: TextInputType.number,
+      );
+      if (code != null && code.isNotEmpty) {
+        try {
+          // Теперь сессия — это привязываемый аккаунт; он подтверждает связь.
+          await client.auth.verifyOTP(type: OtpType.email, email: email, token: code);
+          await client.functions.invoke('account-link', body: {'action': 'confirm', 'pending_id': pendingId});
+          error = null;
+        } on FunctionException catch (e) {
+          error = e.status == 409
+              ? tr(
+                  'Этот аккаунт уже связан с другим или сам является главным для другого',
+                  'Ин ҳисоб аллакай бо дигаре пайваст аст',
+                )
+              : tr('Не удалось привязать аккаунт', 'Пайвасти ҳисоб нашуд');
+        } catch (_) {
+          error = tr('Неверный код или ссылка устарела', 'Рамз нодуруст аст ё мўҳлат гузаштааст');
+        } finally {
+          // Возвращаем исходный аккаунт
+          await client.auth.setSession(myRefresh);
+        }
+      } else {
+        error = null;
+      }
+    } catch (_) {
+      error = tr('Не удалось отправить код на эту почту', 'Рамз ба ин почта фиристода нашуд');
+    } finally {
+      accountLinkingBusy = false;
+    }
+
+    if (!mounted) return;
+    if (error != null) {
+      _fail(error);
+    } else {
+      setState(() {});
+      _ok(tr(
+        'Аккаунт привязан. При входе через его почту появится выбор, в какой войти.',
+        'Ҳисоб пайваст шуд. Ҳангоми воридшавӣ тавассути почтаи он интихоб пайдо мешавад.',
       ));
     }
   }
@@ -273,6 +340,11 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                       child: Text(tr('Привязать Telegram', 'Пайваст кардани Telegram')),
                     ),
                   ],
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: _linkAccount,
+                    child: Text(tr('Привязать аккаунт', 'Пайваст кардани ҳисоб')),
+                  ),
                 ],
                 if (!canChange)
                   Padding(
