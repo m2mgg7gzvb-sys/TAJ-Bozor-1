@@ -56,10 +56,18 @@ Deno.serve(async (req) => {
 
   if (body.action === 'start') {
     const nonce = hex(crypto.getRandomValues(new Uint8Array(16)));
-    const { error } = await db.from('telegram_login_requests').insert({ nonce });
+    // Режим привязки: запрос с токеном входа. Тогда Telegram привяжется к этому аккаунту.
+    let linkUserId: string | null = null;
+    if (body.link === true) {
+      const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+      const { data: u } = await db.auth.getUser(token);
+      if (!u?.user) return json({ error: 'unauthorized' }, 401);
+      linkUserId = u.user.id;
+    }
+    const { error } = await db.from('telegram_login_requests').insert({ nonce, link_user_id: linkUserId });
     if (error) return json({ error: 'db' }, 500);
     await ensureWebhook();
-    return json({ nonce, bot: BOT_USERNAME });
+    return json({ nonce, bot: BOT_USERNAME, link: linkUserId !== null });
   }
 
   if (body.action === 'check') {
@@ -79,6 +87,37 @@ Deno.serve(async (req) => {
 
     // Запрос одноразовый: после выдачи входа удаляем его
     await db.from('telegram_login_requests').delete().eq('nonce', nonce);
+
+    // Режим привязки к уже вошедшему аккаунту
+    if (row.link_user_id) {
+      const { data: taken } = await db
+        .from('telegram_links')
+        .select('user_id')
+        .eq('telegram_id', row.telegram_id)
+        .maybeSingle();
+      if (taken && taken.user_id !== row.link_user_id) return json({ error: 'taken' }, 409);
+      const { error: linkErr } = await db
+        .from('telegram_links')
+        .upsert({ telegram_id: row.telegram_id, user_id: row.link_user_id });
+      if (linkErr) return json({ error: 'db' }, 500);
+      return json({ linked: true });
+    }
+
+    // Telegram уже привязан к аккаунту: входим в него (почту берём из аккаунта)
+    const { data: existing } = await db
+      .from('telegram_links')
+      .select('user_id')
+      .eq('telegram_id', row.telegram_id)
+      .maybeSingle();
+    if (existing) {
+      const { data: owner } = await db.auth.admin.getUserById(existing.user_id);
+      const ownerEmail = owner?.user?.email;
+      if (!ownerEmail) return json({ error: 'no email' }, 409);
+      const linkedLink = await db.auth.admin.generateLink({ type: 'magiclink', email: ownerEmail });
+      const linkedHash = linkedLink.data?.properties?.hashed_token;
+      if (!linkedHash) return json({ error: 'link failed' }, 500);
+      return json({ token_hash: linkedHash });
+    }
 
     const email = `tg${row.telegram_id}@telegram.tajbozor.local`;
     let link = await db.auth.admin.generateLink({ type: 'magiclink', email });

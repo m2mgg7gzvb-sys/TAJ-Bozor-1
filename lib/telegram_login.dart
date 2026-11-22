@@ -15,6 +15,7 @@ var _polling = false;
 /// Два способа входа через мессенджеры: функция и ключ сохранённого запроса.
 const _tgFn = 'telegram-login';
 const _tgKey = 'tg_login_pending';
+const _tgLinkKey = 'tg_link_pending';
 const _waFn = 'whatsapp-login';
 const _waKey = 'wa_login_pending';
 
@@ -65,8 +66,9 @@ Future<String?> _waitForLogin(
   String fn,
   String nonce,
   DateTime started,
-  bool Function() cancelled,
-) async {
+  bool Function() cancelled, {
+  bool link = false,
+}) async {
   final client = Supabase.instance.client;
   final deadline = started.add(_pendingTtl);
   while (!cancelled() && DateTime.now().isBefore(deadline)) {
@@ -75,13 +77,16 @@ Future<String?> _waitForLogin(
     if (cancelled()) return 'cancelled';
     try {
       final res = await client.functions.invoke(fn, body: {'action': 'check', 'nonce': nonce});
-      final tokenHash = (res.data as Map<String, dynamic>?)?['token_hash'] as String?;
+      final data = res.data as Map<String, dynamic>?;
+      if (link && data?['linked'] == true) return null;
+      final tokenHash = data?['token_hash'] as String?;
       if (tokenHash != null) {
         await client.auth.verifyOTP(type: OtpType.magiclink, tokenHash: tokenHash);
         return null;
       }
     } on FunctionException catch (e) {
       if (e.status == 410) return 'expired';
+      if (e.status == 409 && link) return 'taken';
       final tooLong = DateTime.now().difference(started) > const Duration(minutes: 1);
       if (e.status == 404 && tooLong) return 'expired';
     } catch (_) {
@@ -252,15 +257,19 @@ Future<void> _startMessengerLogin(
   required IconData icon,
   required Uri Function(Map<String, dynamic> data, String nonce) linkFor,
   Uri Function(Map<String, dynamic> data, String nonce)? fallbackFor,
+  bool linkMode = false,
 }) async {
-  await rememberAuthIntent(register: register);
+  if (!linkMode) await rememberAuthIntent(register: register);
   final client = Supabase.instance.client;
   final messenger = ScaffoldMessenger.of(context);
 
   String nonce;
   Map<String, dynamic> data;
   try {
-    final res = await client.functions.invoke(fn, body: {'action': 'start'});
+    final res = await client.functions.invoke(
+      fn,
+      body: linkMode ? {'action': 'start', 'link': true} : {'action': 'start'},
+    );
     data = res.data as Map<String, dynamic>;
     nonce = data['nonce'] as String;
   } on FunctionException catch (e) {
@@ -351,7 +360,7 @@ Future<void> _startMessengerLogin(
     ),
   ).then((_) => dialogOpen = false);
 
-  final error = await _waitForLogin(fn, nonce, started, () => cancelled);
+  final error = await _waitForLogin(fn, nonce, started, () => cancelled, link: linkMode);
   await _clearPending(key);
 
   if (dialogOpen && context.mounted) {
@@ -359,12 +368,37 @@ Future<void> _startMessengerLogin(
   }
   lifecycle.dispose();
   launched.dispose();
-  if (error == null || error == 'cancelled') return;
+  if (error == 'cancelled') return;
+  if (error == null) {
+    if (linkMode) messenger.showSnackBar(const SnackBar(content: Text('Telegram привязан')));
+    return;
+  }
   messenger.showSnackBar(SnackBar(
-    content: Text(error == 'expired'
-        ? 'Ссылка устарела. Начните вход заново'
-        : 'Вход не подтверждён'),
+    content: Text(switch (error) {
+      'expired' => 'Ссылка устарела. Начните заново',
+      'taken' => 'Этот Telegram уже привязан к другому аккаунту',
+      _ => 'Вход не подтверждён',
+    }),
   ));
+}
+
+/// Привязка Telegram к уже вошедшему аккаунту (вход не создаётся).
+Future<void> startTelegramLink(BuildContext context) {
+  return _startMessengerLogin(
+    context,
+    register: false,
+    fn: _tgFn,
+    key: _tgLinkKey,
+    dialogTitle: 'Подтвердите в Telegram',
+    dialogText: 'Откройте бота и нажмите Start. Telegram привяжется к вашему аккаунту.',
+    buttonLabel: 'Открыть бота',
+    icon: Icons.send_rounded,
+    linkFor: (data, nonce) =>
+        Uri.parse('tg://resolve?domain=${data['bot']}&start=login_$nonce'),
+    fallbackFor: (data, nonce) =>
+        Uri.parse('https://t.me/${data['bot']}?start=login_$nonce'),
+    linkMode: true,
+  );
 }
 
 /// Вход и регистрация через бота Telegram.

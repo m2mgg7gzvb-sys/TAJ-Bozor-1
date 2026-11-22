@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'lang_store.dart';
+import 'telegram_login.dart';
 import 'theme.dart';
 
 const _linkRedirect = 'https://app.tajbozor.pro';
@@ -29,10 +30,31 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
   String? _error;
   String? _info;
 
+  bool? _tgLinked;
+
   @override
   void initState() {
     super.initState();
     _checkPrimary();
+    _loadTelegram();
+  }
+
+  Future<void> _loadTelegram() async {
+    try {
+      final row = await Supabase.instance.client
+          .from('telegram_links')
+          .select('telegram_id')
+          .maybeSingle();
+      if (mounted) setState(() => _tgLinked = row != null);
+    } catch (_) {
+      if (mounted) setState(() => _tgLinked = false);
+    }
+  }
+
+  Future<void> _linkTelegram() async {
+    setState(() => _error = null);
+    await startTelegramLink(context);
+    await _loadTelegram();
   }
 
   Future<void> _checkPrimary() async {
@@ -216,6 +238,13 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                           )
                         : null,
                   ),
+                if (_tgLinked == true)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.verified_user_outlined, color: AppColors.primary),
+                    title: const Text('Telegram', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(tr('Привязан', 'Пайваст шуд')),
+                  ),
                 if (canChange) ...[
                   const SizedBox(height: 8),
                   for (final entry in unlinkedProviders)
@@ -235,6 +264,13 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                     OutlinedButton(
                       onPressed: _linkPhone,
                       child: Text(tr('Привязать телефон', 'Пайваст кардани телефон')),
+                    ),
+                  ],
+                  if (_tgLinked == false) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _linkTelegram,
+                      child: Text(tr('Привязать Telegram', 'Пайваст кардани Telegram')),
                     ),
                   ],
                 ],
