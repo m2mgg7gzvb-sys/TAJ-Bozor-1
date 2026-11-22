@@ -6,8 +6,7 @@ import 'theme.dart';
 
 const _linkRedirect = 'https://app.tajbozor.pro';
 
-/// Шторка «Способы входа»: что привязано к аккаунту и можно ли привязать ещё.
-/// Привязывать может только основной аккаунт (самый первый зарегистрированный).
+/// Шторка «Способы входа»: что привязано к аккаунту и что можно привязать ещё.
 Future<void> showLoginMethodsSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -28,6 +27,7 @@ class _LoginMethodsSheet extends StatefulWidget {
 class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
   bool? _isPrimary;
   String? _error;
+  String? _info;
 
   @override
   void initState() {
@@ -50,17 +50,116 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
     'apple': _ProviderInfo('Apple', OAuthProvider.apple, enabled: false),
   };
 
-  Future<void> _link(OAuthProvider provider) async {
+  void _fail(String text) {
+    if (!mounted) return;
+    setState(() {
+      _error = text;
+      _info = null;
+    });
+  }
+
+  void _ok(String text) {
+    if (!mounted) return;
+    setState(() {
+      _info = text;
+      _error = null;
+    });
+  }
+
+  Future<void> _linkOAuth(OAuthProvider provider) async {
     setState(() => _error = null);
     try {
       await Supabase.instance.client.auth.linkIdentity(provider, redirectTo: _linkRedirect);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = tr(
-            'Не удалось привязать. Этот способ входа может уже принадлежать другому аккаунту.',
-            'Пайваст карда нашуд. Ин роҳи воридшавӣ шояд ба ҳисоби дигар тааллуқ дорад.',
-          ));
+    } catch (_) {
+      _fail(tr(
+        'Не удалось привязать. Возможно, этот способ уже привязан к другому аккаунту.',
+        'Пайваст карда нашуд. Шояд ин роҳ ба ҳисоби дигар пайваст шуда бошад.',
+      ));
     }
+  }
+
+  /// Привязка почты: Supabase шлёт письмо на новый адрес, после подтверждения почта добавляется к аккаунту.
+  Future<void> _linkEmail() async {
+    final email = await _askText(
+      title: tr('Привязать почту', 'Пайваст кардани почта'),
+      hint: 'name@example.com',
+      keyboard: TextInputType.emailAddress,
+    );
+    if (email == null || email.isEmpty) return;
+    try {
+      await Supabase.instance.client.auth.updateUser(UserAttributes(email: email));
+      _ok(tr(
+        'Письмо отправлено на $email. Откройте его и подтвердите.',
+        'Мактуб ба $email фиристода шуд. Онро кушоед ва тасдиқ кунед.',
+      ));
+    } catch (_) {
+      _fail(tr(
+        'Не удалось отправить письмо. Возможно, эта почта уже занята.',
+        'Мактуб фиристода нашуд. Шояд ин почта банд аст.',
+      ));
+    }
+  }
+
+  /// Привязка телефона: код приходит SMS, затем подтверждаем его.
+  Future<void> _linkPhone() async {
+    final phone = await _askText(
+      title: tr('Привязать телефон', 'Пайваст кардани телефон'),
+      hint: '+992...',
+      keyboard: TextInputType.phone,
+    );
+    if (phone == null || phone.isEmpty) return;
+    try {
+      await Supabase.instance.client.auth.updateUser(UserAttributes(phone: phone));
+    } catch (_) {
+      _fail(tr('Не удалось отправить код на телефон', 'Рамзро ба телефон фиристода нашуд'));
+      return;
+    }
+    final code = await _askText(
+      title: tr('Код из SMS', 'Рамз аз SMS'),
+      hint: '123456',
+      keyboard: TextInputType.number,
+    );
+    if (code == null || code.isEmpty) return;
+    try {
+      await Supabase.instance.client.auth.verifyOTP(
+        type: OtpType.phoneChange,
+        phone: phone,
+        token: code,
+      );
+      _ok(tr('Телефон привязан', 'Телефон пайваст шуд'));
+    } catch (_) {
+      _fail(tr('Неверный код', 'Рамз нодуруст аст'));
+    }
+  }
+
+  Future<String?> _askText({
+    required String title,
+    required String hint,
+    required TextInputType keyboard,
+  }) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: keyboard,
+          decoration: InputDecoration(hintText: hint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(tr('Отмена', 'Бекор')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: Text(tr('Далее', 'Идома')),
+          ),
+        ],
+      ),
+    ).whenComplete(controller.dispose);
   }
 
   Future<void> _unlink(UserIdentity identity) async {
@@ -69,9 +168,7 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
       await Supabase.instance.client.auth.unlinkIdentity(identity);
       if (mounted) setState(() {});
     } catch (_) {
-      if (mounted) {
-        setState(() => _error = tr('Не удалось отвязать способ входа', 'Ҷудо кардани роҳ нашуд'));
-      }
+      _fail(tr('Не удалось отвязать способ входа', 'Ҷудо кардани роҳ нашуд'));
     }
   }
 
@@ -109,9 +206,9 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.verified_user_outlined, color: AppColors.primary),
-                    title: Text(_providers[identity.provider]?.title ?? identity.provider,
+                    title: Text(_providers[identity.provider]?.title ?? _labelFor(identity.provider),
                         style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(identity.identityData?['email'] as String? ?? ''),
+                    subtitle: Text(_subtitleFor(identity)),
                     trailing: canChange && identities.length > 1
                         ? TextButton(
                             onPressed: () => _unlink(identity),
@@ -119,32 +216,43 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                           )
                         : null,
                   ),
-                if (unlinkedProviders.isNotEmpty && canChange) ...[
+                if (canChange) ...[
                   const SizedBox(height: 8),
                   for (final entry in unlinkedProviders)
-                    Opacity(
-                      opacity: entry.value.enabled ? 1 : 0.4,
-                      child: OutlinedButton(
-                        onPressed: entry.value.enabled ? () => _link(entry.value.provider) : null,
-                        child: Text(
-                          entry.value.enabled
-                              ? tr('Привязать ${entry.value.title}', 'Пайваст кардани ${entry.value.title}')
-                              : tr('Привязать ${entry.value.title} (скоро)', 'Пайваст кардани ${entry.value.title} (наздик)'),
-                        ),
-                      ),
+                    _disabledAwareButton(
+                      enabled: entry.value.enabled,
+                      onPressed: () => _linkOAuth(entry.value.provider),
+                      label: tr('Привязать ${entry.value.title}', 'Пайваст кардани ${entry.value.title}'),
+                      soonLabel: tr('Привязать ${entry.value.title} (скоро)', 'Пайваст кардани ${entry.value.title} (наздик)'),
                     ),
+                  if (!linked.contains('email'))
+                    OutlinedButton(
+                      onPressed: _linkEmail,
+                      child: Text(tr('Привязать почту', 'Пайваст кардани почта')),
+                    ),
+                  if (!linked.contains('phone')) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _linkPhone,
+                      child: Text(tr('Привязать телефон', 'Пайваст кардани телефон')),
+                    ),
+                  ],
                 ],
                 if (!canChange)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       tr(
-                        'Привязывать и отвязывать способы может только основной аккаунт (самый первый). Здесь можно только входить.',
-                        'Танҳо ҳисоби асосӣ (аввалин) метавонад роҳҳоро пайваст ва ҷудо кунад.',
+                        'Не удалось проверить аккаунт. Закройте шторку и откройте её снова.',
+                        'Санҷиши ҳисоб нашуд. Варақаро пӯшед ва аз нав кушоед.',
                       ),
                       style: TextStyle(color: AppColors.muted, fontSize: 13),
                     ),
                   ),
+              ],
+              if (_info != null) ...[
+                const SizedBox(height: 10),
+                Text(_info!, style: TextStyle(color: AppColors.primary)),
               ],
               if (_error != null) ...[
                 const SizedBox(height: 10),
@@ -152,6 +260,42 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  String _labelFor(String provider) {
+    switch (provider) {
+      case 'email':
+        return tr('Почта', 'Почта');
+      case 'phone':
+        return tr('Телефон', 'Телефон');
+      default:
+        return provider;
+    }
+  }
+
+  String _subtitleFor(UserIdentity identity) {
+    if (identity.provider == 'phone') {
+      return identity.identityData?['phone'] as String? ?? '';
+    }
+    return identity.identityData?['email'] as String? ?? '';
+  }
+
+  Widget _disabledAwareButton({
+    required bool enabled,
+    required VoidCallback onPressed,
+    required String label,
+    required String soonLabel,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Opacity(
+        opacity: enabled ? 1 : 0.4,
+        child: OutlinedButton(
+          onPressed: enabled ? onPressed : null,
+          child: Text(enabled ? label : soonLabel),
         ),
       ),
     );
