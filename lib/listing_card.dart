@@ -203,34 +203,51 @@ class ListingCard extends StatelessWidget {
                       style: TextStyle(fontSize: 13, color: AppColors.muted),
                     ),
                   ],
-                  if (city != null && city.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      city,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: AppColors.muted),
-                    ),
-                  ],
-                  if (item['seller_rating'] is Map) ...[
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF2B600)),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${((item['seller_rating'] as Map)['avg'] as num).toStringAsFixed(1)} (${(item['seller_rating'] as Map)['count']})',
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          city ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 13, color: AppColors.muted),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      _SellerStars(rating: item['seller_rating']),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Средняя оценка продавца справа от города; без отзывов — «Нет отзывов».
+class _SellerStars extends StatelessWidget {
+  const _SellerStars({required this.rating});
+
+  final Object? rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = TextStyle(fontSize: 13, color: AppColors.muted);
+    if (rating is! Map) {
+      return Text(tr('Нет отзывов', 'Шарҳ нест'), style: muted);
+    }
+    final avg = ((rating as Map)['avg'] as num).toStringAsFixed(1);
+    final count = (rating as Map)['count'];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF2B600)),
+        const SizedBox(width: 3),
+        Text('$avg ($count)', style: muted),
+      ],
     );
   }
 }
