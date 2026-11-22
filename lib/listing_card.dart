@@ -214,7 +214,7 @@ class ListingCard extends StatelessWidget {
                           style: TextStyle(fontSize: 13, color: AppColors.muted),
                         ),
                       ),
-                      _SellerStars(rating: item['seller_rating']),
+                      SellerStars(rating: item['seller_rating']),
                     ],
                   ),
                 ],
@@ -228,8 +228,8 @@ class ListingCard extends StatelessWidget {
 }
 
 /// Пять звёзд: жёлтые по средней оценке (с половинкой), серые без отзывов; рядом число отзывов.
-class _SellerStars extends StatelessWidget {
-  const _SellerStars({required this.rating});
+class SellerStars extends StatelessWidget {
+  const SellerStars({required this.rating});
 
   final Object? rating;
 
