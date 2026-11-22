@@ -257,9 +257,9 @@ Future<void> _startMessengerLogin(
   required IconData icon,
   required Uri Function(Map<String, dynamic> data, String nonce) linkFor,
   Uri Function(Map<String, dynamic> data, String nonce)? fallbackFor,
-  bool link = false,
+  bool linkMode = false,
 }) async {
-  if (!link) await rememberAuthIntent(register: register);
+  if (!linkMode) await rememberAuthIntent(register: register);
   final client = Supabase.instance.client;
   final messenger = ScaffoldMessenger.of(context);
 
@@ -268,7 +268,7 @@ Future<void> _startMessengerLogin(
   try {
     final res = await client.functions.invoke(
       fn,
-      body: link ? {'action': 'start', 'link': true} : {'action': 'start'},
+      body: linkMode ? {'action': 'start', 'link': true} : {'action': 'start'},
     );
     data = res.data as Map<String, dynamic>;
     nonce = data['nonce'] as String;
@@ -360,7 +360,7 @@ Future<void> _startMessengerLogin(
     ),
   ).then((_) => dialogOpen = false);
 
-  final error = await _waitForLogin(fn, nonce, started, () => cancelled, link: link);
+  final error = await _waitForLogin(fn, nonce, started, () => cancelled, link: linkMode);
   await _clearPending(key);
 
   if (dialogOpen && context.mounted) {
@@ -370,7 +370,7 @@ Future<void> _startMessengerLogin(
   launched.dispose();
   if (error == 'cancelled') return;
   if (error == null) {
-    if (link) messenger.showSnackBar(const SnackBar(content: Text('Telegram привязан')));
+    if (linkMode) messenger.showSnackBar(const SnackBar(content: Text('Telegram привязан')));
     return;
   }
   messenger.showSnackBar(SnackBar(
@@ -397,7 +397,7 @@ Future<void> startTelegramLink(BuildContext context) {
         Uri.parse('tg://resolve?domain=${data['bot']}&start=login_$nonce'),
     fallbackFor: (data, nonce) =>
         Uri.parse('https://t.me/${data['bot']}?start=login_$nonce'),
-    link: true,
+    linkMode: true,
   );
 }
 
