@@ -18,6 +18,7 @@ import 'listing_card.dart';
 import 'user_reviews_screen.dart';
 import 'lang_store.dart';
 import 'legal_screen.dart';
+import 'login_methods_sheet.dart';
 import 'my_listings_tab.dart';
 import 'nav_state.dart';
 import 'push.dart';
@@ -296,6 +297,12 @@ class _ProfilePageState extends State<_ProfilePage> {
                             content: Text(err ?? tr('Уведомления включены', 'Огоҳиҳо фаъол шуд')),
                           ));
                         },
+                      ),
+                    if (!isGuest)
+                      _MenuTile(
+                        icon: Icons.login_rounded,
+                        title: tr('Способы входа', 'Роҳҳои воридшавӣ'),
+                        onTap: () => showLoginMethodsSheet(context),
                       ),
                     _MenuTile(
                       icon: Icons.privacy_tip_outlined,
