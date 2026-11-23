@@ -10,6 +10,7 @@ import 'city_store.dart';
 import 'confirm_delete.dart';
 import 'error_log.dart';
 import 'map_picker.dart';
+import 'picker_sheet.dart';
 import 'laptop_catalog.dart';
 import 'listing_draft.dart';
 import 'tech_catalog.dart';
@@ -405,6 +406,39 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return _drop(hint, items.contains(current) ? current : null, items, (v) => onChanged(v ?? ''));
   }
 
+  /// Марка и модель: тап открывает окно с поиском сверху (вместо длинного выпадающего списка).
+  Widget _searchPick(String hint, String current, List<String> items, ValueChanged<String> onChanged) {
+    final value = items.contains(current) ? current : '';
+    final field = InputDecorator(
+      decoration: InputDecoration(
+        hintText: hint,
+        suffixIcon: const Icon(Icons.arrow_drop_down),
+      ).applyDefaults(Theme.of(context).inputDecorationTheme),
+      isEmpty: value.isEmpty,
+      child: Text(value, style: const TextStyle(color: AppColors.onLight)),
+    );
+    final tappable = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        final picked = await showModalBottomSheet<String>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => PickerSheet(
+            title: hint,
+            items: items,
+            current: value.isEmpty ? null : value,
+          ),
+        );
+        if (picked == null || !mounted) return;
+        setState(() => onChanged(picked));
+      },
+      child: IgnorePointer(child: field),
+    );
+    final key = const {'Марка': 'brand', 'Модель': 'model'}[hint];
+    return key == null ? tappable : _hl(key, tappable);
+  }
+
   /// Открывает карту и сохраняет выбранную точку.
   Future<void> _pickPoint() async {
     final initial = (_lat != null && _lng != null) ? LatLng(_lat!, _lng!) : null;
@@ -765,13 +799,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
       ),
       const SizedBox(height: 12),
-      _pick('Марка', _brandCtrl.text, _catalog.keys.toList(), (v) {
+      _searchPick('Марка', _brandCtrl.text, _catalog.keys.toList(), (v) {
         _brandCtrl.text = v;
         _modelCtrl.text = '';
         _generationCtrl.text = '';
       }),
       const SizedBox(height: 12),
-      _pick(
+      _searchPick(
         'Модель',
         _modelCtrl.text,
         _catalog[_brandCtrl.text]?.keys.toList() ?? const [],
