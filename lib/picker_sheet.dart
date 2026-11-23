@@ -37,14 +37,14 @@ class PickerSheetState extends State<PickerSheet> {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.black45),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted),
       ),
     );
   }
 
   Widget _row(String text, {required bool selected, required VoidCallback onTap}) {
     return Material(
-      color: selected ? const Color(0xFFE8F3EF) : Colors.transparent,
+      color: selected ? AppColors.mint : Colors.transparent,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -59,7 +59,7 @@ class PickerSheetState extends State<PickerSheet> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected ? AppColors.primary : Colors.black87,
+                    color: selected ? AppColors.primary : AppColors.ink,
                   ),
                 ),
               ),
@@ -112,7 +112,7 @@ class PickerSheetState extends State<PickerSheet> {
                   ),
                   Text(
                     '${widget.items.length}',
-                    style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
