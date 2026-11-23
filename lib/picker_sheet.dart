@@ -37,7 +37,7 @@ class PickerSheetState extends State<PickerSheet> {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted),
       ),
     );
   }
