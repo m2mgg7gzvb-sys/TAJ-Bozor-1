@@ -53,7 +53,6 @@ class _HomeShellState extends State<HomeShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _askPush();
       if (mounted) maybeShowContactsSetup(context);
-      if (mounted) maybeShowAccountChoice(context);
     });
   }
 
