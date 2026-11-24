@@ -682,7 +682,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Row(
                     children: [
-                      if (kCreditEnabled && num.tryParse('${_item['price']}') != null) ...[
+                      if (num.tryParse('${_item['price']}') != null) ...[
                         Expanded(
                           child: GreenButton.icon(
                             height: 44,
