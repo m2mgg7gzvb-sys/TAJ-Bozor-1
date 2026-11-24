@@ -7,6 +7,8 @@ import 'create_listing_screen.dart';
 import 'glass_widgets.dart';
 import 'guest_prompt.dart';
 import 'listing_card.dart';
+import 'listing_detail_screen.dart';
+import 'fallback_photo.dart';
 import 'listing_utils.dart';
 import 'listing_actions_sheet.dart';
 import 'nav_state.dart';
@@ -77,6 +79,18 @@ class _MyListingsTabState extends State<MyListingsTab> {
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
     final list = List<Map<String, dynamic>>.from(rows);
+    // Просмотры и избранное по каждому объявлению; без них список работает как раньше.
+    try {
+      final stats = await Supabase.instance.client.rpc('my_listing_stats') as List;
+      final byId = <String, Map>{for (final s in stats) '${s['listing_id']}': s as Map};
+      for (final item in list) {
+        final st = byId['${item['id']}'];
+        if (st != null) {
+          item['views'] = st['views'];
+          item['favs'] = st['favorites'];
+        }
+      }
+    } catch (_) {}
     if (mounted) _updatePoll(list);
     return list;
   }
@@ -142,9 +156,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
     }
   }
 
-  /// Карточка со статусом. Активные — с кнопками «Продано» и «В топ»;
-  /// на проверке, заблокированные, замороженные, проданные, снятые и истёкшие — с меткой.
-  /// Для заблокированного и замороженного показывается причина от администратора.
+  /// Карточка своего объявления: фото слева, справа название, цена, место и счётчики.
   Widget _itemCard(Map<String, dynamic> item) {
     final status = item['status'] as String?;
     final note = (item['admin_note'] as String?)?.trim();
@@ -157,59 +169,6 @@ class _MyListingsTabState extends State<MyListingsTab> {
       'hidden' => 'Снято с публикации',
       _ => null,
     };
-    final card = GlowCard(child: ListingCard(item: item));
-    if (label == null) {
-      // Активное объявление: действия в меню в левом верхнем углу, карточка не меняется.
-      final daysLeft = listingDaysLeft(item);
-      return Stack(
-        children: [
-          card,
-          Positioned(
-            top: 60,
-            left: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.surface.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                daysLeft > 0 ? 'Осталось ${daysWord(daysLeft)}' : 'Срок истёк',
-                style: TextStyle(color: AppColors.ink, fontSize: 11, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 6,
-            left: 6,
-            child: Material(
-              color: AppColors.surface.withValues(alpha: 0.92),
-              shape: const CircleBorder(),
-              child: IconButton(
-                tooltip: 'Действия',
-                icon: Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.ink),
-                onPressed: () => showListingActions(
-                  context,
-                  title: (item['title'] as String?) ?? '',
-                  onTop: () => showPromoteSheet(
-                    context,
-                    listingId: item['id'] as String,
-                    title: (item['title'] as String?) ?? '',
-                  ),
-                  onSold: () => _markSold(item),
-                  onEdit: () async {
-                    final saved = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(builder: (_) => CreateListingScreen(listing: item)),
-                    );
-                    if (saved == true) _reload();
-                  },
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
     final badgeColor = switch (status) {
       'blocked' => Colors.red.shade700,
       'frozen' => Colors.blueGrey.shade700,
@@ -218,55 +177,228 @@ class _MyListingsTabState extends State<MyListingsTab> {
       'hidden' => Colors.grey.shade600,
       _ => Colors.orange.shade800,
     };
+    final isActive = label == null;
+    final topDays = topDaysLeft(item);
+    final showTop = isActive && topDays > 0;
+    final photo = photoUrl(item);
+    final facts = [item['city'] as String?, ListingCard.factsOf(item)]
+        .where((x) => x != null && x.trim().isNotEmpty)
+        .join(' • ');
+    final views = (item['views'] as num?)?.toInt() ?? 0;
+    final favs = (item['favs'] as num?)?.toInt() ?? 0;
     final showNote = (status == 'blocked' || status == 'frozen') && note != null && note.isNotEmpty;
-    return Stack(
-      children: [
-        card,
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(8)),
-            child: Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+
+    Widget? tag;
+    if (showTop) {
+      tag = _pill(
+        background: const Color(0xFFF5B301),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF3B2A00)),
+            const SizedBox(width: 4),
+            Text(
+              'TOP · $topDays дн.',
+              style: const TextStyle(color: Color(0xFF3B2A00), fontSize: 12, fontWeight: FontWeight.w800),
             ),
-          ),
+          ],
         ),
-        if (status == 'expired')
-          Positioned(
-            left: 8,
-            right: 8,
-            bottom: 8,
-            child: GreenButton(
-              height: 36,
-              onPressed: () => _renew(item),
-              child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
+      );
+    } else if (label != null) {
+      tag = _pill(
+        background: badgeColor,
+        child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+      );
+    }
+
+    Widget? daysTag;
+    if (isActive) {
+      final daysLeft = listingDaysLeft(item);
+      daysTag = _pill(
+        background: AppColors.surface.withValues(alpha: 0.92),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.schedule_rounded, size: 15, color: AppColors.ink),
+            const SizedBox(width: 4),
+            Text(
+              daysLeft > 0 ? 'Осталось ${daysWord(daysLeft)}' : 'Срок истёк',
+              style: TextStyle(color: AppColors.ink, fontSize: 12, fontWeight: FontWeight.w700),
             ),
-          ),
-        if (showNote)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
-              ),
-              child: Text(
-                'Причина: $note',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 11),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ListingDetailScreen(item: item)),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(color: AppColors.deep.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Column(
+          children: [
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 165,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          photo == null
+                              ? FallbackPhoto(item: item)
+                              : Image.network(
+                                  photo,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => FallbackPhoto(item: item),
+                                ),
+                          if (tag != null) Positioned(top: 10, left: 10, child: tag),
+                          if (daysTag != null) Positioned(left: 10, bottom: 10, child: daysTag),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 8, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  (item['title'] as String?) ?? '',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink),
+                                ),
+                              ),
+                              if (isActive)
+                                Material(
+                                  color: AppColors.surface,
+                                  elevation: 2,
+                                  shape: const CircleBorder(),
+                                  child: SizedBox(
+                                    width: 34,
+                                    height: 34,
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      tooltip: 'Действия',
+                                      icon: Icon(Icons.more_horiz_rounded, size: 20, color: AppColors.ink),
+                                      onPressed: () => showListingActions(
+                                        context,
+                                        title: (item['title'] as String?) ?? '',
+                                        onTop: () => showPromoteSheet(
+                                          context,
+                                          listingId: item['id'] as String,
+                                          title: (item['title'] as String?) ?? '',
+                                        ),
+                                        onSold: () => _markSold(item),
+                                        onEdit: () async {
+                                          final saved = await Navigator.of(context).push<bool>(
+                                            MaterialPageRoute(builder: (_) => CreateListingScreen(listing: item)),
+                                          );
+                                          if (saved == true) _reload();
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            priceText(item),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 17),
+                          ),
+                          if (facts.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on_outlined, size: 16, color: AppColors.muted),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    facts,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: AppColors.muted, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (showNote) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Причина: $note',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.red, fontSize: 12),
+                            ),
+                          ],
+                          const Spacer(),
+                          const SizedBox(height: 10),
+                          Divider(height: 1, color: AppColors.line),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Icon(Icons.visibility_outlined, size: 18, color: AppColors.muted),
+                              const SizedBox(width: 4),
+                              Text('$views', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w600)),
+                              const SizedBox(width: 12),
+                              Container(width: 1, height: 14, color: AppColors.line),
+                              const SizedBox(width: 12),
+                              Icon(Icons.favorite, size: 18, color: AppColors.ruby),
+                              const SizedBox(width: 4),
+                              Text('$favs', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-      ],
+            if (status == 'expired')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: GreenButton(
+                    height: 36,
+                    onPressed: () => _renew(item),
+                    child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _pill({required Color background, required Widget child}) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(10)),
+        child: child,
+      );
 
   /// Прозрачная шапка с заголовком по центру, как во вкладке «Избранное».
   PreferredSizeWidget _glassAppBar() {
@@ -367,6 +499,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: GlassTabs(
               labels: ['Активные (${active.length})', 'Завершённые (${completed.length})'],
+              icons: const [Icons.directions_car_outlined, Icons.check_circle_outline_rounded],
               selected: _tab,
               onChanged: (i) => setState(() => _tab = i),
             ),
@@ -391,12 +524,8 @@ class _MyListingsTabState extends State<MyListingsTab> {
             children: [
               tabs,
               Expanded(
-                child: GridView.count(
+                child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.66,
                   children: [for (final item in shown) _itemCard(item)],
                 ),
               ),
