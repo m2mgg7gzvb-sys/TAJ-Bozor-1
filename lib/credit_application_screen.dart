@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'green_button.dart';
@@ -15,6 +16,19 @@ const Map<String, double> kCreditRates = {'TJS': 23, 'USD': 15};
 
 /// Сроки кредита, месяцев.
 const List<int> kCreditTerms = [12, 24, 36, 48, 60];
+
+/// Телефон Таджикистана: префикс +992 всегда на месте, после него не больше 9 цифр.
+class _TjPhoneFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final t = newValue.text;
+    var rest = t.startsWith('+992 ') ? t.substring(5) : t;
+    rest = rest.replaceAll(RegExp(r'\D'), '');
+    if (rest.length > 9) rest = rest.substring(0, 9);
+    final text = '+992 $rest';
+    return TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
+  }
+}
 
 /// Заявка на кредит: шаг 1 — условия и расчёт платежа, шаг 2 — контакты и отправка.
 class CreditApplicationScreen extends StatefulWidget {
@@ -258,7 +272,7 @@ class _CreditApplicationScreenState extends State<CreditApplicationScreen> {
         controller: _nameCtrl,
         textCapitalization: TextCapitalization.words,
         decoration: InputDecoration(
-          hintText: tr('Например, Рахимова Ситора', 'Масалан, Рахимова Ситора'),
+          hintText: tr('Например, Назиров Мухаммад', 'Масалан, Назиров Мухаммад'),
           filled: true,
           fillColor: AppColors.lightFill,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
@@ -269,6 +283,7 @@ class _CreditApplicationScreenState extends State<CreditApplicationScreen> {
       TextField(
         controller: _phoneCtrl,
         keyboardType: TextInputType.phone,
+        inputFormatters: [_TjPhoneFormatter()],
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.lightFill,
