@@ -195,7 +195,6 @@ class _MyListingsTabState extends State<MyListingsTab> {
       _ => Colors.orange.shade800,
     };
     final isActive = label == null;
-    final daysLeftNow = isActive ? listingDaysLeft(item) : 0;
     final topDays = topDaysLeft(item);
     final showTop = isActive && topDays > 0;
     final photo = photoUrl(item);
@@ -216,7 +215,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
             const Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF3B2A00)),
             const SizedBox(width: 4),
             Text(
-              'TOP · $topDays дн.',
+              'TOP',
               style: const TextStyle(color: Color(0xFF3B2A00), fontSize: 12, fontWeight: FontWeight.w800),
             ),
           ],
@@ -327,6 +326,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
                                           title: (item['title'] as String?) ?? '',
                                         ),
                                         onSold: () => _markSold(item),
+                                        onRenew: () => _extendActive(item),
                                         onEdit: () async {
                                           final saved = await Navigator.of(context).push<bool>(
                                             MaterialPageRoute(builder: (_) => CreateListingScreen(listing: item)),
@@ -396,14 +396,14 @@ class _MyListingsTabState extends State<MyListingsTab> {
                 ],
               ),
             ),
-            if (status == 'expired' || (isActive && daysLeftNow > 0 && daysLeftNow <= 3))
+            if (status == 'expired')
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: SizedBox(
                   width: double.infinity,
                   child: GreenButton(
                     height: 36,
-                    onPressed: () => status == 'expired' ? _renew(item) : _extendActive(item),
+                    onPressed: () => _renew(item),
                     child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
                   ),
                 ),

@@ -10,6 +10,7 @@ Future<void> showListingActions(
   required VoidCallback onTop,
   required VoidCallback onSold,
   required VoidCallback onEdit,
+  VoidCallback? onRenew,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -37,6 +38,21 @@ Future<void> showListingActions(
               },
             ),
             const SizedBox(height: 12),
+            if (onRenew != null) ...[
+              SizedBox(
+                width: double.infinity,
+                child: GreenButton.icon(
+                  height: 50,
+                  onPressed: () {
+                    Navigator.of(sheetCtx).pop();
+                    onRenew();
+                  },
+                  icon: const Icon(Icons.update_rounded, size: 20),
+                  label: const Text('Продлить на 14 дней'),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             SizedBox(
               width: double.infinity,
               child: GreenButton.icon(

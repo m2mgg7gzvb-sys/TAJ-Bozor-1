@@ -125,7 +125,7 @@ class ListingCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         if (_isTop(item))
-                          TopTag(days: isOwnListing(item) ? topDaysLeft(item) : null),
+                          const TopTag(),
                         if (_isTop(item)) const SizedBox(height: 4),
                         if (_isNew(item)) _badge('Новое', const Color(0xFF2E7D5B)),
                         if (item['good_deal'] == true) ...[

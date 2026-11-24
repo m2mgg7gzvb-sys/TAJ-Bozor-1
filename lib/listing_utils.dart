@@ -113,9 +113,3 @@ String topExtendLine(int left, int add) {
     'Шумо TOP-и $left рӯз доред, $add рӯз тамдид мешавад = ${left + add} рӯз',
   );
 }
-
-/// Объявление создано текущим пользователем (его счётчики видит только он).
-bool isOwnListing(Map<String, dynamic> item) {
-  final uid = Supabase.instance.client.auth.currentUser?.id;
-  return uid != null && uid == item['user_id'];
-}
