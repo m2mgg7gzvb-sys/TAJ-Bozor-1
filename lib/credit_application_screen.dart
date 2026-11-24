@@ -292,8 +292,9 @@ class _CreditApplicationScreenState extends State<CreditApplicationScreen> {
       ),
       const SizedBox(height: 20),
       GreenButton(
-        onPressed: _sending ? null : _send,
-        child: Text(tr('Отправить заявку', 'Фиристодани ариза')),
+        // Пока банк-партнёр не подключён, отправка выключена.
+        onPressed: kCreditEnabled && !_sending ? _send : null,
+        child: Text(tr('Подать заявку', 'Ариза пешниҳод кардан')),
       ),
     ];
   }
