@@ -84,6 +84,15 @@ int topDaysLeft(Map<String, dynamic> item) {
   return (left.inHours / 24).ceil();
 }
 
+/// Сколько дней осталось до конца срока объявления (0, если срок уже прошёл).
+int listingDaysLeft(Map<String, dynamic> item) {
+  final until = DateTime.tryParse('${item['expires_at'] ?? ''}');
+  if (until == null) return 0;
+  final left = until.toUtc().difference(DateTime.now().toUtc());
+  if (left <= Duration.zero) return 0;
+  return (left.inHours / 24).ceil();
+}
+
 /// Число дней с правильным окончанием: 1 день, 2 дня, 5 дней.
 String daysWord(int n) {
   final m100 = n % 100;

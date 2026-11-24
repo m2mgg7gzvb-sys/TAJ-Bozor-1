@@ -73,7 +73,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
     if (user == null) return [];
     final rows = await Supabase.instance.client
         .from('listings')
-        .select('$listingSelect, status, admin_note')
+        .select('$listingSelect, status, admin_note, expires_at')
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
     final list = List<Map<String, dynamic>>.from(rows);
@@ -160,9 +160,25 @@ class _MyListingsTabState extends State<MyListingsTab> {
     final card = GlowCard(child: ListingCard(item: item));
     if (label == null) {
       // Активное объявление: действия в меню в левом верхнем углу, карточка не меняется.
+      final daysLeft = listingDaysLeft(item);
       return Stack(
         children: [
           card,
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                daysLeft > 0 ? 'Осталось ${daysWord(daysLeft)}' : 'Срок истёк',
+                style: TextStyle(color: AppColors.ink, fontSize: 11, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
           Positioned(
             top: 6,
             left: 6,
