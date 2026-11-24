@@ -21,6 +21,7 @@ import 'listing_utils.dart';
 import 'listings_screen.dart';
 import 'nav_state.dart';
 import 'loan_calculator_screen.dart';
+import 'credit_application_screen.dart';
 import 'price_history_card.dart';
 import 'safety_tips_screen.dart';
 import 'photo_viewer.dart';
@@ -692,6 +693,22 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           ),
                         ),
                       if (num.tryParse('${_item['price']}') != null) const SizedBox(width: 8),
+                      if (kCreditEnabled && num.tryParse('${_item['price']}') != null) ...[
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => CreditApplicationScreen(
+                                price: num.parse('${_item['price']}'),
+                                listingId: _id,
+                                title: _item['title'] as String?,
+                              ),
+                            )),
+                            icon: const Icon(Icons.account_balance_outlined, size: 18),
+                            label: const Text('В кредит'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () => Navigator.of(context).push(
