@@ -245,12 +245,13 @@ class _MyListingsTabState extends State<MyListingsTab> {
         ),
         child: Column(
           children: [
-            IntrinsicHeight(
+            SizedBox(
+              height: 172,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(
-                    width: 165,
+                  Expanded(
+                    flex: 52,
                     child: ClipRRect(
                       borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
                       child: Stack(
@@ -270,6 +271,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
                     ),
                   ),
                   Expanded(
+                    flex: 48,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(14, 10, 8, 12),
                       child: Column(
