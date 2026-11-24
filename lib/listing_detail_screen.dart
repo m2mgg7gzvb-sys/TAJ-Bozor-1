@@ -20,7 +20,6 @@ import 'listing_card.dart';
 import 'listing_utils.dart';
 import 'listings_screen.dart';
 import 'nav_state.dart';
-import 'loan_calculator_screen.dart';
 import 'credit_application_screen.dart';
 import 'price_history_card.dart';
 import 'safety_tips_screen.dart';
@@ -682,20 +681,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Row(
                     children: [
-                      if (num.tryParse('${_item['price']}') != null)
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => LoanCalculatorScreen(price: num.tryParse('${_item['price']}')),
-                            )),
-                            icon: const Icon(Icons.calculate_outlined, size: 18),
-                            label: const Text('Рассрочка'),
-                          ),
-                        ),
-                      if (num.tryParse('${_item['price']}') != null) const SizedBox(width: 8),
                       if (kCreditEnabled && num.tryParse('${_item['price']}') != null) ...[
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: GreenButton.icon(
+                            height: 44,
                             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                               builder: (_) => CreditApplicationScreen(
                                 price: num.parse('${_item['price']}'),
@@ -704,7 +693,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                               ),
                             )),
                             icon: const Icon(Icons.account_balance_outlined, size: 18),
-                            label: const Text('В кредит'),
+                            label: const Text('Кредит'),
                           ),
                         ),
                         const SizedBox(width: 8),
