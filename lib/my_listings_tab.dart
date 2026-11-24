@@ -13,6 +13,7 @@ import 'listing_utils.dart';
 import 'listing_actions_sheet.dart';
 import 'nav_state.dart';
 import 'promote_sheet.dart';
+import 'renew_sheet.dart';
 import 'slide_up_in.dart';
 import 'theme.dart';
 import 'green_button.dart';
@@ -142,23 +143,6 @@ class _MyListingsTabState extends State<MyListingsTab> {
   }
 
   /// Продлевает истекшее объявление на 14 дней: оно снова идёт на проверку.
-  /// Продление активного объявления за 3 дня до конца: срок добавляется к текущему, статус не меняется.
-  Future<void> _extendActive(Map<String, dynamic> item) async {
-    try {
-      final now = DateTime.now().toUtc();
-      final current = DateTime.tryParse('${item['expires_at'] ?? ''}')?.toUtc();
-      final base = current != null && current.isAfter(now) ? current : now;
-      await Supabase.instance.client.from('listings').update({
-        'expires_at': base.add(const Duration(days: 14)).toIso8601String(),
-        'expiry_notified_at': null,
-      }).eq('id', item['id'] as String);
-      _reload();
-      _snack('Срок продлён на 14 дней');
-    } catch (_) {
-      _snack('Не удалось продлить');
-    }
-  }
-
   Future<void> _renew(Map<String, dynamic> item) async {
     try {
       await Supabase.instance.client.from('listings').update({
@@ -326,7 +310,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
                                           title: (item['title'] as String?) ?? '',
                                         ),
                                         onSold: () => _markSold(item),
-                                        onRenew: () => _extendActive(item),
+                                        onRenew: () => showRenewSheet(context, item: item, onDone: _reload),
                                         onEdit: () async {
                                           final saved = await Navigator.of(context).push<bool>(
                                             MaterialPageRoute(builder: (_) => CreateListingScreen(listing: item)),
