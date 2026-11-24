@@ -165,8 +165,8 @@ class _MyListingsTabState extends State<MyListingsTab> {
         children: [
           card,
           Positioned(
-            top: 8,
-            right: 8,
+            top: 60,
+            left: 8,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
