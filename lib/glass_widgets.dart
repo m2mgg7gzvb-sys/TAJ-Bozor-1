@@ -29,9 +29,10 @@ class GlowCard extends StatelessWidget {
 
 /// Переключатель в виде стеклянной капсулы: подсветка плавно переезжает на выбранную вкладку.
 class GlassTabs extends StatelessWidget {
-  const GlassTabs({required this.labels, required this.selected, required this.onChanged});
+  const GlassTabs({required this.labels, required this.selected, required this.onChanged, this.icons});
 
   final List<String> labels;
+  final List<IconData>? icons;
   final int selected;
   final ValueChanged<int> onChanged;
 
@@ -95,7 +96,20 @@ class GlassTabs extends StatelessWidget {
                             fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
                             color: i == selected ? AppColors.deep : AppColors.ink,
                           ),
-                          child: Text(labels[i], maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (icons != null) ...[
+                                Icon(
+                                  icons![i],
+                                  size: 18,
+                                  color: i == selected ? AppColors.deep : AppColors.ink,
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Flexible(child: Text(labels[i], maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            ],
+                          ),
                         ),
                       ),
                     ),

@@ -48,6 +48,9 @@ class ListingCard extends StatelessWidget {
     return parts.take(3).join(' · ');
   }
 
+  /// Публичная строка характеристик (для других экранов, например «Мои объявления»).
+  static String factsOf(Map<String, dynamic> item) => _facts(item);
+
   /// Опубликовано за последние сутки.
   static bool _isNew(Map<String, dynamic> item) {
     final created = DateTime.tryParse('${item['created_at'] ?? ''}');
