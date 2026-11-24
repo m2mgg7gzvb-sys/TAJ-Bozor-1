@@ -199,7 +199,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
             const Icon(Icons.workspace_premium_rounded, size: 14, color: Color(0xFF3B2A00)),
             const SizedBox(width: 4),
             Text(
-              'TOP',
+              'TOP · $topDays дн.',
               style: const TextStyle(color: Color(0xFF3B2A00), fontSize: 12, fontWeight: FontWeight.w800),
             ),
           ],
