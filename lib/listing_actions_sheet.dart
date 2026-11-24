@@ -48,7 +48,7 @@ Future<void> showListingActions(
                     onRenew();
                   },
                   icon: const Icon(Icons.update_rounded, size: 20),
-                  label: const Text('Продлить на 14 дней'),
+                  label: const Text('Продлить объявление'),
                 ),
               ),
               const SizedBox(height: 12),
