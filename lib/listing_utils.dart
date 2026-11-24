@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'lang_store.dart';
+
 /// Какие поля объявления загружать вместе с фото.
 const listingSelect =
     'id, public_id, user_id, lat, lng, title, description, price, currency, city, address, details, created_at, bumped_at, top_until, negotiable, category_id, subcategory_id, listing_images(path, position), categories(slug)';
@@ -71,4 +73,34 @@ Future<void> attachSellerRatings(List<Map<String, dynamic>> items) async {
       it['seller_rating'] = {'avg': sum[uid]! / cnt[uid]!, 'count': cnt[uid]};
     }
   } catch (_) {}
+}
+
+/// Сколько полных дней TOP ещё действует (0, если TOP не активен).
+int topDaysLeft(Map<String, dynamic> item) {
+  final until = DateTime.tryParse('${item['top_until'] ?? ''}');
+  if (until == null) return 0;
+  final left = until.toUtc().difference(DateTime.now().toUtc());
+  if (left <= Duration.zero) return 0;
+  return (left.inHours / 24).ceil();
+}
+
+/// Число дней с правильным окончанием: 1 день, 2 дня, 5 дней.
+String daysWord(int n) {
+  final m100 = n % 100;
+  final m10 = n % 10;
+  if (m100 >= 11 && m100 <= 14) return '$n дней';
+  if (m10 == 1) return '$n день';
+  if (m10 >= 2 && m10 <= 4) return '$n дня';
+  return '$n дней';
+}
+
+/// Текст подтверждения TOP: сколько уже действует, сколько добавится и итог.
+String topExtendLine(int left, int add) {
+  if (left <= 0) {
+    return tr('TOP будет включён на ${daysWord(add)}', 'TOP $add рӯз фаъол мешавад');
+  }
+  return tr(
+    'У вас действует TOP ${daysWord(left)}, будет продлён на ${daysWord(add)} = ${daysWord(left + add)}',
+    'Шумо TOP-и $left рӯз доред, $add рӯз тамдид мешавад = ${left + add} рӯз',
+  );
 }

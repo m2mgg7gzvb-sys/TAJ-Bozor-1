@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'theme.dart';
 import 'green_button.dart';
+import 'lang_store.dart';
+import 'listing_utils.dart';
 import 'wallet_sheet.dart';
 
 /// Варианты продвижения (TOP): срок в днях и цена в TJS.
@@ -37,12 +39,27 @@ class _PromoteSheet extends StatefulWidget {
 class _PromoteSheetState extends State<_PromoteSheet> {
   int _selected = 1; // 7 дней по умолчанию
   int _balance = 0;
+  int _topLeft = 0; // сколько дней TOP уже действует у этого объявления
   bool _paying = false;
 
   @override
   void initState() {
     super.initState();
     _loadBalance();
+    _loadTop();
+  }
+
+  Future<void> _loadTop() async {
+    try {
+      final row = await Supabase.instance.client
+          .from('listings')
+          .select('top_until')
+          .eq('id', widget.listingId)
+          .maybeSingle();
+      if (mounted && row != null) setState(() => _topLeft = topDaysLeft(row));
+    } catch (_) {
+      // Без этого просто не покажем оставшиеся дни.
+    }
   }
 
   Future<void> _loadBalance() async {
@@ -57,6 +74,19 @@ class _PromoteSheetState extends State<_PromoteSheet> {
   /// Списывает деньги с баланса и включает TOP для этого объявления.
   Future<void> _pay() async {
     if (_paying) return;
+    final plan = promotePlans[_selected];
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Подтвердите TOP', 'Тасдиқи TOP')),
+        content: Text('${topExtendLine(_topLeft, plan.days)}\n\n${tr('Списать', 'Пардохт')} ${plan.price} TJS'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Отмена', 'Бекор'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Оплатить', 'Пардохт'))),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     setState(() => _paying = true);
     try {
       await Supabase.instance.client.rpc('request_top_orders', params: {
@@ -124,6 +154,17 @@ class _PromoteSheetState extends State<_PromoteSheet> {
               style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
             ),
             const SizedBox(height: 16),
+            if (_topLeft > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  tr(
+                    'Сейчас действует TOP: ${daysWord(_topLeft)}. Новый срок добавится к текущему.',
+                    'Ҳоло TOP: $_topLeft рӯз фаъол аст. Мӯҳлати нав ба ҷорӣ илова мешавад.',
+                  ),
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                ),
+              ),
             for (var i = 0; i < promotePlans.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -207,6 +248,8 @@ class _TopPickSheetState extends State<_TopPickSheet> {
   late final Future<List<Map<String, dynamic>>> _items = _load();
   // id объявления -> индекс в promotePlans (срок продвижения для этого объявления)
   final Map<String, int> _picks = {};
+  // данные объявлений по id: название и top_until
+  final Map<String, Map<String, dynamic>> _rowById = {};
 
   bool _submitting = false;
   int _balance = 0;
@@ -216,10 +259,13 @@ class _TopPickSheetState extends State<_TopPickSheet> {
     if (uid == null) return [];
     final rows = await Supabase.instance.client
         .from('listings')
-        .select('id, title')
+        .select('id, title, top_until')
         .eq('user_id', uid)
         .eq('status', 'active')
         .order('created_at', ascending: false);
+    for (final r in rows) {
+      _rowById[r['id'] as String] = Map<String, dynamic>.from(r);
+    }
     try {
       _balance = await Supabase.instance.client.rpc('get_balance') as int? ?? 0;
     } catch (_) {
@@ -231,6 +277,28 @@ class _TopPickSheetState extends State<_TopPickSheet> {
   /// Сохраняет заявку на TOP. Оплата пока не подключена, поэтому заявка ждёт оплаты.
   Future<void> _submit() async {
     if (_picks.isEmpty || _submitting) return;
+    final lines = <String>[];
+    var total = 0;
+    for (final e in _picks.entries) {
+      final plan = promotePlans[e.value];
+      final row = _rowById[e.key] ?? const <String, dynamic>{};
+      total += plan.price;
+      lines.add('${(row['title'] as String?) ?? ''}: ${topExtendLine(topDaysLeft(row), plan.days)}');
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Подтвердите TOP', 'Тасдиқи TOP')),
+        content: SingleChildScrollView(
+          child: Text('${lines.join('\n\n')}\n\n${tr('Итого', 'Ҷамъ')}: $total TJS'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Отмена', 'Бекор'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Оплатить', 'Пардохт'))),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     setState(() => _submitting = true);
     try {
       await Supabase.instance.client.rpc('request_top_orders', params: {
@@ -369,11 +437,21 @@ class _TopPickSheetState extends State<_TopPickSheet> {
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Text(
-                                      title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                        if (topDaysLeft(_rowById[id] ?? const <String, dynamic>{}) > 0)
+                                          Text(
+                                            'TOP: ${daysWord(topDaysLeft(_rowById[id]!))}',
+                                            style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 8),

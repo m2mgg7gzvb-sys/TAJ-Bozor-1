@@ -4,7 +4,10 @@ import 'theme.dart';
 
 /// Золотой значок «TOP» в стиле шапки главной: градиент и мягкое свечение.
 class TopTag extends StatelessWidget {
-  const TopTag({super.key});
+  const TopTag({super.key, this.days});
+
+  /// Сколько дней TOP ещё действует. Если не задано, показываем просто TOP.
+  final int? days;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,7 @@ class TopTag extends StatelessWidget {
         ],
       ),
       child: Text(
-        'TOP',
+        days == null ? 'TOP' : 'TOP · $days дн.',
         style: TextStyle(color: AppColors.ink, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),
     );
