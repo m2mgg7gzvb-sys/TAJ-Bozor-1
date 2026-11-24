@@ -142,6 +142,23 @@ class _MyListingsTabState extends State<MyListingsTab> {
   }
 
   /// Продлевает истекшее объявление на 14 дней: оно снова идёт на проверку.
+  /// Продление активного объявления за 3 дня до конца: срок добавляется к текущему, статус не меняется.
+  Future<void> _extendActive(Map<String, dynamic> item) async {
+    try {
+      final now = DateTime.now().toUtc();
+      final current = DateTime.tryParse('${item['expires_at'] ?? ''}')?.toUtc();
+      final base = current != null && current.isAfter(now) ? current : now;
+      await Supabase.instance.client.from('listings').update({
+        'expires_at': base.add(const Duration(days: 14)).toIso8601String(),
+        'expiry_notified_at': null,
+      }).eq('id', item['id'] as String);
+      _reload();
+      _snack('Срок продлён на 14 дней');
+    } catch (_) {
+      _snack('Не удалось продлить');
+    }
+  }
+
   Future<void> _renew(Map<String, dynamic> item) async {
     try {
       await Supabase.instance.client.from('listings').update({
@@ -178,6 +195,7 @@ class _MyListingsTabState extends State<MyListingsTab> {
       _ => Colors.orange.shade800,
     };
     final isActive = label == null;
+    final daysLeftNow = isActive ? listingDaysLeft(item) : 0;
     final topDays = topDaysLeft(item);
     final showTop = isActive && topDays > 0;
     final photo = photoUrl(item);
@@ -378,14 +396,14 @@ class _MyListingsTabState extends State<MyListingsTab> {
                 ],
               ),
             ),
-            if (status == 'expired')
+            if (status == 'expired' || (isActive && daysLeftNow > 0 && daysLeftNow <= 3))
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: SizedBox(
                   width: double.infinity,
                   child: GreenButton(
                     height: 36,
-                    onPressed: () => _renew(item),
+                    onPressed: () => status == 'expired' ? _renew(item) : _extendActive(item),
                     child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
                   ),
                 ),
