@@ -49,9 +49,12 @@ class _RenewSheetState extends State<_RenewSheet> {
       final now = DateTime.now().toUtc();
       final current = DateTime.tryParse('${widget.item['expires_at'] ?? ''}')?.toUtc();
       final base = current != null && current.isAfter(now) ? current : now;
+      final wasExpired = widget.item['status'] == 'expired';
       await Supabase.instance.client.from('listings').update({
         'expires_at': base.add(Duration(days: days)).toIso8601String(),
         'expiry_notified_at': null,
+        // Истёкшее объявление снова становится активным (без повторной модерации).
+        if (wasExpired) 'status': 'active',
       }).eq('id', widget.item['id'] as String);
       if (!mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text('Срок продлён на $days дней')));
