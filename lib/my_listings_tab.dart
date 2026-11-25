@@ -142,21 +142,6 @@ class _MyListingsTabState extends State<MyListingsTab> {
     }
   }
 
-  /// Продлевает истекшее объявление на 14 дней: оно снова идёт на проверку.
-  Future<void> _renew(Map<String, dynamic> item) async {
-    try {
-      await Supabase.instance.client.from('listings').update({
-        'status': 'moderation',
-        'expires_at': DateTime.now().toUtc().add(const Duration(days: 14)).toIso8601String(),
-        'expiry_notified_at': null,
-      }).eq('id', item['id'] as String);
-      _reload();
-      _snack('Объявление продлено. Оно снова на проверке, это займёт до 30 минут.');
-    } catch (_) {
-      _snack('Не удалось продлить');
-    }
-  }
-
   /// Карточка своего объявления: фото слева, справа название, цена, место и счётчики.
   Widget _itemCard(Map<String, dynamic> item) {
     final status = item['status'] as String?;
@@ -387,8 +372,8 @@ class _MyListingsTabState extends State<MyListingsTab> {
                   width: double.infinity,
                   child: GreenButton(
                     height: 36,
-                    onPressed: () => _renew(item),
-                    child: const Text('Продлить на 14 дней', style: TextStyle(fontSize: 13)),
+                    onPressed: () => showRenewSheet(context, item: item, onDone: _reload),
+                    child: const Text('Продлить', style: TextStyle(fontSize: 13)),
                   ),
                 ),
               ),
