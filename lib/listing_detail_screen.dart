@@ -31,6 +31,10 @@ import 'copy_id.dart';
 import 'theme.dart';
 import 'user_profile_screen.dart';
 
+/// Показывать кнопку «Кредит» на странице объявления.
+/// Выключено, пока кредитная функция не готова (нужна регистрация организации для публикации).
+const bool kCreditButtonVisible = false;
+
 /// Страница объявления: галерея, цена, кнопки связи, описание, продавец,
 /// похожие объявления и другие объявления продавца.
 class ListingDetailScreen extends StatefulWidget {
@@ -682,7 +686,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Row(
                     children: [
-                      if (num.tryParse('${_item['price']}') != null) ...[
+                      if (kCreditButtonVisible && num.tryParse('${_item['price']}') != null) ...[
                         Expanded(
                           child: GreenButton.icon(
                             height: 44,
