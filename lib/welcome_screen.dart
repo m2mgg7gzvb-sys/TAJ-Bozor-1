@@ -188,10 +188,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       scale: Tween<double>(begin: 0.4, end: 1).animate(_part(0, 0.45, Curves.elasticOut)),
                       child: FadeTransition(
                         opacity: _part(0, 0.2),
-                        child: Image.asset('assets/logo.png', width: 110, height: 110),
+                        child: Image.asset('assets/logo.png', width: 92, height: 92),
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 16),
                     FadeTransition(
                       opacity: _part(0.35, 0.7),
                       child: Column(
@@ -201,7 +201,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                             'TAJ Bozor',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 40,
+                              fontSize: 34,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
                             ),
@@ -270,7 +270,7 @@ class _SheetState extends State<_Sheet> {
     final onSkip = widget.onSkip;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
+      padding: const EdgeInsets.fromLTRB(22, 14, 22, 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(44)),
@@ -294,17 +294,17 @@ class _SheetState extends State<_Sheet> {
           const SizedBox(height: 18),
           Text(
             _register ? 'Создать аккаунт' : 'Войти',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.ink),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.ink),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             _register
                 ? 'Аккаунт создастся автоматически при первом входе'
                 : 'Войдите, чтобы публиковать объявления и писать продавцам',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.muted, fontSize: 14),
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           // Тонкая зелёная линия-разделитель, как в макете.
           Container(
             height: 2,
@@ -315,56 +315,56 @@ class _SheetState extends State<_Sheet> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
+          // Все кнопки входа одного цвета; порядок и подписи зависят от вкладки.
           _PillButton(
             label: _register ? 'Зарегистрироваться через Apple' : 'Продолжить с Apple',
-            icon: Image.asset('assets/icons/apple_logo.png', height: 24),
+            icon: Image.asset('assets/icons/apple_logo.png', height: 22),
             filled: true,
             onPressed: () => onApple(_register),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться через Google' : 'Продолжить с Google',
-            icon: Image.asset('assets/icons/google_logo.png', height: 22),
-            filled: false,
+            icon: Image.asset('assets/icons/google_logo.png', height: 20),
+            filled: true,
             onPressed: () => onGoogle(_register),
           ),
           // Вход через WhatsApp и Telegram через бота: открывается чат, вход подтверждается сам
-          const SizedBox(height: 12),
+          const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться через WhatsApp' : 'Продолжить с WhatsApp',
-            icon: Image.asset('assets/icons/whatsapp_logo.png', height: 24),
-            filled: false,
+            icon: Image.asset('assets/icons/whatsapp_logo.png', height: 22),
+            filled: true,
             onPressed: () => startWhatsappLogin(context, register: _register),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться через Telegram' : 'Продолжить с Telegram',
-            icon: Image.asset('assets/icons/telegram_logo.png', height: 24),
-            filled: false,
+            icon: Image.asset('assets/icons/telegram_logo.png', height: 22),
+            filled: true,
             onPressed: () => startTelegramLogin(context, register: _register),
           ),
-          if (!_register) ...[
-            const SizedBox(height: 12),
-            _PillButton(
-              label: 'Войти по номеру',
-              filled: true,
-              icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 22),
-              onPressed: () => onPhone(false),
-            ),
-          ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 9),
+          _PillButton(
+            label: _register ? 'Зарегистрироваться по номеру' : 'Войти по номеру',
+            filled: true,
+            icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
+            onPressed: () => onPhone(_register),
+          ),
+          const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться по почте' : 'Войти по почте',
-            icon: const Icon(Icons.mail_outline_rounded, color: AppColors.deep, size: 22),
-            filled: false,
+            icon: const Icon(Icons.mail_outline_rounded, color: Colors.white, size: 20),
+            filled: true,
             onPressed: () => onEmail(_register),
           ),
           TextButton(
             onPressed: onSkip,
+            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 4)),
             child: const Text(
               'Пропустить',
-              style: TextStyle(color: AppColors.primary, fontSize: 17, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppColors.primary, fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
           Text(
@@ -406,7 +406,7 @@ class _PillButton extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: radius,
         child: Ink(
-          height: 58,
+          height: 50,
           decoration: BoxDecoration(
             borderRadius: radius,
             gradient: filled
@@ -434,7 +434,7 @@ class _PillButton extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: filled ? Colors.white : AppColors.deep,
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
