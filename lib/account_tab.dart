@@ -333,6 +333,16 @@ class _ProfilePageState extends State<_ProfilePage> {
                     onPressed: () => _confirmSignOut(context),
                     child: Text(tr('Выйти', 'Баромадан')),
                   ),
+                if (!isGuest) ...[
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => _confirmDeleteAccount(context),
+                    child: Text(
+                      tr('Удалить аккаунт', 'Ҳисобро нест кардан'),
+                      style: const TextStyle(color: AppColors.ruby),
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -829,6 +839,50 @@ class _MenuTile extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );
+  }
+}
+
+/// Удаление аккаунта: объявления скрываются сразу, аккаунт удаляется окончательно через 14 дней.
+/// Если войти снова в этот срок, аккаунт восстанавливается.
+Future<void> _confirmDeleteAccount(BuildContext context) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(tr('Удалить аккаунт?', 'Ҳисобро нест кардан?')),
+      content: Text(tr(
+        'Ваши объявления будут скрыты, а аккаунт удалён через 14 дней. Если войдёте снова в этот срок, аккаунт восстановится.',
+        'Эълонҳои шумо пинҳон мешаванд ва ҳисоб пас аз 14 рӯз нест карда мешавад. Агар дар ин муддат боз ворид шавед, ҳисоб барқарор мешавад.',
+      )),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(tr('Отмена', 'Бекор')),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(tr('Удалить', 'Нест кардан'), style: const TextStyle(color: AppColors.ruby)),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+  try {
+    await Supabase.instance.client.rpc('request_account_deletion');
+    await Supabase.instance.client.auth.signOut();
+    if (context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(tr(
+          'Аккаунт помечен на удаление. Войдите снова в течение 14 дней, чтобы его восстановить.',
+          'Ҳисоб барои нест кардан нишон шуд. Барои барқарорсозӣ дар муддати 14 рӯз боз ворид шавед.',
+        )),
+      ));
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(tr('Не удалось удалить аккаунт: $e', 'Нест кардани ҳисоб нашуд: $e'))),
+      );
+    }
   }
 }
 
