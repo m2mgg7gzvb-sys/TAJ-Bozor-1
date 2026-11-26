@@ -319,15 +319,18 @@ class _SheetState extends State<_Sheet> {
           // Все кнопки входа одного цвета; порядок и подписи зависят от вкладки.
           _PillButton(
             label: _register ? 'Зарегистрироваться через Apple' : 'Продолжить с Apple',
-            icon: Image.asset('assets/icons/apple_logo.png', height: 22),
-            filled: true,
+            icon: ColorFiltered(
+              colorFilter: const ColorFilter.mode(AppColors.deep, BlendMode.srcIn),
+              child: Image.asset('assets/icons/apple_logo.png', height: 22),
+            ),
+            filled: false,
             onPressed: () => onApple(_register),
           ),
           const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться через Google' : 'Продолжить с Google',
             icon: Image.asset('assets/icons/google_logo.png', height: 20),
-            filled: true,
+            filled: false,
             onPressed: () => onGoogle(_register),
           ),
           // Вход через WhatsApp и Telegram через бота: открывается чат, вход подтверждается сам
@@ -335,28 +338,28 @@ class _SheetState extends State<_Sheet> {
           _PillButton(
             label: _register ? 'Зарегистрироваться через WhatsApp' : 'Продолжить с WhatsApp',
             icon: Image.asset('assets/icons/whatsapp_logo.png', height: 22),
-            filled: true,
+            filled: false,
             onPressed: () => startWhatsappLogin(context, register: _register),
           ),
           const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться через Telegram' : 'Продолжить с Telegram',
             icon: Image.asset('assets/icons/telegram_logo.png', height: 22),
-            filled: true,
+            filled: false,
             onPressed: () => startTelegramLogin(context, register: _register),
           ),
           const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться по номеру' : 'Войти по номеру',
-            filled: true,
-            icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
+            filled: false,
+            icon: const Icon(Icons.phone_rounded, color: AppColors.deep, size: 20),
             onPressed: () => onPhone(_register),
           ),
           const SizedBox(height: 9),
           _PillButton(
             label: _register ? 'Зарегистрироваться по почте' : 'Войти по почте',
-            icon: const Icon(Icons.mail_outline_rounded, color: Colors.white, size: 20),
-            filled: true,
+            icon: const Icon(Icons.mail_outline_rounded, color: AppColors.deep, size: 20),
+            filled: false,
             onPressed: () => onEmail(_register),
           ),
           TextButton(
