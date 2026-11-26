@@ -26,6 +26,8 @@ Future<void> bootstrap() async {
     final session = state.session;
     if (state.event == AuthChangeEvent.signedIn && session != null) {
       checkAuthIntent(session.user);
+      // Если аккаунт был помечен на удаление менее 14 дней назад, он восстанавливается при входе.
+      Supabase.instance.client.rpc('restore_account').then((_) {}).catchError((_) {});
     }
     if (state.event == AuthChangeEvent.signedIn || state.event == AuthChangeEvent.signedOut) {
       loadThemeMode();
