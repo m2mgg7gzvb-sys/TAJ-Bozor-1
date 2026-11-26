@@ -845,26 +845,54 @@ class _MenuTile extends StatelessWidget {
 /// Удаление аккаунта: объявления скрываются сразу, аккаунт удаляется окончательно через 14 дней.
 /// Если войти снова в этот срок, аккаунт восстанавливается.
 Future<void> _confirmDeleteAccount(BuildContext context) async {
+  final controller = TextEditingController();
   final ok = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(tr('Удалить аккаунт?', 'Ҳисобро нест кардан?')),
-      content: Text(tr(
-        'Ваши объявления будут скрыты, а аккаунт удалён через 14 дней. Если войдёте снова в этот срок, аккаунт восстановится.',
-        'Эълонҳои шумо пинҳон мешаванд ва ҳисоб пас аз 14 рӯз нест карда мешавад. Агар дар ин муддат боз ворид шавед, ҳисоб барқарор мешавад.',
-      )),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(tr('Отмена', 'Бекор')),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(tr('Удалить', 'Нест кардан'), style: const TextStyle(color: AppColors.ruby)),
-        ),
-      ],
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) {
+        final confirmed = controller.text.trim() == 'Delete';
+        return AlertDialog(
+          title: Text(tr('Удалить аккаунт?', 'Ҳисобро нест кардан?')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tr(
+                'Ваши объявления будут скрыты, а аккаунт удалён через 14 дней. Если войдёте снова в этот срок, аккаунт восстановится.',
+                'Эълонҳои шумо пинҳон мешаванд ва ҳисоб пас аз 14 рӯз нест карда мешавад. Агар дар ин муддат боз ворид шавед, ҳисоб барқарор мешавад.',
+              )),
+              const SizedBox(height: 14),
+              Text(tr(
+                'Чтобы подтвердить, напишите слово Delete:',
+                'Барои тасдиқ калимаи Delete-ро нависед:',
+              )),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: const InputDecoration(hintText: 'Delete'),
+                onChanged: (_) => setState(() {}),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(tr('Отмена', 'Бекор')),
+            ),
+            TextButton(
+              onPressed: confirmed ? () => Navigator.pop(ctx, true) : null,
+              child: Text(
+                tr('Удалить', 'Нест кардан'),
+                style: TextStyle(color: confirmed ? AppColors.ruby : AppColors.muted),
+              ),
+            ),
+          ],
+        );
+      },
     ),
   );
+  controller.dispose();
   if (ok != true) return;
   try {
     await Supabase.instance.client.rpc('request_account_deletion');
