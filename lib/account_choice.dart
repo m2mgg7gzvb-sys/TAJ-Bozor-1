@@ -34,13 +34,20 @@ Future<void> maybeShowAccountChoice(BuildContext context) async {
         body: {'action': 'switch', 'target_user_id': picked['id']},
       );
       final tokenHash = (sw.data as Map<String, dynamic>?)?['token_hash'] as String?;
-      if (tokenHash == null) return;
+      if (tokenHash == null) {
+        throw Exception('switch: нет токена (${sw.data})');
+      }
       await client.auth.verifyOTP(type: OtpType.magiclink, tokenHash: tokenHash);
     } finally {
       accountLinkingBusy = false;
     }
-  } catch (_) {
-    // Если проверка не прошла, просто входим в текущий аккаунт
+  } catch (e) {
+    // Если переключение не удалось, остаёмся в текущем аккаунте и показываем причину
+    if (context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Не удалось войти в другой аккаунт: $e')),
+      );
+    }
   }
 }
 
