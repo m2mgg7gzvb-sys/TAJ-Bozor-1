@@ -340,7 +340,6 @@ class _LoginMethodsSheetState extends State<_LoginMethodsSheet> {
                           : tr('Пользователь', 'Корбар')),
                       subtitle: Text([
                         if ((a['public_id'] as String?)?.isNotEmpty == true) 'ID: ${a['public_id']}',
-                        a['role'] == 'Основной' ? tr('Основной', 'Асосӣ') : tr('Привязка', 'Пайванд'),
                       ].join('  ·  ')),
                     ),
                 ],
