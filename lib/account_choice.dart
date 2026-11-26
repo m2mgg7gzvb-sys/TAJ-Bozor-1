@@ -80,6 +80,9 @@ Future<Map<String, dynamic>?> showAccountPicker(
                 [
                   if ((c['public_id'] as String?)?.isNotEmpty == true)
                     'ID: ${c['public_id']}',
+                  c['role'] == 'Основной'
+                      ? tr('Основной', 'Асосӣ')
+                      : tr('Привязка', 'Пайванд'),
                 ].join('  ·  '),
               ),
             ),
