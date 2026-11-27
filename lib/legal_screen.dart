@@ -1,7 +1,30 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'lang_store.dart';
 import 'theme.dart';
+
+final _emailPattern = RegExp(r'[\w.+-]+@[\w-]+\.[\w.-]+');
+
+/// Делает e-mail в тексте нажимаемым: открывает почтовое приложение с готовым адресом.
+TextSpan _linkify(String text, TextStyle style) {
+  final spans = <InlineSpan>[];
+  var last = 0;
+  for (final m in _emailPattern.allMatches(text)) {
+    if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
+    final email = m.group(0)!;
+    spans.add(TextSpan(
+      text: email,
+      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, decoration: TextDecoration.underline),
+      recognizer: TapGestureRecognizer()
+        ..onTap = () => launchUrl(Uri(scheme: 'mailto', path: email)),
+    ));
+    last = m.end;
+  }
+  if (last < text.length) spans.add(TextSpan(text: text.substring(last)));
+  return TextSpan(style: style, children: spans);
+}
 
 /// Экран юридического текста: заголовок и разделы на русском или таджикском.
 class LegalPage extends StatelessWidget {
@@ -26,7 +49,7 @@ class LegalPage extends StatelessWidget {
           for (final (heading, body) in sections) ...[
             Text(heading, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 6),
-            Text(body, style: const TextStyle(height: 1.45)),
+            Text.rich(_linkify(body, const TextStyle(height: 1.45))),
             const SizedBox(height: 18),
           ],
         ],
