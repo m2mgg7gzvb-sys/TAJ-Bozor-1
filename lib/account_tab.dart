@@ -269,23 +269,6 @@ class _ProfilePageState extends State<_ProfilePage> {
                         title: tr('Поддержка', 'Дастгирӣ'),
                         onTap: () => tabIndex.value = 3,
                       ),
-                    _MenuTile(
-                      icon: Icons.mail_outline_rounded,
-                      title: tr('Написать на e-mail', 'Ба e-mail нависед'),
-                      onTap: () => _openExternal(Uri(scheme: 'mailto', path: kSupportEmail)),
-                    ),
-                    if (kSupportTelegram.isNotEmpty)
-                      _MenuTile(
-                        icon: Icons.send_rounded,
-                        title: tr('Поддержка в Telegram', 'Дастгирӣ дар Telegram'),
-                        onTap: () => _openExternal(Uri.parse('https://t.me/$kSupportTelegram')),
-                      ),
-                    if (kSupportWhatsapp.isNotEmpty)
-                      _MenuTile(
-                        icon: Icons.chat_rounded,
-                        title: tr('Поддержка в WhatsApp', 'Дастгирӣ дар WhatsApp'),
-                        onTap: () => _openExternal(Uri.parse('https://wa.me/$kSupportWhatsapp')),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -346,6 +329,16 @@ class _ProfilePageState extends State<_ProfilePage> {
                   ],
                 ),
                 const SizedBox(height: 24),
+                _MenuCard(
+                  children: [
+                    _MenuTile(
+                      icon: Icons.support_agent_rounded,
+                      title: tr('Связь с поддержкой', 'Алоқа бо дастгирӣ'),
+                      onTap: () => _showSupportSheet(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 if (!isGuest)
                   OutlinedButton(
                     onPressed: () => _confirmSignOut(context),
@@ -864,6 +857,86 @@ class _MenuTile extends StatelessWidget {
 const kSupportEmail = 'support@tajbozor.pro';
 const kSupportTelegram = ''; // имя пользователя без @, например tajbozor_support
 const kSupportWhatsapp = ''; // номер в международном формате без +, например 992900000000
+
+/// Окно «Связь с поддержкой»: чат в приложении, e-mail, позже Telegram и WhatsApp.
+Future<void> _showSupportSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              tr('Связь с поддержкой', 'Алоқа бо дастгирӣ'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 16),
+            _SupportOption(
+              icon: Icons.chat_bubble_outline_rounded,
+              title: tr('Чат с поддержкой в приложении', 'Чати дастгирӣ дар барнома'),
+              onTap: () {
+                Navigator.pop(ctx);
+                tabIndex.value = 3;
+              },
+            ),
+            _SupportOption(
+              icon: Icons.mail_outline_rounded,
+              title: tr('Написать на e-mail', 'Ба e-mail нависед'),
+              subtitle: kSupportEmail,
+              onTap: () {
+                Navigator.pop(ctx);
+                _openExternal(Uri(scheme: 'mailto', path: kSupportEmail));
+              },
+            ),
+            if (kSupportTelegram.isNotEmpty)
+              _SupportOption(
+                icon: Icons.send_rounded,
+                title: tr('Поддержка в Telegram', 'Дастгирӣ дар Telegram'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openExternal(Uri.parse('https://t.me/$kSupportTelegram'));
+                },
+              ),
+            if (kSupportWhatsapp.isNotEmpty)
+              _SupportOption(
+                icon: Icons.chat_rounded,
+                title: tr('Поддержка в WhatsApp', 'Дастгирӣ дар WhatsApp'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openExternal(Uri.parse('https://wa.me/$kSupportWhatsapp'));
+                },
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _SupportOption extends StatelessWidget {
+  const _SupportOption({required this.icon, required this.title, required this.onTap, this.subtitle});
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.primary),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+      subtitle: subtitle == null ? null : Text(subtitle!),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: onTap,
+    );
+  }
+}
 
 Future<void> _openExternal(Uri uri) async {
   try {
