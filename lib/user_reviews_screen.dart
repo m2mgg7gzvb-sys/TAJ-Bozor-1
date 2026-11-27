@@ -4,10 +4,31 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
 import 'green_button.dart';
 import 'lang_store.dart';
+import 'listing_detail_screen.dart';
+import 'listing_utils.dart';
 import 'review_dialog.dart';
 import 'theme.dart';
 
 const _yellow = Color(0xFFF2B600);
+
+/// Открывает объявление, на которое был оставлен отзыв.
+Future<void> openReviewListing(BuildContext context, String listingId) async {
+  final row = await Supabase.instance.client
+      .from('listings')
+      .select(listingSelect)
+      .eq('id', listingId)
+      .maybeSingle();
+  if (!context.mounted) return;
+  if (row == null) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(tr('Объявление недоступно', 'Эълон дастрас нест'))),
+    );
+    return;
+  }
+  Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => ListingDetailScreen(item: Map<String, dynamic>.from(row))),
+  );
+}
 
 /// Экран отзывов о пользователе: сводка по звёздам, сортировка, тексты и кнопка «Написать отзыв».
 class UserReviewsScreen extends StatefulWidget {
@@ -467,6 +488,40 @@ class _ReviewTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (review.listingId != null) ...[
+            GestureDetector(
+              onTap: review.listingTitle == null ? null : () => openReviewListing(context, review.listingId!),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.sell_outlined, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        (review.listingTitle ?? '').isNotEmpty
+                            ? review.listingTitle!
+                            : tr('Объявление удалено', 'Эълон нест карда шудааст'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: review.listingTitle == null ? AppColors.muted : AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    if (review.listingTitle != null)
+                      Icon(Icons.chevron_right_rounded, color: AppColors.primary),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           Row(
             children: [
               CircleAvatar(
@@ -485,11 +540,6 @@ class _ReviewTile extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(tr('Сделка состоялась', 'Савдо анҷом ёфт'),
                           style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
-                      if (review.listingTitle != null && review.listingTitle!.isNotEmpty)
-                        Text(review.listingTitle!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppColors.muted, fontSize: 12)),
                     ],
                   ],
                 ),
