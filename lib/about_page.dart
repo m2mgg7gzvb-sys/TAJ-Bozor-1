@@ -27,6 +27,14 @@ class AboutPage extends StatelessWidget {
             ),
             style: const TextStyle(height: 1.45),
           ),
+          const SizedBox(height: 14),
+          Text(
+            tr(
+              '*WhatsApp принадлежит компании Meta, которая признана экстремистской и запрещена на территории РФ.',
+              '*WhatsApp ба ширкати Meta тааллуқ дорад, ки экстремистӣ эътироф шуда ва дар қаламрави Федератсияи Русия манъ аст.',
+            ),
+            style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.45),
+          ),
           const SizedBox(height: 22),
           Text(
             tr('Источники данных', 'Манбаъҳои маълумот'),
