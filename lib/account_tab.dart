@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'about_page.dart';
+import 'chat_screen.dart';
 import 'auth_screen.dart';
 import 'avatar_crop_screen.dart';
 import 'copy_id.dart';
@@ -878,10 +879,10 @@ Future<void> _showSupportSheet(BuildContext context) {
             const SizedBox(height: 16),
             _SupportOption(
               icon: Icons.chat_bubble_outline_rounded,
-              title: tr('Чат с поддержкой в приложении', 'Чати дастгирӣ дар барнома'),
+              title: tr('Чат с поддержкой', 'Чати дастгирӣ'),
               onTap: () {
                 Navigator.pop(ctx);
-                tabIndex.value = 3;
+                _openSupportChat(context);
               },
             ),
             _SupportOption(
@@ -934,6 +935,24 @@ class _SupportOption extends StatelessWidget {
       subtitle: subtitle == null ? null : Text(subtitle!),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
+    );
+  }
+}
+
+/// Сразу открывает диалог с поддержкой (создаёт его, если его ещё нет).
+Future<void> _openSupportChat(BuildContext context) async {
+  try {
+    final id = await findOrCreateConversation(kind: 'support');
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatScreen(conversationId: id, title: tr('Поддержка', 'Дастгирӣ')),
+      ),
+    );
+  } catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(tr('Не удалось открыть чат поддержки', 'Кушодани чати дастгирӣ муяссар нашуд'))),
     );
   }
 }
