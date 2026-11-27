@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'about_page.dart';
 import 'auth_screen.dart';
@@ -267,6 +268,23 @@ class _ProfilePageState extends State<_ProfilePage> {
                         icon: Icons.support_agent_rounded,
                         title: tr('Поддержка', 'Дастгирӣ'),
                         onTap: () => tabIndex.value = 3,
+                      ),
+                    _MenuTile(
+                      icon: Icons.mail_outline_rounded,
+                      title: tr('Написать на e-mail', 'Ба e-mail нависед'),
+                      onTap: () => _openExternal(Uri(scheme: 'mailto', path: kSupportEmail)),
+                    ),
+                    if (kSupportTelegram.isNotEmpty)
+                      _MenuTile(
+                        icon: Icons.send_rounded,
+                        title: tr('Поддержка в Telegram', 'Дастгирӣ дар Telegram'),
+                        onTap: () => _openExternal(Uri.parse('https://t.me/$kSupportTelegram')),
+                      ),
+                    if (kSupportWhatsapp.isNotEmpty)
+                      _MenuTile(
+                        icon: Icons.chat_rounded,
+                        title: tr('Поддержка в WhatsApp', 'Дастгирӣ дар WhatsApp'),
+                        onTap: () => _openExternal(Uri.parse('https://wa.me/$kSupportWhatsapp')),
                       ),
                   ],
                 ),
@@ -839,6 +857,19 @@ class _MenuTile extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );
+  }
+}
+
+/// Контакты поддержки. Пустое значение скрывает пункт меню.
+const kSupportEmail = 'support@tajbozor.pro';
+const kSupportTelegram = ''; // имя пользователя без @, например tajbozor_support
+const kSupportWhatsapp = ''; // номер в международном формате без +, например 992900000000
+
+Future<void> _openExternal(Uri uri) async {
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    // Нет приложения для ссылки: ничего не делаем
   }
 }
 
